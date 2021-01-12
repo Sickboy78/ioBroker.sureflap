@@ -1,0 +1,104 @@
+{
+	"common": {
+		"name": "sureflap",
+		"version": "0.0.1",
+		"news": {
+			"0.0.1": {
+				"en": "initial release",
+				"de": "Erstveröffentlichung",
+				"ru": "Начальная версия",
+				"pt": "lançamento inicial",
+				"nl": "Eerste uitgave",
+				"fr": "Première version",
+				"it": "Versione iniziale",
+				"es": "Versión inicial",
+				"pl": "Pierwsze wydanie",
+				"zh-cn": "首次出版"
+			}
+		},
+		"title": "Sure Flap",
+		"titleLang": {
+			"en": "Sure Flap",
+			"de": "Sure Flap",
+			"ru": "Sure Flap",
+			"pt": "Sure Flap",
+			"nl": "Sure Flap",
+			"fr": "Sure Flap",
+			"it": "Sure Flap",
+			"es": "Sure Flap",
+			"pl": "Sure Flap",
+			"zh-cn": "Sure Flap"
+		},
+		"desc": {
+			"en": "Adapter for Sureflap cat und pet flap from Sure Petcare",
+			"de": "Adapter für Sureflap Katzen- und Haustierklappen von Sure Petcare",
+			"ru": "Адаптер для заслонок Sureflap для кошек и домашних животных Sure Petcare",
+			"pt": "Adaptador para gato Sureflap e abas de animais de estimação da Sure Petcare",
+			"nl": "Adapter voor Sureflap katten- en huisdierkleppen van Sure Petcare",
+			"fr": "Adaptateur pour les clapets Sureflap pour chats et animaux domestiques de Sure Petcare",
+			"it": "Adattatore per le alette per gatti e animali di Sureflap di Sure Petcare",
+			"es": "Adaptador para Sureflap gato y aletas de mascota de Sure Petcare",
+			"pl": "Adapter do klap Sureflap dla kotów i zwierząt z Sureflap od Sure Petcare",
+			"zh-cn": "Sure Petcare的Sureflap猫和宠物皮瓣适配器"
+		},
+		"authors": [
+			"Sickboy78 <asmoday_666@gmx.de>"
+		],
+		"keywords": [
+			"sureflap",
+			"surepetcare",
+			"petcare",
+			"cat",
+			"pet",
+			"flap",
+			"smart home"
+		],
+		"license": "MIT",
+		"platform": "Javascript/Node.js",
+		"main": "main.js",
+		"icon": "sureflap.png",
+		"enabled": true,
+		"extIcon": "https://raw.githubusercontent.com/Sickboy78/ioBroker.sureflap/master/admin/sureflap.png",
+		"readme": "https://github.com/Sickboy78/ioBroker.sureflap/blob/master/README.md",
+		"loglevel": "info",
+		"mode": "daemon",
+		"type": "iot-systems",
+		"compact": true,
+		"connectionType": "cloud",
+		"dataSource": "poll",
+		"materialize": true,
+		"dependencies": [
+			{
+				"js-controller": ">=2.0.0"
+			}
+		]
+	},
+	"native": {
+		"option1": true,
+		"option2": "42"
+	},
+	"objects": [],
+	"instanceObjects": [
+		{
+			"_id": "info",
+			"type": "channel",
+			"common": {
+				"name": "Information"
+			},
+			"native": {}
+		},
+		{
+			"_id": "connected",
+			"type": "state",
+			"common": {
+				"role": "indicator.connected",
+				"name": "Device or service connected",
+				"type": "boolean",
+				"read": true,
+				"write": false,
+				"def": false
+			},
+			"native": {}
+		}
+	]
+}

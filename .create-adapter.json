@@ -1,0 +1,41 @@
+{
+	"cli": true,
+	"adapterName": "sureflap",
+	"title": "Sure Flap",
+	"description": "Adpater für Sureflap Katzen- und Haustierklappen von Sure Petcare",
+	"keywords": [
+		"sureflap",
+		"surepetcare",
+		"petcare",
+		"cat",
+		"flap"
+	],
+	"expert": "yes",
+	"features": [
+		"adapter"
+	],
+	"adminFeatures": [],
+	"type": "iot-systems",
+	"startMode": "daemon",
+	"connectionType": "cloud",
+	"dataSource": "poll",
+	"connectionIndicator": "yes",
+	"language": "JavaScript",
+	"adminReact": "no",
+	"tools": [
+		"ESLint",
+		"type checking"
+	],
+	"indentation": "Tab",
+	"quotes": "double",
+	"es6class": "yes",
+	"authorName": "Sickboy78",
+	"authorGithub": "Sickboy78",
+	"authorEmail": "asmoday_666@gmx.de",
+	"gitRemoteProtocol": "HTTPS",
+	"gitCommit": "no",
+	"license": "MIT License",
+	"ci": "gh-actions",
+	"dependabot": "no",
+	"creatorVersion": "1.31.0"
+}

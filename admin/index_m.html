@@ -1,0 +1,292 @@
+<html>
+
+<head>
+
+	<!-- Load ioBroker scripts and styles-->
+	<link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
+	<link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+
+	<script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+
+	<script type="text/javascript" src="../../js/translate.js"></script>
+	<script type="text/javascript" src="../../lib/js/materialize.js"></script>
+	<script type="text/javascript" src="../../js/adapter-settings.js"></script>
+
+	<!-- Load our own files -->
+	<link rel="stylesheet" type="text/css" href="style.css" />
+	<script type="text/javascript" src="words.js"></script>
+
+	<script type="text/javascript">
+		let timerId = 0;
+		// This will be called by the admin adapter when the settings page loads
+		// eslint-disable-next-line no-unused-vars
+		function load(settings, onChange) {
+			// example: select elements with id=key and class=value and insert value
+			if (!settings) return;
+
+			testLogin(settings);
+
+			$('.value').each(function () {
+				const $key = $(this);
+				const id = $key.attr('id');
+				if ($key.attr('type') === 'checkbox') {
+					// do not call onChange direct, because onChange could expect some arguments
+					$key.prop('checked', settings[id])
+						.on('change', () => onChange());
+				} else {
+					// do not call onChange direct, because onChange could expect some arguments
+					$key.val(settings[id])
+						.on('change', () => onChange())
+						.on('keyup', () => onChange());
+				}
+			});
+			onChange(false);
+			// reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
+			// eslint-disable-next-line no-undef
+			if (M) M.updateTextFields();
+		}
+
+		// This will be called by the admin adapter when the user presses the save button
+		// eslint-disable-next-line no-unused-vars
+		function save(callback) {
+			// example: select elements with class=value and build settings object
+			const obj = {};
+			$('.value').each(function () {
+				const $this = $(this);
+				if ($this.attr('type') === 'checkbox') {
+					obj[$this.attr('id')] = $this.prop('checked');
+				} else if ($this.attr('type') === 'number') {
+					obj[$this.attr('id')] = parseFloat($this.val());
+				} else {
+					obj[$this.attr('id')] = $this.val();
+				}
+			});
+			callback(obj);
+			testLogin(obj);
+		}
+
+		/**
+		 * tests the credentials and shows success or error message
+		 */
+		function testLogin(settings) {
+			clearTimeout(timerId);
+			$('div.input-field').removeClass('red-border');
+			$('div.message-box').hide('slow');
+			timerId = setTimeout(doLogin(settings), 200);
+		}
+
+		/**
+		 * does a login and retrieves surepet data on success
+		 */
+		function doLogin(settings) {
+			doLoginViaApi(settings.username,settings.password)
+				.then(token => getSurePetDataFromApi(token))
+				.then(data => showSurepetData(data))
+				.catch(error => {
+					$('div.input-field').addClass('red-border');
+					showError(error);
+				});
+		}
+
+		/**
+		 * does a login via the surepet API
+		 * @return {Promise} Promise of an auth token
+		 */
+		function doLoginViaApi(username, password) {
+			return new Promise((resolve, reject) => {
+				const postData = JSON.stringify( { 'email_address':username,'password':password, 'device_id':'1050547954'} );
+				const options = buildOptions('/api/auth/login', 'POST', '', postData);
+				httpRequest(options).then(result => {
+					if (result == undefined || result.data == undefined || !('token' in result.data)) {
+						return reject(new Error(`Request returned no login token.`));
+					} else {
+						return resolve(result.data['token']);
+					}
+				}).catch(error => {
+					return reject(error);
+				});
+			});
+		}
+
+		/**
+		 * gets surepet data from surepet API
+		 * @param {string} token
+		 * @return {Promise} Promise of surepet data
+		 */
+		function getSurePetDataFromApi(token) {
+			return new Promise((resolve, reject) => {
+				const options = buildOptions('/api/me/start', 'GET', token);
+				httpRequest(options).then(result => {
+					if (result == undefined || result.data == undefined) {
+						return reject(new Error(`Getting surepet data failed.`));
+					} else {
+						return resolve(result.data);
+					}
+				}).catch(error => {
+					return reject(error);
+				});
+			});
+		}
+
+		/**
+		 * builds a options JSon object for a http request
+		 * @param {string} path
+		 * @param {string} method
+		 * @param {string} token
+		 * @param {object} postData
+		 * @return {object}
+		 */
+		function buildOptions(path, method, token, postData) {
+			const options = {
+				url: 'https://app.api.surehub.io' + path,
+				method: method,
+				data: postData,
+				contentType: 'application/json;charset=utf-8',
+				headers: {
+					'Host' : 'app.api.surehub.io',
+					'Accept' : 'application/json, text/plain, */*',
+					'Referer' : 'https://surepetcare.io/',
+					'Origin' :  'https://surepetcare.io',
+				}
+			};
+
+			if (token != undefined && token != '') {
+				options.headers['Authorization'] = 'Bearer ' + token;
+			}
+
+			return options;
+		}
+
+		/**
+		 * does a http request
+		 * @param {object} options
+		 * @return {Promise} Promise of an response JSon object
+		 */
+		function httpRequest(options) {
+			return new Promise((resolve, reject) => {
+				$.ajax(options).done(data => {
+					if(data instanceof Object) {
+						return resolve(data);
+					} else {
+						return reject(new Error(`Json parse error in returned data.`));
+					}
+				}).fail(error => {
+					return reject(error);
+				});
+			});
+		}
+
+		/**
+		 * shows an error message box
+		 * @param {object} error
+		 */
+		function showError(error) {
+			let errorText = error.toString();
+			if(error instanceof Object) {
+				// eslint-disable-next-line no-prototype-builtins
+				if(error.hasOwnProperty('status') && error.hasOwnProperty('statusText') && error.hasOwnProperty('responseText')) {
+					errorText = error.status.toString() + ' - ' + error.statusText + ' - ' + error.responseText;
+				}
+			}
+			const div = $('<div>',{
+				class: 'message-box',
+				style: 'display: none;'
+			});
+			const title = $('<p>',{
+				class: 'title',
+				text: 'Login failed. Username or password incorrect?'
+			});
+			const text = $('<p>',{
+				text: errorText
+			});
+			title.appendTo(div);
+			text.appendTo(div);
+
+			$('#result').empty();
+			div.appendTo($('#result'));
+			div.show('slow');
+		}
+
+		/**
+		 * shows an message box with surepet data
+		 * @param {object} data
+		 */
+		function showSurepetData(data) {
+			const div = $('<div>',{
+				class: 'message-box',
+				style: 'display: none;'
+			});
+			const title = $('<p>',{
+				class: 'title',
+				text: 'Login successful.'
+			});
+			title.appendTo(div);
+
+			data.households.forEach(household => {
+				const householdText = $('<p>',{
+					class: 'household',
+					text: 'Household ' + household.name + ' (' + household.id + ')'
+				});
+				householdText.appendTo(div);
+			});
+			data.pets.forEach(pet => {
+				const petDiv = $('<div>',{
+					class: 'pet-box'
+				});
+				const petText = $('<p>',{
+					class: 'pet-text',
+					text: pet.name + ' (' + pet.id + ')'
+				});
+				const petImage = $('<img>',{
+					class: 'pet-image',
+					alt: pet.name,
+					src: pet.photo.location
+				});
+				petImage.appendTo(petDiv);
+				petText.appendTo(petDiv);
+				petDiv.appendTo(div);
+			});
+
+			$('#result').empty();
+			div.appendTo($('#result'));
+			div.show('slow');
+		}
+
+	</script>
+
+</head>
+
+<body>
+
+	<div class="m adapter-container">
+
+		<div class="row">
+			<div class="col s12 m4 l2">
+				<img src="sureflap.png" class="logo">
+			</div>
+		</div>
+
+		<!-- Put your content here -->
+
+		<!-- For example columns with settings: -->
+		<div class="row">
+			<div class="col s6 input-field">
+				<input type="text" class="value" id="username" />
+				<label for="username" class="translate">username</label>
+			</div>
+
+			<div class="col s6 input-field">
+				<input type="password" class="value" id="password" />
+				<label for="password" class="translate">password</label>
+			</div>
+		</div>
+
+		<div class="row" id="result">
+		</div>
+
+	</div>
+
+</body>
+
+</html>

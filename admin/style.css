@@ -1,0 +1,68 @@
+/* You can delete those if you want. I just found them very helpful */
+* {
+	box-sizing: border-box
+}
+.m {
+	/* Don't cut off dropdowns! */
+	overflow: initial;
+}
+.m.adapter-container,
+.m.adapter-container > div.App {
+	/* Fix layout/scrolling issues with tabs */
+	height: 100%;
+	width: 100%;
+	position: relative;
+}
+.m .select-wrapper + label {
+	/* The positioning for dropdown labels is messed up */
+	transform: none !important;
+}
+
+label > i[title] {
+	/* Display the help cursor for the tooltip icons and fix their positioning */
+	cursor: help;
+	margin-left: 0.25em;
+}
+
+.dropdown-content {
+	/* Don't wrap text in dropdowns */
+	white-space: nowrap;
+}
+
+/* Add your styles here */
+.red-border {
+	border: 2px dashed red;
+}
+
+.message-box {
+	position: relative;
+	width: 50%;
+	left: 25%;
+	border: 2px solid #2196f3;
+	padding: 10px;
+	word-wrap: break-word;
+}
+
+.message-box .title {
+	font-weight: bold;
+	font-size: 1.1rem;
+}
+
+.message-box .household {
+	font-weight: bold;
+}
+
+.pet-box {
+	clear:both;
+	overflow: hidden;
+}
+
+.pet-box .pet-text {
+	margin-top: 48px;
+}
+
+.pet-box .pet-image {
+	float: left;
+	width: 100px;
+	margin: 10px;
+}
