@@ -374,7 +374,7 @@ class Sureflap extends utils.Adapter {
 				const since = this.sureFlapState.pets[i].position.since;
 
 				let household_name = '';
-				this.sureFlapState.households.array.forEach(household => {
+				this.sureFlapState.households.forEach(household => {
 					if (household.id === this.sureFlapState.pets[i].household_id) {
 						household_name = household.name;
 					}
