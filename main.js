@@ -1006,11 +1006,11 @@ class Sureflap extends utils.Adapter {
 	calculateBatteryPercentage(battery)
 	{
 		if (battery <= 5) {
-			return 0.0;
+			return 0;
 		} else if (battery >= 6) {
-			return 100.0;
+			return 100;
 		} else {
-			return (battery - 5) * 100.0;
+			return Math.round((1 - Math.pow(6 - battery,2)) * 100);
 		}
 	}
 
