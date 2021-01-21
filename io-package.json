@@ -88,11 +88,11 @@
 			"native": {}
 		},
 		{
-			"_id": "connected",
+			"_id": "info.connection",
 			"type": "state",
 			"common": {
 				"role": "indicator.connected",
-				"name": "Device or service connected",
+				"name": "If connected to surepetcare api",
 				"type": "boolean",
 				"read": true,
 				"write": false,
