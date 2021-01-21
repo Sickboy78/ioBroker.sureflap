@@ -54,7 +54,7 @@ class Sureflap extends utils.Adapter {
 		// Initialize your adapter here
 
 		// Reset the connection indicator during startup
-		this.setState('connected', false, true);
+		this.setConnectionStatusToAdapter(false);
 
 		// The adapters config (in the instance object everything under the attribute "native") is accessible via
 		// this.config:
@@ -79,7 +79,7 @@ class Sureflap extends utils.Adapter {
 	onUnload(callback) {
 		try {
 			clearTimeout(this.timerId);
-			this.setState && this.setState('connected', false, true);
+			this.setConnectionStatusToAdapter(false);
 			this.log.info(`everything cleaned up`);
 		} catch (e) {
 			this.log.warn(`adapter clean up failed: ${e}`);
@@ -186,10 +186,10 @@ class Sureflap extends utils.Adapter {
 	 */
 	doAuthenticate() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			this.setState('connected',false, true);
+			this.setConnectionStatusToAdapter(false);
 			this.doLoginViaApi().then(token => {
 				this.sureFlapState['token'] = token;
-				this.setState('connected',true, true);
+				this.setConnectionStatusToAdapter(true);
 				this.log.info(`connected`);
 				return resolve();
 			}).catch(error => {
@@ -560,6 +560,15 @@ class Sureflap extends utils.Adapter {
 	 * methods to set values to the adapter *
 	 ****************************************/
 
+	/**
+	 * sets connection status to the adapter
+	 * @param {boolean} connected
+	 */
+	setConnectionStatusToAdapter(connected) {
+		this.setObjectNotExists('info', this.buildChannelObject('Information'));
+		this.setObjectNotExists('info.connection', this.buildStateObject('If connected to surepetcare api','indicator.connected'));
+		this.setState('info.connection', connected, true);
+	}
 
 	/**
 	 * sets global online status to the adapter
@@ -567,12 +576,9 @@ class Sureflap extends utils.Adapter {
 	setGlobalOnlineStatusToAdapter() {
 		// all devices online status
 		if (!this.sureFlapStatePrev.all_devices_online || (this.sureFlapState.all_devices_online !== this.sureFlapStatePrev.all_devices_online)) {
-			const obj_name = 'all_devices_online';
-			this.getObject(obj_name, (err, obj) => {
-				if (!obj) {
-					this.setObject(obj_name, this.buildStateObject('all devices online'));
-				}
-			});
+			const obj_name = 'info.all_devices_online';
+			this.setObjectNotExists('info', this.buildChannelObject('Information'));
+			this.setObjectNotExists(obj_name, this.buildStateObject('If all devices are online'));
 			this.setState(obj_name, this.sureFlapState.all_devices_online, true);
 		}
 	}
@@ -587,11 +593,7 @@ class Sureflap extends utils.Adapter {
 		// lock mode
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.locking.mode !== this.sureFlapStatePrev.devices[deviceIndex].status.locking.mode)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + 'lockmode';
-			this.getObject(obj_name, (err, obj) => {
-				if (!obj) {
-					this.setObject(obj_name, this.buildStateObject('lockmode','switch','number',false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' }));
-				}
-			});
+			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode','switch','number',false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' }));
 			try {
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.locking.mode, true);
 			} catch(error) {
@@ -609,11 +611,7 @@ class Sureflap extends utils.Adapter {
 
 			const control_name = 'curfew';
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + control_name;
-			this.getObject(obj_name, (err, obj) => {
-				if (!obj) {
-					this.setObject(obj_name, this.buildStateObject('lockmode','switch','boolean', false));
-				}
-			});
+			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode','switch','boolean', false));
 			try {
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].control.curfew.length > 0, true);
 			} catch(error) {
@@ -658,17 +656,9 @@ class Sureflap extends utils.Adapter {
 			}
 
 			for(let h = 0; h < new_state.devices[deviceIndex].control.curfew.length; h++) {
-				this.getObject(obj_name + '.' + h, (err, obj) => {
-					if (!obj) {
-						this.setObject(obj_name + '.' + h, this.buildChannelObject('curfew setting ' + h));
-					}
-				});
+				this.setObjectNotExists(obj_name + '.' + h, this.buildChannelObject('curfew setting ' + h));
 				['enabled','lock_time','unlock_time'].forEach(state => {
-					this.getObject(obj_name + '.' + h + '.' + state, (err, obj) => {
-						if (!obj) {
-							this.setObject(obj_name + '.' + h + '.' + state, this.buildStateObject(state,'indicator',state === 'enabled' ? 'boolean' : 'string'));
-						}
-					});
+					this.setObjectNotExists(obj_name + '.' + h + '.' + state, this.buildStateObject(state,'indicator',state === 'enabled' ? 'boolean' : 'string'));
 					this.setState(obj_name + '.' + h + '.' + state, state === 'enabled' ? new_state.devices[deviceIndex].control.curfew[h][state] == true : new_state.devices[deviceIndex].control.curfew[h][state], true);
 				});
 			}
@@ -687,21 +677,13 @@ class Sureflap extends utils.Adapter {
 		// battery status
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery !== this.sureFlapStatePrev.devices[deviceIndex].status.battery)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery';
-			this.getObject(obj_name, (err, obj) => {
-				if (!obj) {
-					this.setObject(obj_name, this.buildStateObject('battery','indicator','number'));
-				}
-			});
+			this.setObjectNotExists(obj_name, this.buildStateObject('battery','indicator','number'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery, true);
 		}
 
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== this.sureFlapStatePrev.devices[deviceIndex].status.battery_percentage)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery_percentage';
-			this.getObject(obj_name, (err, obj) => {
-				if (!obj) {
-					this.setObject(obj_name, this.buildStateObject('battery_percentage','indicator','number'));
-				}
-			});
+			this.setObjectNotExists(obj_name, this.buildStateObject('battery percentage','indicator','number'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery_percentage, true);
 		}
 	}
@@ -714,11 +696,7 @@ class Sureflap extends utils.Adapter {
 	setHubStatusToAdapter(prefix,deviceIndex) {
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.led_mode !== this.sureFlapStatePrev.devices[deviceIndex].status.led_mode)) {
 			const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'led_mode';
-			this.getObject(obj_name, (err, obj) => {
-				if (!obj) {
-					this.setObject(obj_name, this.buildStateObject('led_mode','indicator','number', true, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }));
-				}
-			});
+			this.setObjectNotExists(obj_name, this.buildStateObject('led mode','indicator','number', true, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.led_mode, true);
 		}
 	}
@@ -735,11 +713,7 @@ class Sureflap extends utils.Adapter {
 			if ('parent' in this.sureFlapState.devices[deviceIndex]) {
 				obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].parent.name + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
 			}
-			this.getObject(obj_name, (err, obj) => {
-				if (!obj) {
-					this.setObject(obj_name, this.buildStateObject('online'));
-				}
-			});
+			this.setObjectNotExists(obj_name, this.buildStateObject('If device is online'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.online, true);
 		}
 	}
@@ -776,22 +750,14 @@ class Sureflap extends utils.Adapter {
 			const prefix = this.sureFlapState.households[h].name;
 
 			// create household channels
-			this.getObject(this.sureFlapState.households[h].name, (err, obj) => {
-				if (!obj) {
-					this.setObject(this.sureFlapState.households[h].name, this.buildDeviceObject('Household \'' + this.sureFlapState.households[h].name_org + '\' (' + this.sureFlapState.households[h].id + ')'));
-				}
-			});
+			this.setObjectNotExists(this.sureFlapState.households[h].name, this.buildDeviceObject('Household \'' + this.sureFlapState.households[h].name_org + '\' (' + this.sureFlapState.households[h].id + ')'));
 
 			// create hub (devices in household without parent)
 			for(let d = 0; d < this.sureFlapState.devices.length; d++) {
 				if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
 					if (!('parent' in this.sureFlapState.devices[d])) {
 						const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
-						this.getObject(obj_name, (err, obj) => {
-							if (!obj) {
-								this.setObject(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'));
-							}
-						});
+						this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'));
 					}
 				}
 			}
@@ -817,11 +783,7 @@ class Sureflap extends utils.Adapter {
 									type = 'device';
 									break;
 							}
-							this.getObject(obj_name + item, (err, obj) => {
-								if (!obj) {
-									this.setObject(obj_name + item, type === 'channel' ? this.buildChannelObject(name) : this.buildDeviceObject(name));
-								}
-							});
+							this.setObjectNotExists(obj_name + item, type === 'channel' ? this.buildChannelObject(name) : this.buildDeviceObject(name));
 						});
 					}
 				}
