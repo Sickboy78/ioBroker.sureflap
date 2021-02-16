@@ -566,7 +566,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	setConnectionStatusToAdapter(connected) {
 		this.setObjectNotExists('info', this.buildChannelObject('Information'));
-		this.setObjectNotExists('info.connection', this.buildStateObject('If connected to surepetcare api','indicator.connected'));
+		this.setObjectNotExists('info.connection', this.buildStateObject('If connected to surepetcare api', 'indicator.connected'));
 		this.setState('info.connection', connected, true);
 	}
 
@@ -593,7 +593,7 @@ class Sureflap extends utils.Adapter {
 		// lock mode
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.locking.mode !== this.sureFlapStatePrev.devices[deviceIndex].status.locking.mode)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + 'lockmode';
-			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode','switch','number',false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' }));
+			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode', 'switch', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' }));
 			try {
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.locking.mode, true);
 			} catch(error) {
@@ -604,14 +604,14 @@ class Sureflap extends utils.Adapter {
 		// curfew
 		if (!this.sureFlapStatePrev.devices || (JSON.stringify(this.sureFlapState.devices[deviceIndex].control.curfew) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].control.curfew))) {
 			if(this.sureFlapStatePrev.devices && this.sureFlapStatePrev.devices[deviceIndex].control.curfew.length > 0) {
-				this.setCurfewToAdapter(prefix,hierarchy,deviceIndex,this.sureFlapStatePrev,'last_curfew');
+				this.setCurfewToAdapter(prefix, hierarchy, deviceIndex, this.sureFlapStatePrev, 'last_curfew');
 			}
 
-			this.setCurfewToAdapter(prefix,hierarchy,deviceIndex,this.sureFlapState,'curfew');
+			this.setCurfewToAdapter(prefix, hierarchy, deviceIndex, this.sureFlapState, 'curfew');
 
 			const control_name = 'curfew';
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + control_name;
-			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode','switch','boolean', false));
+			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode', 'switch', 'boolean', false));
 			try {
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].control.curfew.length > 0, true);
 			} catch(error) {
@@ -658,7 +658,7 @@ class Sureflap extends utils.Adapter {
 			for(let h = 0; h < new_state.devices[deviceIndex].control.curfew.length; h++) {
 				this.setObjectNotExists(obj_name + '.' + h, this.buildChannelObject('curfew setting ' + h));
 				['enabled','lock_time','unlock_time'].forEach(state => {
-					this.setObjectNotExists(obj_name + '.' + h + '.' + state, this.buildStateObject(state,'indicator',state === 'enabled' ? 'boolean' : 'string'));
+					this.setObjectNotExists(obj_name + '.' + h + '.' + state, this.buildStateObject(state, 'indicator', state === 'enabled' ? 'boolean' : 'string'));
 					this.setState(obj_name + '.' + h + '.' + state, state === 'enabled' ? new_state.devices[deviceIndex].control.curfew[h][state] == true : new_state.devices[deviceIndex].control.curfew[h][state], true);
 				});
 			}
@@ -677,13 +677,13 @@ class Sureflap extends utils.Adapter {
 		// battery status
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery !== this.sureFlapStatePrev.devices[deviceIndex].status.battery)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery';
-			this.setObjectNotExists(obj_name, this.buildStateObject('battery','indicator','number'));
+			this.setObjectNotExists(obj_name, this.buildStateObject('battery', 'indicator', 'number'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery, true);
 		}
 
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== this.sureFlapStatePrev.devices[deviceIndex].status.battery_percentage)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery_percentage';
-			this.setObjectNotExists(obj_name, this.buildStateObject('battery percentage','indicator','number'));
+			this.setObjectNotExists(obj_name, this.buildStateObject('battery percentage', 'indicator', 'number'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery_percentage, true);
 		}
 	}
@@ -696,7 +696,7 @@ class Sureflap extends utils.Adapter {
 	setHubStatusToAdapter(prefix,deviceIndex) {
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.led_mode !== this.sureFlapStatePrev.devices[deviceIndex].status.led_mode)) {
 			const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'led_mode';
-			this.setObjectNotExists(obj_name, this.buildStateObject('led mode','indicator','number', true, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }));
+			this.setObjectNotExists(obj_name, this.buildStateObject('led mode', 'indicator', 'number', true, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.led_mode, true);
 		}
 	}
@@ -730,13 +730,13 @@ class Sureflap extends utils.Adapter {
 	setPetStatusToAdapter(prefix, name, name_org, where, since, petIndex) {
 		if (!this.sureFlapStatePrev.pets || (where !== this.sureFlapStatePrev.pets[petIndex].position.where)) {
 			const obj_name = prefix + '.' + name;
-			this.setObjectNotExists(obj_name + '.name', this.buildStateObject(name_org,'text','string'));
+			this.setObjectNotExists(obj_name + '.name', this.buildStateObject(name_org, 'text', 'string', false));
 			this.setState(obj_name + '.name', name, true);
 
 			this.setObjectNotExists(obj_name + '.inside', this.buildStateObject('is ' + name + ' inside'));
 			this.setState(obj_name + '.inside', (where == 1) ? true : false, true);
 
-			this.setObjectNotExists(obj_name + '.since', this.buildStateObject('last location change','date','string'));
+			this.setObjectNotExists(obj_name + '.since', this.buildStateObject('last location change', 'date', 'string'));
 			this.setState(obj_name + '.since', since, true);
 		}
 	}

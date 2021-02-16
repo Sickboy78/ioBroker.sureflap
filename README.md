@@ -16,6 +16,48 @@
 
 Adpater für Sureflap Katzen- und Haustierklappen von Sure Petcare
 
+## Struktur
+
+Der Adapter erzeugt folgende hirarchische Strukur:
+
+Adapter
+├ Haushalt
+│ ├ Hub
+│ │ ├ led_mode
+│ │ ├ online
+│ │ └ Klappe
+│ │   ├ battery
+│ │   ├ battery_percentage
+│ │   ├ online
+│ │   └ control
+│ │     ├ curfew
+│ │     ├ lockmode
+│ │     ├ curfew
+│ │     │ └ Sperrzeit
+│ │     │   ├ enabled
+│ │     │   ├ lock_time
+│ │     │   └unlock_time
+│ │	    └ last_curfew
+│ │	      └ Sperrzeit
+│ │	        ├ enabled
+│ │	        ├ lock_time
+│ │	        └ unlock_time
+│ └ pets
+│   └ Haustier
+│     ├ name
+│     ├ inside
+│     └ since
+└ info
+  ├ all_devices_online
+  └ connection
+
+## Folgende Werte können geschrieben werden
+
+control.curfew - Ausgangssperre de/aktivieren
+control.lockmode - Sperrmodus setzen
+Haustier.inside - Haustier auf drin oder draußen setzen
+  
+
 ## Developer manual
 This section is intended for the developer. It can be deleted later
 
@@ -95,7 +137,7 @@ For later updates, the above procedure is not necessary. Just do the following:
 
 ## Changelog
 
-### 0.0.1
+### 1.0.0
 * (Sickboy78) initial release
 
 ## License
