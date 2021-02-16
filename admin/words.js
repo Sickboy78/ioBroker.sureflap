@@ -15,7 +15,7 @@ systemDictionary = {
 		"zh-cn": "sureflap的适配器设置"
 	},
 	"option1": {
-		"en": "option1",
+		"en": "option 1",
 		"de": "Option 1",
 		"ru": "Опция 1",
 		"pt": "Opção 1",
@@ -27,9 +27,9 @@ systemDictionary = {
 		"zh-cn": "选项1"
 	},
 	"option2": {
-		"en": "option2",
+		"en": "option 2",
 		"de": "Option 2",
-		"ru": "option2",
+		"ru": "option 2",
 		"pt": "opção 2",
 		"nl": "Optie 2",
 		"fr": "Option 2",

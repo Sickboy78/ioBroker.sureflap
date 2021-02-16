@@ -644,7 +644,7 @@ class Sureflap extends utils.Adapter {
 						this.getObject(obj_name + '.' + h + state, (err, obj) => {
 							if(obj) {
 								this.log.debug(`delete id: ${obj._id}`);
-								this.delForeignObject(obj._id, (err) => {
+								this.delObject(obj._id, (err) => {
 									if(err) {
 										this.log.error(`could not delete object '${obj_name}.${h}${state}' (${err})`);
 									}
