@@ -20,42 +20,44 @@ Adpater für Sureflap Katzen- und Haustierklappen von Sure Petcare
 
 Der Adapter erzeugt folgende hirarchische Strukur:
 
-Adapter
-├ Haushalt
-│ ├ Hub
-│ │ ├ led_mode
-│ │ ├ online
-│ │ └ Klappe
-│ │   ├ battery
-│ │   ├ battery_percentage
-│ │   ├ online
-│ │   └ control
-│ │     ├ curfew
-│ │     ├ lockmode
-│ │     ├ curfew
-│ │     │ └ Sperrzeit
-│ │     │   ├ enabled
-│ │     │   ├ lock_time
-│ │     │   └unlock_time
-│ │	    └ last_curfew
-│ │	      └ Sperrzeit
-│ │	        ├ enabled
-│ │	        ├ lock_time
-│ │	        └ unlock_time
-│ └ pets
-│   └ Haustier
-│     ├ name
-│     ├ inside
-│     └ since
-└ info
-  ├ all_devices_online
-  └ connection
+Adapter<br>
+├ Haushalt<br>
+│ ├ Hub<br>
+│ │ ├ led_mode<br>
+│ │ ├ online<br>
+│ │ └ Klappe<br>
+│ │ &nbsp;&nbsp;&nbsp; ├ battery<br>
+│ │ &nbsp;&nbsp;&nbsp; ├ battery_percentage<br>
+│ │ &nbsp;&nbsp;&nbsp; ├ online<br>
+│ │ &nbsp;&nbsp;&nbsp; └ control<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ curfew<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ lockmode<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ curfew<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ └ Sperrzeit<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; ├ enabled<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; ├ lock_time<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; └unlock_time<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ last_curfew<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ Sperrzeit<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ enabled<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ lock_time<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ unlock_time<br>
+│ └ pets<br>
+│ &nbsp;&nbsp;&nbsp; └ Haustier<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ name<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ inside<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ since<br>
+└ info<br>
+&nbsp;&nbsp;&nbsp; ├ all_devices_online<br>
+&nbsp;&nbsp;&nbsp; └ connection<br>
 
 ## Folgende Werte können geschrieben werden
 
-control.curfew - Ausgangssperre de/aktivieren
-control.lockmode - Sperrmodus setzen
-Haustier.inside - Haustier auf drin oder draußen setzen
+control.curfew - Ausgangssperre ein- (true) oder ausschalten (false)
+
+control.lockmode - Sperrmodus setzen (0 - offen, 1 - Einsperren, 2 - Aussperren, 3 - Ein- und Aussperren)
+
+Haustier.inside - Haustier auf drin (true) oder draußen (false) setzen
   
 
 ## Developer manual
