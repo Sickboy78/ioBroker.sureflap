@@ -96,8 +96,9 @@
 			});
 			callback(obj);
 			// decrypt password
-			const settings = obj;
-			settings.password = decrypt(secret, settings.password);
+			const settings = {};
+			settings.username = obj.username;
+			settings.password = decrypt(secret, obj.password);
 			testLogin(settings);
 		}
 
