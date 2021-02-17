@@ -749,8 +749,8 @@ class Sureflap extends utils.Adapter {
 		for(let h = 0; h < this.sureFlapState.households.length; h++) {
 			const prefix = this.sureFlapState.households[h].name;
 
-			// create household channels
-			this.setObjectNotExists(this.sureFlapState.households[h].name, this.buildDeviceObject('Household \'' + this.sureFlapState.households[h].name_org + '\' (' + this.sureFlapState.households[h].id + ')'));
+			// create household folder
+			this.setObjectNotExists(this.sureFlapState.households[h].name, this.buildFolderObject('Household \'' + this.sureFlapState.households[h].name_org + '\' (' + this.sureFlapState.households[h].id + ')'));
 
 			// create hub (devices in household without parent)
 			for(let d = 0; d < this.sureFlapState.devices.length; d++) {
@@ -1077,6 +1077,22 @@ class Sureflap extends utils.Adapter {
 	buildChannelObject(name) {
 		return {
 			type: 'channel',
+			common: {
+				name: name,
+				role: ''
+			},
+			native: {}
+		};
+	}
+
+	/**
+	 * builds a folder object
+	 * @param {string} name
+	 * @return {object}
+	 */
+	buildFolderObject(name) {
+		return {
+			type: 'folder',
 			common: {
 				name: name,
 				role: ''
