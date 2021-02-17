@@ -1014,7 +1014,7 @@ class Sureflap extends utils.Adapter {
 			// @ts-ignore
 			'email_address': this.config.username,
 			// @ts-ignore
-			'password': this.config.password,
+			'password': this.decrypt('Zgfr56gFe87jJOM', this.config.password),
 			'device_id':'1050547954'
 		};
 	}
