@@ -95,7 +95,10 @@
 				}
 			});
 			callback(obj);
-			testLogin(obj);
+			// decrypt password
+			const settings = obj;
+			settings.password = decrypt(secret, settings.password);
+			testLogin(settings);
 		}
 
 		/**
