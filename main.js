@@ -576,7 +576,7 @@ class Sureflap extends utils.Adapter {
 		if (!this.sureFlapStatePrev.all_devices_online || (this.sureFlapState.all_devices_online !== this.sureFlapStatePrev.all_devices_online)) {
 			const obj_name = 'info.all_devices_online';
 			this.setObjectNotExists('info', this.buildChannelObject('Information'));
-			this.setObjectNotExists(obj_name, this.buildStateObject('If all devices are online'));
+			this.setObjectNotExists(obj_name, this.buildStateObject('If all devices are online','indicator.reachable'));
 			this.setState(obj_name, this.sureFlapState.all_devices_online, true);
 		}
 	}
@@ -591,7 +591,7 @@ class Sureflap extends utils.Adapter {
 		// lock mode
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.locking.mode !== this.sureFlapStatePrev.devices[deviceIndex].status.locking.mode)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + 'lockmode';
-			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode', 'switch', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' }));
+			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' }));
 			try {
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.locking.mode, true);
 			} catch(error) {
@@ -609,7 +609,7 @@ class Sureflap extends utils.Adapter {
 
 			const control_name = 'curfew';
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + control_name;
-			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode', 'switch', 'boolean', false));
+			this.setObjectNotExists(obj_name, this.buildStateObject('curfew', 'switch', 'boolean', false));
 			try {
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].control.curfew.length > 0, true);
 			} catch(error) {
@@ -656,7 +656,7 @@ class Sureflap extends utils.Adapter {
 			for(let h = 0; h < new_state.devices[deviceIndex].control.curfew.length; h++) {
 				this.setObjectNotExists(obj_name + '.' + h, this.buildChannelObject('curfew setting ' + h));
 				['enabled','lock_time','unlock_time'].forEach(state => {
-					this.setObjectNotExists(obj_name + '.' + h + '.' + state, this.buildStateObject(state, 'indicator', state === 'enabled' ? 'boolean' : 'string'));
+					this.setObjectNotExists(obj_name + '.' + h + '.' + state, this.buildStateObject(state, state === 'enabled' ? 'indicator' : 'value', state === 'enabled' ? 'boolean' : 'string'));
 					this.setState(obj_name + '.' + h + '.' + state, state === 'enabled' ? new_state.devices[deviceIndex].control.curfew[h][state] == true : new_state.devices[deviceIndex].control.curfew[h][state], true);
 				});
 			}
@@ -675,13 +675,13 @@ class Sureflap extends utils.Adapter {
 		// battery status
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery !== this.sureFlapStatePrev.devices[deviceIndex].status.battery)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery';
-			this.setObjectNotExists(obj_name, this.buildStateObject('battery', 'indicator', 'number'));
+			this.setObjectNotExists(obj_name, this.buildStateObject('battery', 'value.voltage', 'number'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery, true);
 		}
 
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== this.sureFlapStatePrev.devices[deviceIndex].status.battery_percentage)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery_percentage';
-			this.setObjectNotExists(obj_name, this.buildStateObject('battery percentage', 'indicator', 'number'));
+			this.setObjectNotExists(obj_name, this.buildStateObject('battery percentage', 'value.battery', 'number'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery_percentage, true);
 		}
 	}
@@ -711,7 +711,7 @@ class Sureflap extends utils.Adapter {
 			if ('parent' in this.sureFlapState.devices[deviceIndex]) {
 				obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].parent.name + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
 			}
-			this.setObjectNotExists(obj_name, this.buildStateObject('If device is online'));
+			this.setObjectNotExists(obj_name, this.buildStateObject('If device is online','indicator.reachable'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.online, true);
 		}
 	}
