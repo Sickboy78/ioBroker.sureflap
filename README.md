@@ -10,7 +10,7 @@
 
 [![NPM](https://nodei.co/npm/iobroker.sureflap.png?downloads=true)](https://nodei.co/npm/iobroker.sureflap/)
 
-**Tests:** ![Test and Release](https://github.com/Sickboy78/ioBroker.sureflap/workflows/Test%20and%20Release/badge.svg)
+**Tests:** ![Test and Release](https://github.com/Sickboy78/ioBroker.sureflap/workflows/Test%20and%20Release/badge.svg) Linux/Mac/Windows: [![Travis-CI](http://img.shields.io/travis/Sickboy78/ioBroker.sureflap/master.svg)](https://travis-ci.com/Sickboy78/ioBroker.sureflap) Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/Sickboy78/ioBroker.sureflap?branch=master&svg=true)](https://ci.appveyor.com/project/Sickboy78/ioBroker.sureflap/)
 
 ## sureflap adapter for ioBroker
 
