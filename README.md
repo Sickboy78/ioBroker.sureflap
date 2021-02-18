@@ -1,4 +1,7 @@
-![Logo](admin/sureflap.png)
+<p align="center">
+  <img src="admin/sureflap.png" />
+</p>
+
 # ioBroker.sureflap
 
 [![NPM version](http://img.shields.io/npm/v/iobroker.sureflap.svg)](https://www.npmjs.com/package/iobroker.sureflap)
@@ -8,21 +11,23 @@
 [![Dependency Status](https://img.shields.io/david/Sickboy78/iobroker.sureflap.svg)](https://david-dm.org/Sickboy78/iobroker.sureflap)
 [![Known Vulnerabilities](https://snyk.io/test/github/Sickboy78/ioBroker.sureflap/badge.svg)](https://snyk.io/test/github/Sickboy78/ioBroker.sureflap)
 
+![Test and Release](https://github.com/Sickboy78/ioBroker.sureflap/workflows/Test%20and%20Release/badge.svg) Linux/Mac/Windows: [![Travis-CI](http://img.shields.io/travis/Sickboy78/ioBroker.sureflap/master.svg)](https://travis-ci.com/Sickboy78/ioBroker.sureflap) Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/Sickboy78/ioBroker.sureflap?branch=master&svg=true)](https://ci.appveyor.com/project/Sickboy78/ioBroker.sureflap/)
+
 [![NPM](https://nodei.co/npm/iobroker.sureflap.png?downloads=true)](https://nodei.co/npm/iobroker.sureflap/)
 
-**Tests:** ![Test and Release](https://github.com/Sickboy78/ioBroker.sureflap/workflows/Test%20and%20Release/badge.svg) Linux/Mac/Windows: [![Travis-CI](http://img.shields.io/travis/Sickboy78/ioBroker.sureflap/master.svg)](https://travis-ci.com/Sickboy78/ioBroker.sureflap) Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/Sickboy78/ioBroker.sureflap?branch=master&svg=true)](https://ci.appveyor.com/project/Sickboy78/ioBroker.sureflap/)
-
 ## Adpater for SureFlap® cat and pet flaps from Sure Petcare®
-
-![sureflap](https://github.com/Sickboy78/ioBroker.sureflap/admin/SureFlap_Pet_Door_Connect_Hub_Phone.png)
+<p align="center">
+  <img src="/admin/SureFlap_Pet_Door_Connect_Hub_Phone.png" />
+</p>
 
 ## Configuration
 
-Add username and password from your Sure Petcare account on the adapter configuration page.
+Add username and password from your Sure Petcare® account on the adapter configuration page.
 
 ## Description
 
 The adapter provides information about the settings and status of your cat flap.
+
 It also shows the location of your pets.
 
 ### Changeable Values
@@ -31,9 +36,9 @@ The following states can be changed and will take effect on your device respecti
 
 | state | description | allowed values |
 |-------|-------------|----------------|
-| household_name.hub_name.flap_name.control.curfew | enables or disables the configured curfew (curfew must be configured via app) | true or false |
-| household_name.hub_name.flap_name.control.lockmode | sets the lockmode | 0 - open, 1 - lock in, 2 - lock out, 3 - closed (lock in and out) |
-| household_name.pets.pet_name.inside | sets whether your pet is inside | true or false |
+| household_name.hub_name.flap_name.control.curfew | enables or disables the configured curfew<br>(curfew must be configured via app) | **true** or **false** |
+| household_name.hub_name.flap_name.control.lockmode | sets the lockmode | **0** - open<br>**1** - lock in<br>**2** - lock out<br>**3** - closed (lock in and out) |
+| household_name.pets.pet_name.inside | sets whether your pet is inside | **true** or **false** |
 
 ### Structure
 
@@ -74,7 +79,7 @@ adapter<br>
 
 SureFlap® and Sure Petcare® are registered trademarks of [SureFlap Ltd.](https://www.surepetcare.com/)
 
-The picture of the cat flap, hub and smartphone app is provided free to use from [Surepetcare](https://www.surepetcare.com/en-us/press).
+The picture of the cat flap, hub and smartphone app is provided free to use from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
