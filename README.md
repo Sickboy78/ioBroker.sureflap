@@ -12,38 +12,57 @@
 
 **Tests:** ![Test and Release](https://github.com/Sickboy78/ioBroker.sureflap/workflows/Test%20and%20Release/badge.svg) Linux/Mac/Windows: [![Travis-CI](http://img.shields.io/travis/Sickboy78/ioBroker.sureflap/master.svg)](https://travis-ci.com/Sickboy78/ioBroker.sureflap) Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/Sickboy78/ioBroker.sureflap?branch=master&svg=true)](https://ci.appveyor.com/project/Sickboy78/ioBroker.sureflap/)
 
-## sureflap adapter for ioBroker
+## Adpater for SureFlap® cat and pet flaps from Sure Petcare®
 
-Adpater für Sureflap Katzen- und Haustierklappen von Sure Petcare
+![sureflap](https://github.com/Sickboy78/ioBroker.sureflap/admin/SureFlap_Pet_Door_Connect_Hub_Phone.png)
 
-## Struktur
+## Configuration
 
-Der Adapter erzeugt folgende hirarchische Strukur:
+Add username and password from your Sure Petcare account on the adapter configuration page.
 
-Adapter<br>
-├ Haushalt<br>
-│ ├ Hub<br>
+## Description
+
+The adapter provides information about the settings and status of your cat flap.
+It also shows the location of your pets.
+
+### Changeable Values
+
+The following states can be changed and will take effect on your device respectively will be reflected in your Sure Petcare® app.
+
+| state | description | allowed values |
+|-------|-------------|----------------|
+| household_name.hub_name.flap_name.control.curfew | enables or disables the configured curfew (curfew must be configured via app) | true or false |
+| household_name.hub_name.flap_name.control.lockmode | sets the lockmode | 0 - open, 1 - lock in, 2 - lock out, 3 - closed (lock in and out) |
+| household_name.pets.pet_name.inside | sets whether your pet is inside | true or false |
+
+### Structure
+
+The adapter creates the following hierarchical structure:
+
+adapter<br>
+├ household_name<br>
+│ ├ hub_name<br>
 │ │ ├ led_mode<br>
 │ │ ├ online<br>
-│ │ └ Klappe<br>
+│ │ └ flap_name<br>
 │ │ &nbsp;&nbsp;&nbsp; ├ battery<br>
 │ │ &nbsp;&nbsp;&nbsp; ├ battery_percentage<br>
 │ │ &nbsp;&nbsp;&nbsp; ├ online<br>
-│ │ &nbsp;&nbsp;&nbsp; └ control<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ curfew<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ lockmode<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ curfew<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ └ Sperrzeit<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; ├ enabled<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; ├ lock_time<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; └unlock_time<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ last_curfew<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ Sperrzeit<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ enabled<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ lock_time<br>
-│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ unlock_time<br>
+│ │ &nbsp;&nbsp;&nbsp; ├ control<br>
+│ │ &nbsp;&nbsp;&nbsp; │ ├ curfew<br>
+│ │ &nbsp;&nbsp;&nbsp; │ └ lockmode<br>
+│ │ &nbsp;&nbsp;&nbsp; ├ curfew<br>
+│ │ &nbsp;&nbsp;&nbsp; │ └ 0..i<br>
+│ │ &nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; ├ enabled<br>
+│ │ &nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; ├ lock_time<br>
+│ │ &nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; └unlock_time<br>
+│ │ &nbsp;&nbsp;&nbsp; └ last_curfew<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ 0..i<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ enabled<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ lock_time<br>
+│ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ unlock_time<br>
 │ └ pets<br>
-│ &nbsp;&nbsp;&nbsp; └ Haustier<br>
+│ &nbsp;&nbsp;&nbsp; └ pet_name<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ name<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ inside<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ since<br>
@@ -51,98 +70,19 @@ Adapter<br>
 &nbsp;&nbsp;&nbsp; ├ all_devices_online<br>
 &nbsp;&nbsp;&nbsp; └ connection<br>
 
-## Folgende Werte können geschrieben werden
+## Notes
 
-control.curfew - Ausgangssperre ein- (true) oder ausschalten (false)
+SureFlap® and Sure Petcare® are registered trademarks of [SureFlap Ltd.](https://www.surepetcare.com/)
 
-control.lockmode - Sperrmodus setzen (0 - offen, 1 - Einsperren, 2 - Aussperren, 3 - Ein- und Aussperren)
-
-Haustier.inside - Haustier auf drin (true) oder draußen (false) setzen
-  
-
-## Developer manual
-This section is intended for the developer. It can be deleted later
-
-### Getting started
-
-You are almost done, only a few steps left:
-1. Create a new repository on GitHub with the name `ioBroker.sureflap`
-1. Initialize the current folder as a new git repository:  
-	```bash
-	git init
-	git add .
-	git commit -m "Initial commit"
-	```
-1. Link your local repository with the one on GitHub:  
-	```bash
-	git remote add origin https://github.com/Sickboy78/ioBroker.sureflap
-	```
-
-1. Push all files to the GitHub repo:  
-	```bash
-	git push origin master
-	```
-
-1. Head over to [main.js](main.js) and start programming!
-
-### Best Practices
-We've collected some [best practices](https://github.com/ioBroker/ioBroker.repositories#development-and-coding-best-practices) regarding ioBroker development and coding in general. If you're new to ioBroker or Node.js, you should
-check them out. If you're already experienced, you should also take a look at them - you might learn something new :)
-
-### Scripts in `package.json`
-Several npm scripts are predefined for your convenience. You can run them using `npm run <scriptname>`
-| Script name | Description |
-|-------------|-------------|
-| `test:js` | Executes the tests you defined in `*.test.js` files. |
-| `test:package` | Ensures your `package.json` and `io-package.json` are valid. |
-| `test:unit` | Tests the adapter startup with unit tests (fast, but might require module mocks to work). |
-| `test:integration` | Tests the adapter startup with an actual instance of ioBroker. |
-| `test` | Performs a minimal test run on package files and your tests. |
-| `check` | Performs a type-check on your code (without compiling anything). |
-| `lint` | Runs `ESLint` to check your code for formatting errors and potential bugs. |
-
-### Writing tests
-When done right, testing code is invaluable, because it gives you the 
-confidence to change your code while knowing exactly if and when 
-something breaks. A good read on the topic of test-driven development 
-is https://hackernoon.com/introduction-to-test-driven-development-tdd-61a13bc92d92. 
-Although writing tests before the code might seem strange at first, but it has very 
-clear upsides.
-
-The template provides you with basic tests for the adapter startup and package files.
-It is recommended that you add your own tests into the mix.
-
-### Publishing the adapter
-Since you have chosen GitHub Actions as your CI service, you can 
-enable automatic releases on npm whenever you push a new git tag that matches the form 
-`v<major>.<minor>.<patch>`. The necessary steps are described in `.github/workflows/test-and-release.yml`.
-
-To get your adapter released in ioBroker, please refer to the documentation 
-of [ioBroker.repositories](https://github.com/ioBroker/ioBroker.repositories#requirements-for-adapter-to-get-added-to-the-latest-repository).
-
-### Test the adapter manually on a local ioBroker installation
-In order to install the adapter locally without publishing, the following steps are recommended:
-1. Create a tarball from your dev directory:  
-	```bash
-	npm pack
-	```
-1. Upload the resulting file to your ioBroker host
-1. Install it locally (The paths are different on Windows):
-	```bash
-	cd /opt/iobroker
-	npm i /path/to/tarball.tgz
-	```
-
-For later updates, the above procedure is not necessary. Just do the following:
-1. Overwrite the changed files in the adapter directory (`/opt/iobroker/node_modules/iobroker.sureflap`)
-1. Execute `iobroker upload sureflap` on the ioBroker host
+The picture of the cat flap, hub and smartphone app is provided free to use from [Surepetcare](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
-### 1.0.0
+### 1.0.0 (2021-02-18)
 * (Sickboy78) initial release
 
 ## License
+
 MIT License
 
 Copyright (c) 2021 Sickboy78 <asmoday_666@gmx.de>
