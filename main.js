@@ -167,8 +167,6 @@ class Sureflap extends utils.Adapter {
 	 */
 	startLoadingData() {
 		clearTimeout(this.timerId);
-		// TODO cleanup adapter
-		// TODO fix object types
 		this.doAuthenticate()
 			.then(() => this.getHouseholdFromApi())
 			.then(() => this.startUpdateLoop())
@@ -176,7 +174,7 @@ class Sureflap extends utils.Adapter {
 				this.log.error(error);
 				this.log.info(`disconnected`);
 				// @ts-ignore
-				this.timerId = setTimeout(this.startLoadingData.bind(this), 5*1000);
+				this.timerId = setTimeout(this.startLoadingData.bind(this), 10*1000);
 			});
 	}
 
@@ -225,7 +223,7 @@ class Sureflap extends utils.Adapter {
 				this.log.info(`loop stopped`);
 				this.log.info(`disconnected`);
 				// @ts-ignore
-				this.timerId = setTimeout(this.startLoadingData.bind(this), 5*1000);
+				this.timerId = setTimeout(this.startLoadingData.bind(this), 10*1000);
 			});
 	}
 
@@ -259,7 +257,7 @@ class Sureflap extends utils.Adapter {
 			this.log.debug(`login count: ${this.numberOfLogins}`);
 			this.httpRequest('login', options, postData).then(result => {
 				if (result == undefined || result.data == undefined || !('token' in result.data)) {
-					return reject(new Error(`login failed. possible wrong login or pwd? retrying in 5 seconds`));
+					return reject(new Error(`login failed. possible wrong login or pwd? retrying in 10 seconds`));
 				} else {
 					this.numberOfLogins = 0;
 					return resolve(result.data['token']);
@@ -280,7 +278,7 @@ class Sureflap extends utils.Adapter {
 			this.log.info(`reading households...`);
 			this.httpRequest('get_household', options, '').then(result => {
 				if (result == undefined || result.data == undefined) {
-					return reject(new Error(`getting household failed. retrying login in 5 seconds`));
+					return reject(new Error(`getting household failed. retrying login in 10 seconds`));
 				} else {
 					this.sureFlapState['household'] = result.data[0]['id'];
 					this.log.info(`households read`);
@@ -301,7 +299,7 @@ class Sureflap extends utils.Adapter {
 			const options = this.buildOptions('/api/me/start', 'GET', this.sureFlapState['token']);
 			this.httpRequest('get_control', options, '').then(result => {
 				if (result == undefined || result.data == undefined) {
-					return reject(new Error(`getting controls failed. retrying login in 5 seconds`));
+					return reject(new Error(`getting controls failed. retrying login in 10 seconds`));
 				} else {
 					this.sureFlapStatePrev = JSON.parse(JSON.stringify(this.sureFlapState));
 					this.sureFlapState.devices = result.data.devices;
@@ -1132,7 +1130,7 @@ class Sureflap extends utils.Adapter {
 			});
 
 			req.on('error', (err) => {
-				return reject(new Error(`Request error: ${err} retrying in 5 seconds`));
+				return reject(new Error(`Request error: ${err} retrying in 10 seconds`));
 			});
 
 			req.write(postData);
