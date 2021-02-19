@@ -83,7 +83,7 @@ The picture of the cat flap, hub and smartphone app is provided free to use from
 
 ## Changelog
 
-### 1.0.0 (2021-02-18)
+### 1.0.1 (2021-02-19)
 * (Sickboy78) initial release
 
 ## License
