@@ -1,5 +1,5 @@
 {
-  "name": "iobroker.sureflap",
+  "name": "@sickboy78/iobroker.sureflap",
   "version": "1.0.0",
   "description": "Adpater für Sureflap Katzen- und Haustierklappen von Sure Petcare",
   "author": {
@@ -56,6 +56,9 @@
   },
   "bugs": {
     "url": "https://github.com/Sickboy78/ioBroker.sureflap/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "readmeFilename": "README.md"
 }
