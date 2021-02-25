@@ -83,6 +83,9 @@ The picture of the cat flap, hub and smartphone app is provided free to use from
 
 ## Changelog
 
+### 1.0.2 (2021-02-25)
+* (Sickboy78) fixed bug setting lockmode
+
 ### 1.0.1 (2021-02-19)
 * (Sickboy78) initial release
 
