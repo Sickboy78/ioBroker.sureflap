@@ -720,10 +720,10 @@ class Sureflap extends utils.Adapter {
 	setPetStatusToAdapter(prefix, name, name_org, where, since, petIndex) {
 		if (!this.sureFlapStatePrev.pets || (where !== this.sureFlapStatePrev.pets[petIndex].position.where)) {
 			const obj_name = prefix + '.' + name;
-			this.setObjectNotExists(obj_name + '.name', this.buildStateObject(name_org, 'text', 'string', false));
+			this.setObjectNotExists(obj_name + '.name', this.buildStateObject(name_org, 'text', 'string'));
 			this.setState(obj_name + '.name', name, true);
 
-			this.setObjectNotExists(obj_name + '.inside', this.buildStateObject('is ' + name + ' inside'));
+			this.setObjectNotExists(obj_name + '.inside', this.buildStateObject('is ' + name + ' inside', 'indicator', 'boolean', false));
 			this.setState(obj_name + '.inside', (where == 1) ? true : false, true);
 
 			this.setObjectNotExists(obj_name + '.since', this.buildStateObject('last location change', 'date', 'string'));
