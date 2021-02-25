@@ -403,21 +403,13 @@ class Sureflap extends utils.Adapter {
 			return;
 		}
 
-		this.getState(hierarchy + '.locking', (err, state) => {
-			if(state) {
-				if(state.val !== value) {
-					this.log.debug(`changing lock mode to ${value}...`);
-					this.setLockmode(device, value)
-						.then(() => {
-							this.log.info(`lock mode changed to ${value}`);
-						}).catch(err => {
-							this.log.error(`changing lock mode failed: ${err}`);
-						});
-				}
-			} else {
+		this.log.debug(`changing lock mode to ${value}...`);
+		this.setLockmode(device, value)
+			.then(() => {
+				this.log.info(`lock mode changed to ${value}`);
+			}).catch(err => {
 				this.log.error(`changing lock mode failed: ${err}`);
-			}
-		});
+			});
 	}
 
 	/**
