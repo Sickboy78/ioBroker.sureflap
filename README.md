@@ -83,6 +83,10 @@ The picture of the cat flap, hub and smartphone app is provided free to use from
 
 ## Changelog
 
+### 1.0.3 (2021-02-28)
+* (Sickboy78) code improvements from review
+* (Sickboy78) fixed timezone bug
+
 ### 1.0.2 (2021-02-25)
 * (Sickboy78) fixed bug setting lockmode and inside values
 

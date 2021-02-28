@@ -1,9 +1,9 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.0.2",
+		"version": "1.0.3",
 		"news": {
-			"1.0.2": {
+			"1.0.3": {
 				"en": "initial release",
 				"de": "Erstveröffentlichung",
 				"ru": "Начальная версия",
@@ -69,14 +69,25 @@
 		"materialize": true,
 		"dependencies": [
 			{
-				"js-controller": ">=2.0.0"
+				"js-controller": ">=3.0.0"
 			}
-		]
+		],
+        "globalDependencies" : [
+            {
+                "admin": ">=4.0.9"                
+            }
+        ]
 	},
 	"native": {
-        "username": "username",
-        "password": "password"
+        "username": "",
+        "password": ""
 	},
+	"encryptedNative":[
+        "password"
+    ],
+    "protectedNative": [
+        "password"
+    ],
 	"objects": [],
 	"instanceObjects": [
 		{
@@ -93,6 +104,19 @@
 			"common": {
 				"role": "indicator.connected",
 				"name": "If connected to surepetcare api",
+				"type": "boolean",
+				"read": true,
+				"write": false,
+				"def": false
+			},
+			"native": {}
+		},
+		{
+			"_id": "info.all_devices_online",
+			"type": "state",
+			"common": {
+				"role": "indicator.reachable",
+				"name": "If all devices are online",
 				"type": "boolean",
 				"read": true,
 				"write": false,

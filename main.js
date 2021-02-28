@@ -17,6 +17,7 @@ const utils = require('@iobroker/adapter-core');
 // Load your modules here, e.g.:
 // const fs = require("fs");
 const https = require('https');
+const util = require('util');
 
 class Sureflap extends utils.Adapter {
 
@@ -35,10 +36,15 @@ class Sureflap extends utils.Adapter {
 		this.numberOfLogins = 0;
 		// timer id
 		this.timerId = 0;
+		// is first update loop
+		this.firstLoop = true;
 		// current state
 		this.sureFlapState = {};
 		// previous state
 		this.sureFlapStatePrev = {};
+
+		// promisify setObjectNotExists
+		this.setObjectNotExistsPromise = util.promisify(this.setObjectNotExists);
 
 		this.on('ready', this.onReady.bind(this));
 		this.on('stateChange', this.onStateChange.bind(this));
@@ -203,6 +209,7 @@ class Sureflap extends utils.Adapter {
 	startUpdateLoop() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
 			this.log.info(`starting update loop...`);
+			this.firstLoop=true;
 			this.updateLoop();
 			this.log.info(`update loop started`);
 			return resolve();
@@ -214,7 +221,8 @@ class Sureflap extends utils.Adapter {
 	 */
 	updateLoop() {
 		clearTimeout(this.timerId);
-		this.getControlsFromApi()
+		this.getDataFromApi()
+			.then(() => this.createAdapterObjectHierarchy())
 			.then(() => this.getStatus())
 			.then(() => this.getPets())
 			.then(() => this.setUpdateTimer())
@@ -224,7 +232,8 @@ class Sureflap extends utils.Adapter {
 				this.log.info(`disconnected`);
 				// @ts-ignore
 				this.timerId = setTimeout(this.startLoadingData.bind(this), 10*1000);
-			});
+			})
+			.finally(() => {this.firstLoop=false;});
 	}
 
 	/**
@@ -291,10 +300,10 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * gets the controls from surepet API
+	 * gets the data from surepet API
 	 * @return {Promise}
 	 */
-	getControlsFromApi() {
+	getDataFromApi() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const options = this.buildOptions('/api/me/start', 'GET', this.sureFlapState['token']);
 			this.httpRequest('get_control', options, '').then(result => {
@@ -326,7 +335,6 @@ class Sureflap extends utils.Adapter {
 	 */
 	getStatus() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
-			this.createDeviceHierarchyToAdapter();
 			this.setGlobalOnlineStatusToAdapter();
 
 			for(let h = 0; h < this.sureFlapState.households.length; h++) {
@@ -366,22 +374,12 @@ class Sureflap extends utils.Adapter {
 
 			for (let i = 0; i < numPets; i++) {
 				const name = this.sureFlapState.pets[i].name;
-				const name_org = this.sureFlapState.pets[i].name_org;
-				const petId = this.sureFlapState.pets[i].id;
 				const where = this.sureFlapState.pets[i].position.where;
 				const since = this.sureFlapState.pets[i].position.since;
-
-				let household_name = '';
-				this.sureFlapState.households.forEach(household => {
-					if (household.id === this.sureFlapState.pets[i].household_id) {
-						household_name = household.name;
-					}
-				});
+				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[i].household_id);
 				const prefix = household_name + '.pets';
 
-				// TODO: remove deleted pets
-				this.createPetHierarchyToAdapter(prefix, household_name, name, name_org, petId);
-				this.setPetStatusToAdapter(prefix, name, name_org, where, since, i);
+				this.setPetStatusToAdapter(prefix, name, where, since, i);
 			}
 			return resolve();
 		}));
@@ -555,8 +553,10 @@ class Sureflap extends utils.Adapter {
 	 * @param {boolean} connected
 	 */
 	setConnectionStatusToAdapter(connected) {
+		/* objects created via io-package.json, no need to create them here
 		this.setObjectNotExists('info', this.buildChannelObject('Information'));
 		this.setObjectNotExists('info.connection', this.buildStateObject('If connected to surepetcare api', 'indicator.connected'));
+		*/
 		this.setState('info.connection', connected, true);
 	}
 
@@ -567,8 +567,10 @@ class Sureflap extends utils.Adapter {
 		// all devices online status
 		if (!this.sureFlapStatePrev.all_devices_online || (this.sureFlapState.all_devices_online !== this.sureFlapStatePrev.all_devices_online)) {
 			const obj_name = 'info.all_devices_online';
+			/* objects created via io-package.json, no need to create them here
 			this.setObjectNotExists('info', this.buildChannelObject('Information'));
 			this.setObjectNotExists(obj_name, this.buildStateObject('If all devices are online','indicator.reachable'));
+			*/
 			this.setState(obj_name, this.sureFlapState.all_devices_online, true);
 		}
 	}
@@ -582,8 +584,7 @@ class Sureflap extends utils.Adapter {
 	setSureflapConnectToAdapter(prefix, hierarchy, deviceIndex) {
 		// lock mode
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.locking.mode !== this.sureFlapStatePrev.devices[deviceIndex].status.locking.mode)) {
-			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + 'lockmode';
-			this.setObjectNotExists(obj_name, this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' }));
+			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.lockmode';
 			try {
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.locking.mode, true);
 			} catch(error) {
@@ -599,9 +600,7 @@ class Sureflap extends utils.Adapter {
 
 			this.setCurfewToAdapter(prefix, hierarchy, deviceIndex, this.sureFlapState, 'curfew');
 
-			const control_name = 'curfew';
-			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + control_name;
-			this.setObjectNotExists(obj_name, this.buildStateObject('curfew', 'switch', 'boolean', false));
+			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.curfew';
 			try {
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].control.curfew.length > 0, true);
 			} catch(error) {
@@ -646,10 +645,12 @@ class Sureflap extends utils.Adapter {
 			}
 
 			for(let h = 0; h < new_state.devices[deviceIndex].control.curfew.length; h++) {
-				this.setObjectNotExists(obj_name + '.' + h, this.buildChannelObject('curfew setting ' + h));
-				['enabled','lock_time','unlock_time'].forEach(state => {
-					this.setObjectNotExists(obj_name + '.' + h + '.' + state, this.buildStateObject(state, state === 'enabled' ? 'indicator' : 'value', state === 'enabled' ? 'boolean' : 'string'));
-					this.setState(obj_name + '.' + h + '.' + state, state === 'enabled' ? new_state.devices[deviceIndex].control.curfew[h][state] == true : new_state.devices[deviceIndex].control.curfew[h][state], true);
+				this.setObjectNotExists(obj_name + '.' + h, this.buildChannelObject('curfew setting ' + h), () => {
+					['enabled','lock_time','unlock_time'].forEach(state => {
+						this.setObjectNotExists(obj_name + '.' + h + '.' + state, this.buildStateObject(state, state === 'enabled' ? 'indicator' : 'value', state === 'enabled' ? 'boolean' : 'string'), () => {
+							this.setState(obj_name + '.' + h + '.' + state, state === 'enabled' ? new_state.devices[deviceIndex].control.curfew[h][state] == true : new_state.devices[deviceIndex].control.curfew[h][state], true);
+						});
+					});
 				});
 			}
 		}).catch(error => {
@@ -667,13 +668,11 @@ class Sureflap extends utils.Adapter {
 		// battery status
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery !== this.sureFlapStatePrev.devices[deviceIndex].status.battery)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery';
-			this.setObjectNotExists(obj_name, this.buildStateObject('battery', 'value.voltage', 'number'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery, true);
 		}
 
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== this.sureFlapStatePrev.devices[deviceIndex].status.battery_percentage)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery_percentage';
-			this.setObjectNotExists(obj_name, this.buildStateObject('battery percentage', 'value.battery', 'number'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery_percentage, true);
 		}
 	}
@@ -686,7 +685,6 @@ class Sureflap extends utils.Adapter {
 	setHubStatusToAdapter(prefix,deviceIndex) {
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.led_mode !== this.sureFlapStatePrev.devices[deviceIndex].status.led_mode)) {
 			const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'led_mode';
-			this.setObjectNotExists(obj_name, this.buildStateObject('led mode', 'indicator', 'number', true, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.led_mode, true);
 		}
 	}
@@ -703,7 +701,6 @@ class Sureflap extends utils.Adapter {
 			if ('parent' in this.sureFlapState.devices[deviceIndex]) {
 				obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].parent.name + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
 			}
-			this.setObjectNotExists(obj_name, this.buildStateObject('If device is online','indicator.reachable'));
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.online, true);
 		}
 	}
@@ -712,86 +709,17 @@ class Sureflap extends utils.Adapter {
 	 * sets pet status to the adapter
 	 * @param {string} prefix
 	 * @param {string} name
-	 * @param {string} name_org
 	 * @param {number} where
 	 * @param {string} since
 	 * @param {number} petIndex
 	 */
-	setPetStatusToAdapter(prefix, name, name_org, where, since, petIndex) {
+	setPetStatusToAdapter(prefix, name, where, since, petIndex) {
 		if (!this.sureFlapStatePrev.pets || (where !== this.sureFlapStatePrev.pets[petIndex].position.where)) {
 			const obj_name = prefix + '.' + name;
-			this.setObjectNotExists(obj_name + '.name', this.buildStateObject(name_org, 'text', 'string'));
 			this.setState(obj_name + '.name', name, true);
-
-			this.setObjectNotExists(obj_name + '.inside', this.buildStateObject('is ' + name + ' inside', 'indicator', 'boolean', false));
 			this.setState(obj_name + '.inside', (where == 1) ? true : false, true);
-
-			this.setObjectNotExists(obj_name + '.since', this.buildStateObject('last location change', 'date', 'string'));
 			this.setState(obj_name + '.since', since, true);
 		}
-	}
-
-	/**
-	 * creates device hierarchy data structures in the adapter
-	 */
-	createDeviceHierarchyToAdapter() {
-		// households
-		for(let h = 0; h < this.sureFlapState.households.length; h++) {
-			const prefix = this.sureFlapState.households[h].name;
-
-			// create household folder
-			this.setObjectNotExists(this.sureFlapState.households[h].name, this.buildFolderObject('Household \'' + this.sureFlapState.households[h].name_org + '\' (' + this.sureFlapState.households[h].id + ')'));
-
-			// create hub (devices in household without parent)
-			for(let d = 0; d < this.sureFlapState.devices.length; d++) {
-				if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
-					if (!('parent' in this.sureFlapState.devices[d])) {
-						const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
-						this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'));
-					}
-				}
-			}
-			// create devices in household with parent (sureflap and feeding bowl)
-			for(let d = 0; d < this.sureFlapState.devices.length; d++) {
-				if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
-					if ('parent' in this.sureFlapState.devices[d]) {
-						const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
-						['','.control','.curfew','.last_curfew'].forEach(item => {
-							let name = 'Device \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')';
-							let type = 'channel';
-							switch(item) {
-								case '.control':
-									name = 'control switches';
-									break;
-								case '.curfew':
-									name = 'curfew settings';
-									break;
-								case '.last_curfew':
-									name = 'last curfew settings';
-									break;
-								default:
-									type = 'device';
-									break;
-							}
-							this.setObjectNotExists(obj_name + item, type === 'channel' ? this.buildChannelObject(name) : this.buildDeviceObject(name));
-						});
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * creates pet hierarchy data structures in the adapter
-	 * @param {string} prefix
-	 * @param {string} household_name
-	 * @param {string} name
-	 * @param {string} name_org
-	 * @param {number} id
-	 */
-	createPetHierarchyToAdapter(prefix, household_name, name, name_org, id) {
-		this.setObjectNotExists(prefix, this.buildDeviceObject('Pets in Household ' + household_name));
-		this.setObjectNotExists(prefix + '.' + name, this.buildChannelObject('Pet \'' + name_org + '\' (' + id + ')'));
 	}
 
 	/**
@@ -806,9 +734,9 @@ class Sureflap extends utils.Adapter {
 				const promiseArray = [];
 				for(let h = 0; h < num_curfew; h++) {
 					curfew[h] = {};
-					['enabled','lock_time','unlock_time'].forEach(state => {
-						promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + state));
-					});
+					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'enabled'));
+					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'lock_time'));
+					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'unlock_time'));
 				}
 				Promise.all(promiseArray).then((values) => {
 					for(let h = 0; h < num_curfew; h++) {
@@ -841,6 +769,161 @@ class Sureflap extends utils.Adapter {
 				}
 			});
 		});
+	}
+
+	/************************************************
+	 * methods to initially create object hierarchy *
+	 ************************************************/
+
+	/**
+	 * creates the adapters object hierarchy
+	 * @return {Promise}
+	 */
+	createAdapterObjectHierarchy() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			if(this.firstLoop === true) {
+				this.createHouseholdsAndHubsToAdapter()
+					.then(() => this.createDevicesToAdapter())
+					.then(() => this.createPetsToAdapter())
+					.then(() => { return resolve(); })
+					.catch(() => { return reject(); });
+			} else {
+				return resolve();
+			}
+		}));
+	}
+
+	/**
+	 * creates houshold and hub data structures in the adapter
+	 * @return {Promise}
+	 */
+	createHouseholdsAndHubsToAdapter() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			// households
+			for(let h = 0; h < this.sureFlapState.households.length; h++) {
+				const prefix = this.sureFlapState.households[h].name;
+
+				// create household folder
+				this.setObjectNotExists(this.sureFlapState.households[h].name, this.buildFolderObject('Household \'' + this.sureFlapState.households[h].name_org + '\' (' + this.sureFlapState.households[h].id + ')'), () => {
+
+					// create hub (devices in household without parent)
+					for(let d = 0; d < this.sureFlapState.devices.length; d++) {
+						if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
+							if (!('parent' in this.sureFlapState.devices[d])) {
+								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
+								this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.led_mode', this.buildStateObject('led mode', 'indicator', 'number', true, {0: 'OFF', 1:'HIGH', 4:'DIMMED' })));
+									Promise.all(promiseArray).then(() => {
+										return resolve();
+									}).catch(error => {
+										this.log.warn(`could not create household and hub hierarchy (${error})`);
+										return reject();
+									});
+								});
+							}
+						}
+					}
+				});
+			}
+		}));
+	}
+
+	/**
+	 * creates device hierarchy data structures in the adapter
+	 * @return {Promise}
+	 */
+	createDevicesToAdapter() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			// households
+			for(let h = 0; h < this.sureFlapState.households.length; h++) {
+				const prefix = this.sureFlapState.households[h].name;
+
+				// create devices in household with parent (sureflap and feeding bowl)
+				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
+					if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
+						if ('parent' in this.sureFlapState.devices[d]) {
+							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
+							this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew', this.buildChannelObject('curfew settings')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.last_curfew', this.buildChannelObject('last curfew settings')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+								this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' })));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.curfew', this.buildStateObject('curfew', 'switch', 'boolean', false)));
+									Promise.all(promiseArray).then(() => {
+										return resolve();
+									}).catch(error => {
+										this.log.warn(`could not create adapter device hierarchy (${error})`);
+										return reject();
+									});
+								});
+							});
+						}
+					}
+				}
+			}
+		}));
+	}
+
+	/**
+	 * creates pet hierarchy data structures in the adapter
+	 * @return {Promise}
+	 */
+	createPetsToAdapter() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			const numPets = this.sureFlapState.pets.length;
+
+			for (let i = 0; i < numPets; i++) {
+				const name = this.sureFlapState.pets[i].name;
+				const name_org = this.sureFlapState.pets[i].name_org;
+				const petId = this.sureFlapState.pets[i].id;
+				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[i].household_id);
+				const prefix = household_name + '.pets';
+
+				// TODO: remove deleted pets
+				promiseArray.push(this.createPetHierarchyToAdapter(prefix, household_name, name, name_org, petId));
+			}
+			Promise.all(promiseArray).then(() => {
+				return resolve();
+			}).catch(() => {
+				return reject();
+			});
+		}));
+	}
+
+	/**
+	 * creates hierarchy data structures for the given pet in the adapter
+	 * @param {string} prefix
+	 * @param {string} household_name
+	 * @param {string} name
+	 * @param {string} name_org
+	 * @param {number} id
+	 * @return {Promise}
+	 */
+	createPetHierarchyToAdapter(prefix, household_name, name, name_org, id) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			const obj_name = prefix + '.' + name;
+			this.setObjectNotExists(prefix, this.buildDeviceObject('Pets in Household ' + household_name),() => {
+				this.setObjectNotExists(obj_name, this.buildChannelObject('Pet \'' + name_org + '\' (' + id + ')'),() => {
+					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.name', this.buildStateObject(name_org, 'text', 'string')));
+					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.inside', this.buildStateObject('is ' + name + ' inside', 'indicator', 'boolean', false)));
+					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.since', this.buildStateObject('last location change', 'date', 'string')));
+					Promise.all(promiseArray).then(() => {
+						return resolve();
+					}).catch(error => {
+						this.log.warn(`could not create adapter pet hierarchy (${error})`);
+						return reject();
+					});
+				});
+			});
+		}));
 	}
 
 	/******************
@@ -910,6 +993,20 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * returns the household name of given household id
+	 * @param {string} id a household id
+	 * @return {string} household name
+	 */
+	getHouseholdNameForId(id) {
+		for (let i=0; i < this.sureFlapState.households.length; i++) {
+			if (this.sureFlapState.households[i].id === id) {
+				return this.sureFlapState.households[i].name;
+			}
+		}
+		return '';
+	}
+
+	/**
 	 * removes whitespaces and special characters from device, household and pet names
 	 */
 	makeNamesCanonical() {
@@ -946,8 +1043,8 @@ class Sureflap extends utils.Adapter {
 	 */
 	getCurrentDateFormatted()
 	{
-		const date = new Date();
-		return date.toISOString().slice(0,10) + ' ' + (date.getHours() < 10 ? '0' + date.getHours():date.getHours()) + ':' + (date.getMinutes() < 10 ? '0' + date.getMinutes():date.getMinutes());
+		const date = new Date().toISOString();
+		return date.slice(0,10) + ' ' + date.slice(11,16);
 	}
 
 	/**
@@ -1004,7 +1101,7 @@ class Sureflap extends utils.Adapter {
 			// @ts-ignore
 			'email_address': this.config.username,
 			// @ts-ignore
-			'password': this.decrypt('Zgfr56gFe87jJOM', this.config.password),
+			'password': this.config.password,
 			'device_id':'1050547954'
 		};
 	}
