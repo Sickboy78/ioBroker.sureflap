@@ -398,6 +398,7 @@ class Sureflap extends utils.Adapter {
 	changeLockmode(hierarchy, device, value) {
 		if(value < 0 || value > 3) {
 			this.log.warn(`invalid value for lock mode: ${value}`);
+			this.resetControlLockmodeToAdapter(hierarchy, device);
 			return;
 		}
 
@@ -407,6 +408,7 @@ class Sureflap extends utils.Adapter {
 				this.log.info(`lock mode changed to ${value}`);
 			}).catch(err => {
 				this.log.error(`changing lock mode failed: ${err}`);
+				this.resetControlLockmodeToAdapter(hierarchy, device);
 			});
 	}
 
@@ -424,25 +426,28 @@ class Sureflap extends utils.Adapter {
 				current_state = true;
 			}
 		}).finally(() => {
-			this.log.debug(`curfew control old state: ${current_state} new state: ${value}`);
+			this.log.debug(`control curfew old state: ${current_state} new state: ${value}`);
 			if(current_state !== value) {
 				if(value === true) {
 					// enable curfew
 					const obj_name =  hierarchy + '.last_curfew';
 					this.getCurfewFromAdapter(obj_name).then(curfew => {
 						const curfewJSON = JSON.stringify(curfew);
-						this.log.debug(`setting curfew to: ${curfewJSON}`);
 						if(curfew.length > 0) {
+							this.log.debug(`setting curfew to: ${curfewJSON}`);
 							this.setCurfew(device,curfew).then(() => {
 								this.log.info(`curfew succesfully enabled`);
 							}).catch(err => {
 								this.log.error(`could not enable curfew because: ${err}`);
+								this.resetControlCurfewToAdapter(hierarchy, device);
 							});
 						} else {
 							this.log.error(`could not enable curfew because: last_curfew does not contain a curfew`);
+							this.resetControlCurfewToAdapter(hierarchy, device);
 						}
 					}).catch(err => {
 						this.log.error(`could not enable curfew because: ${err}`);
+						this.resetControlCurfewToAdapter(hierarchy, device);
 					});
 				} else {
 					// disable curfew
@@ -456,9 +461,11 @@ class Sureflap extends utils.Adapter {
 							this.log.info(`curfew succesfully disabled`);
 						}).catch(err => {
 							this.log.error(`could not disable curfew because: ${err}`);
+							this.resetControlCurfewToAdapter(hierarchy, device);
 						});
 					}).catch(err => {
 						this.log.error(`could not disable curfew because: ${err}`);
+						this.resetControlCurfewToAdapter(hierarchy, device);
 					});
 				}
 			}
@@ -477,9 +484,11 @@ class Sureflap extends utils.Adapter {
 				this.log.info(`pet location succesfully set`);
 			}).catch(error => {
 				this.log.error(`could not set pet location because: ${error}`);
+				this.resetPetInsideToAdapter(hierarchy, pet);
 			});
 		}).catch(error => {
 			this.log.error(`could not set pet location because: ${error}`);
+			this.resetPetInsideToAdapter(hierarchy, pet);
 		});
 	}
 
@@ -606,6 +615,22 @@ class Sureflap extends utils.Adapter {
 			} catch(error) {
 				this.log.error(`could not set curfew to adapter (${error})`);
 			}
+		}
+
+		const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.curfew_active';
+		try {
+			const new_val = this.isCurfewActive(this.sureFlapState.devices[deviceIndex].control.curfew);
+			this.getStateValueFromAdapter(obj_name).then(old_val =>{
+				if(old_val != new_val) {
+					this.setState(obj_name, new_val, true);
+					this.log.debug(`changing curfew_active from ${old_val} to ${new_val}`);
+				}
+			}).catch(() => {
+				this.setState(obj_name, new_val, true);
+				this.log.debug(`setting curfew_active to ${new_val}`);
+			});
+		} catch(error) {
+			this.log.error(`could not set curfew_active to adapter (${error})`);
 		}
 	}
 
@@ -771,6 +796,42 @@ class Sureflap extends utils.Adapter {
 		});
 	}
 
+	/**
+	 * resets the control lockmode adapter value to the state value
+	 * @param {string} hierarchy
+	 * @param {string} device
+	 */
+	resetControlLockmodeToAdapter(hierarchy, device) {
+		const deviceIndex = this.getDeviceIndex(device);
+		const value = this.sureFlapState.devices[deviceIndex].status.locking.mode;
+		this.log.debug(`resetting control lockmode for ${device} to: ${value}`);
+		this.setState(hierarchy + '.control' + '.lockmode', value, true);
+	}
+
+	/**
+	 * resets the control curfew adapter value to the state value
+	 * @param {string} hierarchy
+	 * @param {string} device
+	 */
+	resetControlCurfewToAdapter(hierarchy, device) {
+		const deviceIndex = this.getDeviceIndex(device);
+		const value = this.sureFlapState.devices[deviceIndex].control.curfew && (this.sureFlapState.devices[deviceIndex].control.curfew.length > 0);
+		this.log.debug(`resetting control curfew for ${device} to: ${value}`);
+		this.setState(hierarchy + '.control' + '.curfew', value, true);
+	}
+
+	/**
+	 * resets the pet inside adapter value to the state value
+	 * @param {string} hierarchy
+	 * @param {string} pet
+	 */
+	resetPetInsideToAdapter(hierarchy, pet) {
+		const petIndex = this.getPetIndex(pet);
+		const value = this.sureFlapStatePrev.pets[petIndex].position.where;
+		this.log.debug(`resetting pet inside for ${pet} to: ${value}`);
+		this.setState(hierarchy + '.pets.' + pet + '.inside', value, true);
+	}
+
 	/************************************************
 	 * methods to initially create object hierarchy *
 	 ************************************************/
@@ -849,6 +910,7 @@ class Sureflap extends utils.Adapter {
 							this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew', this.buildChannelObject('curfew settings')));
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.last_curfew', this.buildChannelObject('last curfew settings')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew_active', this.buildStateObject('If curfew is active','indicator')));
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
@@ -948,6 +1010,44 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * Calculates wether the current curfew is active
+	 * @param {object} curfew an array of curfew settings
+	 * @return {boolean}
+	 */
+	isCurfewActive(curfew) {
+		const current_date = new Date();
+		const current_hour = current_date.getHours();
+		const current_minutes = current_date.getMinutes();
+		for(let h = 0; h < curfew.length; h++) {
+			if('enabled' in curfew[h] && curfew[h]['enabled'] && 'lock_time' in curfew[h] && 'unlock_time' in curfew[h]) {
+				const start = curfew[h]['lock_time'].split(':');
+				const end = curfew[h]['unlock_time'].split(':');
+				const start_hour = parseInt(start[0]);
+				const start_minutes = parseInt(start[1]);
+				const end_hour = parseInt(end[0]);
+				const end_minutes = parseInt(end[1]);
+				//this.log.debug(`curfew ${h} start ${start_hour}:${start_minutes} end ${end_hour}:${end_minutes} current ${current_hour}:${current_minutes}`);
+				if(start_hour < end_hour || (start_hour === end_hour && start_minutes < end_minutes)) {
+					// current time must be between start and end
+					if(start_hour < current_hour || (start_hour === current_hour && start_minutes <= current_minutes)) {
+						if(end_hour > current_hour || (end_hour === current_hour && end_minutes > current_minutes)) {
+							return true;
+						}
+					}
+				} else {
+					// current time must be after start or before end
+					if(start_hour < current_hour || (start_hour === current_hour && start_minutes <= current_minutes)) {
+						return true;
+					} else if(end_hour > current_hour || (end_hour === current_hour && end_minutes > current_minutes)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * reads a state value from the adapter
 	 * @param {string} obj_name
 	 * @return {Promise} Promise of a adapter state value
@@ -979,6 +1079,20 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * returns the device index
+	 * @param {string} name
+	 * @return {number} device index
+	 */
+	getDeviceIndex(name) {
+		for (let i=0; i < this.sureFlapState.devices.length; i++) {
+			if (this.sureFlapState.devices[i].name === name) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	/**
 	 * returns the pet id of the pet
 	 * @param {string} name
 	 * @return {string} pet id
@@ -990,6 +1104,20 @@ class Sureflap extends utils.Adapter {
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * returns the pet index of the pet
+	 * @param {string} name
+	 * @return {number} pet index
+	 */
+	getPetIndex(name) {
+		for (let i=0; i < this.sureFlapState.pets.length; i++) {
+			if (this.sureFlapState.pets[i].name === name) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -1010,7 +1138,7 @@ class Sureflap extends utils.Adapter {
 	 * removes whitespaces and special characters from device, household and pet names
 	 */
 	makeNamesCanonical() {
-		const reg = /[^\w]/i;
+		const reg = /[^\w]/ig;
 		const rep = '_';
 
 		for (let d = 0; d < this.sureFlapState.devices.length; d++) {
