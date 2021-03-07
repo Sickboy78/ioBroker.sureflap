@@ -308,13 +308,14 @@ class Sureflap extends utils.Adapter {
 			const options = this.buildOptions('/api/me/start', 'GET', this.sureFlapState['token']);
 			this.httpRequest('get_control', options, '').then(result => {
 				if (result == undefined || result.data == undefined) {
-					return reject(new Error(`getting controls failed. retrying login in 10 seconds`));
+					return reject(new Error(`getting data failed. retrying login in 10 seconds`));
 				} else {
 					this.sureFlapStatePrev = JSON.parse(JSON.stringify(this.sureFlapState));
 					this.sureFlapState.devices = result.data.devices;
 					this.sureFlapState.households = result.data.households;
 					this.sureFlapState.pets = result.data.pets;
 					this.makeNamesCanonical();
+					this.makeCurfewArray();
 					this.setOfflineDevices();
 					return resolve();
 				}
@@ -915,7 +916,7 @@ class Sureflap extends utils.Adapter {
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
 								this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
-									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH' })));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH', 4:'CURFEW' })));
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.curfew', this.buildStateObject('curfew', 'switch', 'boolean', false)));
 									Promise.all(promiseArray).then(() => {
 										return resolve();
@@ -1132,6 +1133,21 @@ class Sureflap extends utils.Adapter {
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * checks every device and makes the curfew an array if it's not
+	 */
+	makeCurfewArray() {
+		for (let d = 0; d < this.sureFlapState.devices.length; d++) {
+			if('curfew' in this.sureFlapState.devices[d].control) {
+				if(!Array.isArray(this.sureFlapState.devices[d].control.curfew)) {
+					this.sureFlapState.devices[d].control.curfew = [this.sureFlapState.devices[d].control.curfew];
+				}
+			} else {
+				this.sureFlapState.devices[d].control.curfew = [];
+			}
+		}
 	}
 
 	/**
