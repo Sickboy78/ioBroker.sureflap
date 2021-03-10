@@ -19,6 +19,11 @@ const utils = require('@iobroker/adapter-core');
 const https = require('https');
 const util = require('util');
 
+// Constants
+const DEVICE_TYPE_PET_FLAP = 3;
+const DEVICE_TYPE_FEEDER = 4;
+const DEVICE_TYPE_CAT_FLAP = 6;
+
 class Sureflap extends utils.Adapter {
 
 	/**
@@ -316,6 +321,7 @@ class Sureflap extends utils.Adapter {
 					this.sureFlapState.pets = result.data.pets;
 					this.makeNamesCanonical();
 					this.makeCurfewArray();
+					this.normalizeLockMode();
 					this.setOfflineDevices();
 					return resolve();
 				}
@@ -346,10 +352,10 @@ class Sureflap extends utils.Adapter {
 						if ('parent' in this.sureFlapState.devices[d]) {
 							const hierarchy = '.' + this.sureFlapState.devices[d].parent.name;
 
-							if (this.sureFlapState.devices[d].product_id == 3 || this.sureFlapState.devices[d].product_id == 6) {
+							if (this.sureFlapState.devices[d].product_id == DEVICE_TYPE_PET_FLAP || this.sureFlapState.devices[d].product_id == DEVICE_TYPE_CAT_FLAP) {
 								// Sureflap Connect
 								this.setSureflapConnectToAdapter(prefix,hierarchy,d);
-							} else if (this.sureFlapState.devices[d].product_id == 4) {
+							} else if (this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
 								// Feeding Bowl Connect currently not supported
 								// TODO: implement
 							}
@@ -421,6 +427,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	changeCurfew(hierarchy, device, value) {
 		let current_state = false;
+		const device_type = this.getDeviceType(device);
 		const curfew_settings = hierarchy + '.curfew';
 		this.getCurfewCountFromAdapter(curfew_settings).then(count => {
 			if(count > 0) {
@@ -433,8 +440,12 @@ class Sureflap extends utils.Adapter {
 					// enable curfew
 					const obj_name =  hierarchy + '.last_curfew';
 					this.getCurfewFromAdapter(obj_name).then(curfew => {
-						const curfewJSON = JSON.stringify(curfew);
 						if(curfew.length > 0) {
+							if(DEVICE_TYPE_PET_FLAP === device_type) {
+								// pet flap takes single object instead of array
+								curfew = curfew[0];
+							}
+							const curfewJSON = JSON.stringify(curfew);
 							this.log.debug(`setting curfew to: ${curfewJSON}`);
 							this.setCurfew(device,curfew).then(() => {
 								this.log.info(`curfew succesfully enabled`);
@@ -456,6 +467,10 @@ class Sureflap extends utils.Adapter {
 					this.getCurfewFromAdapter(obj_name).then(curfew => {
 						for(let h = 0; h < curfew.length; h++) {
 							curfew[h].enabled = false;
+						}
+						if(DEVICE_TYPE_PET_FLAP === device_type) {
+							// pet flap takes single object instead of array
+							curfew = curfew[0];
 						}
 						this.log.debug('setting curfew to: ' + JSON.stringify(curfew));
 						this.setCurfew(device,curfew).then(() => {
@@ -1094,6 +1109,20 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * returns the device type of the device
+	 * @param {string} name
+	 * @return {number} device type
+	 */
+	getDeviceType(name) {
+		for (let i=0; i < this.sureFlapState.devices.length; i++) {
+			if (this.sureFlapState.devices[i].name === name) {
+				return this.sureFlapState.devices[i].product_id;
+			}
+		}
+		return -1;
+	}
+
+	/**
 	 * returns the pet id of the pet
 	 * @param {string} name
 	 * @return {string} pet id
@@ -1133,6 +1162,19 @@ class Sureflap extends utils.Adapter {
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * normalizes lockmode by changing lockmode 4 to 0
+	 */
+	normalizeLockMode() {
+		for (let d = 0; d < this.sureFlapState.devices.length; d++) {
+			if('lockmode' in this.sureFlapState.devices[d].control) {
+				if(this.sureFlapState.devices[d].control.lockmode === 4) {
+					this.sureFlapState.devices[d].control.lockmode = 0;
+				}
+			}
+		}
 	}
 
 	/**
