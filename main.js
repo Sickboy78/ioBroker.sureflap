@@ -429,9 +429,11 @@ class Sureflap extends utils.Adapter {
 		let current_state = false;
 		const device_type = this.getDeviceType(device);
 		const curfew_settings = hierarchy + '.curfew';
-		this.getCurfewCountFromAdapter(curfew_settings).then(count => {
-			if(count > 0) {
-				current_state = true;
+		this.getCurfewFromAdapter(curfew_settings).then(curfew => {
+			if(curfew.length > 0) {
+				for(let h = 0; h < curfew.length; h++) {
+					current_state = current_state || curfew[h].enabled;
+				}
 			}
 		}).finally(() => {
 			this.log.debug(`control curfew old state: ${current_state} new state: ${value}`);
@@ -444,6 +446,7 @@ class Sureflap extends utils.Adapter {
 							if(DEVICE_TYPE_PET_FLAP === device_type) {
 								// pet flap takes single object instead of array
 								curfew = curfew[0];
+								curfew.enabled = true;
 							}
 							const curfewJSON = JSON.stringify(curfew);
 							this.log.debug(`setting curfew to: ${curfewJSON}`);
