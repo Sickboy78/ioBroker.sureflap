@@ -430,11 +430,7 @@ class Sureflap extends utils.Adapter {
 		const device_type = this.getDeviceType(device);
 		const curfew_settings = hierarchy + '.curfew';
 		this.getCurfewFromAdapter(curfew_settings).then(curfew => {
-			if(curfew.length > 0) {
-				for(let h = 0; h < curfew.length; h++) {
-					current_state = current_state || curfew[h].enabled;
-				}
-			}
+			current_state = this.isCurfewEnabled(curfew);
 		}).finally(() => {
 			this.log.debug(`control curfew old state: ${current_state} new state: ${value}`);
 			if(current_state !== value) {
@@ -622,7 +618,7 @@ class Sureflap extends utils.Adapter {
 
 		// curfew
 		if (!this.sureFlapStatePrev.devices || (JSON.stringify(this.sureFlapState.devices[deviceIndex].control.curfew) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].control.curfew))) {
-			if(this.sureFlapStatePrev.devices && this.sureFlapStatePrev.devices[deviceIndex].control.curfew.length > 0) {
+			if(this.sureFlapStatePrev.devices && this.sureFlapStatePrev.devices[deviceIndex].control.curfew) {
 				this.setCurfewToAdapter(prefix, hierarchy, deviceIndex, this.sureFlapStatePrev, 'last_curfew');
 			}
 
@@ -630,7 +626,7 @@ class Sureflap extends utils.Adapter {
 
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.curfew';
 			try {
-				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].control.curfew.length > 0, true);
+				this.setState(obj_name, this.isCurfewEnabled(this.sureFlapState.devices[deviceIndex].control.curfew), true);
 			} catch(error) {
 				this.log.error(`could not set curfew to adapter (${error})`);
 			}
@@ -834,7 +830,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetControlCurfewToAdapter(hierarchy, device) {
 		const deviceIndex = this.getDeviceIndex(device);
-		const value = this.sureFlapState.devices[deviceIndex].control.curfew && (this.sureFlapState.devices[deviceIndex].control.curfew.length > 0);
+		const value = this.sureFlapState.devices[deviceIndex].control.curfew && this.isCurfewEnabled(this.sureFlapState.devices[deviceIndex].control.curfew);
 		this.log.debug(`resetting control curfew for ${device} to: ${value}`);
 		this.setState(hierarchy + '.control' + '.curfew', value, true);
 	}
@@ -934,7 +930,7 @@ class Sureflap extends utils.Adapter {
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
 								this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
-									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH', 4:'CURFEW' })));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH'})));
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.curfew', this.buildStateObject('curfew', 'switch', 'boolean', false)));
 									Promise.all(promiseArray).then(() => {
 										return resolve();
@@ -1026,6 +1022,21 @@ class Sureflap extends utils.Adapter {
 				this.sureFlapState.devices[d].status.battery_percentage = this.calculateBatteryPercentage(this.sureFlapState.devices[d].status.battery);
 			}
 		}
+	}
+
+	/**
+	 * Returns wether the curfew is enabled
+	 * @param {object} curfew an array of curfew settings
+	 * @return {boolean}
+	 */
+	isCurfewEnabled(curfew) {
+		let enabled = false;
+		if(curfew.length > 0) {
+			for(let h = 0; h < curfew.length; h++) {
+				enabled = enabled || curfew[h].enabled;
+			}
+		}
+		return enabled;
 	}
 
 	/**
@@ -1169,12 +1180,15 @@ class Sureflap extends utils.Adapter {
 
 	/**
 	 * normalizes lockmode by changing lockmode 4 to 0
+	 * Catflap has 4 lockmodes, Petflap has 5 lockmodes (extra mode for curfew)
+	 * scince control should be the same for both flaps, lockmode 4 is removed
+	 * and curfew is controlled via control.curfew
 	 */
 	normalizeLockMode() {
 		for (let d = 0; d < this.sureFlapState.devices.length; d++) {
-			if('lockmode' in this.sureFlapState.devices[d].control) {
-				if(this.sureFlapState.devices[d].control.lockmode === 4) {
-					this.sureFlapState.devices[d].control.lockmode = 0;
+			if('locking' in this.sureFlapState.devices[d].status && 'mode' in this.sureFlapState.devices[d].status.locking) {
+				if(this.sureFlapState.devices[d].status.locking.mode === 4) {
+					this.sureFlapState.devices[d].status.locking.mode = 0;
 				}
 			}
 		}
