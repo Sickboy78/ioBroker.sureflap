@@ -268,6 +268,9 @@ class Sureflap extends utils.Adapter {
 			this.sureFlapState = {};
 			this.numberOfLogins++;
 			this.log.info(`connecting...`);
+			this.log.debug(`email_address: ${this.buildLoginJsonData().email_address}`);
+			this.log.debug(`password: ${this.buildLoginJsonData().password}`);
+			this.log.debug(`json: ${postData}`);
 			this.log.debug(`login count: ${this.numberOfLogins}`);
 			this.httpRequest('login', options, postData).then(result => {
 				if (result == undefined || result.data == undefined || !('token' in result.data)) {
@@ -1403,6 +1406,16 @@ class Sureflap extends utils.Adapter {
 			const req = https.request(options, (res) => {
 
 				if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+					req.on('error', error => {
+						this.log.error(`error: ${error.toString()}`);
+					});
+					const data = [];
+					res.on('data', (chunk) => {
+						data.push(chunk);
+					});
+					res.on('end', () => {
+						this.log.debug(`result: ${data.join('')}`);
+					});
 					return reject(new Error(`Request returned status code ${res.statusCode}`));
 				} else {
 					const data = [];
