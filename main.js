@@ -384,12 +384,16 @@ class Sureflap extends utils.Adapter {
 
 			for (let i = 0; i < numPets; i++) {
 				const name = this.sureFlapState.pets[i].name;
-				const where = this.sureFlapState.pets[i].position.where;
-				const since = this.sureFlapState.pets[i].position.since;
 				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[i].household_id);
 				const prefix = household_name + '.pets';
+				if('position' in this.sureFlapState.pets[i]) {
+					const where = this.sureFlapState.pets[i].position.where;
+					const since = this.sureFlapState.pets[i].position.since;
+					this.setPetStatusWithPositionToAdapter(prefix, name, where, since, i);
+				} else {
+					this.setPetStatusToAdapter(prefix, name, i);
+				}
 
-				this.setPetStatusToAdapter(prefix, name, where, since, i);
 			}
 			return resolve();
 		}));
@@ -752,14 +756,27 @@ class Sureflap extends utils.Adapter {
 	 * sets pet status to the adapter
 	 * @param {string} prefix
 	 * @param {string} name
+	 * @param {number} petIndex
+	 */
+	setPetStatusToAdapter(prefix, name, petIndex) {
+		if (!this.sureFlapStatePrev.pets || (name !== this.sureFlapStatePrev.pets[petIndex].name)) {
+			const obj_name = prefix + '.' + name;
+			this.setState(obj_name + '.name', name, true);
+		}
+	}
+
+	/**
+	 * sets pet status to the adapter
+	 * @param {string} prefix
+	 * @param {string} name
 	 * @param {number} where
 	 * @param {string} since
 	 * @param {number} petIndex
 	 */
-	setPetStatusToAdapter(prefix, name, where, since, petIndex) {
-		if (!this.sureFlapStatePrev.pets || (where !== this.sureFlapStatePrev.pets[petIndex].position.where)) {
-			const obj_name = prefix + '.' + name;
-			this.setState(obj_name + '.name', name, true);
+	setPetStatusWithPositionToAdapter(prefix, name, where, since, petIndex) {
+		this.setPetStatusToAdapter(prefix, name, petIndex);
+		const obj_name = prefix + '.' + name;
+		if (!this.sureFlapStatePrev.pets || !('position' in this.sureFlapStatePrev.pets[petIndex]) || (where !== this.sureFlapStatePrev.pets[petIndex].position.where) || (since !== this.sureFlapStatePrev.pets[petIndex].position.since)) {
 			this.setState(obj_name + '.inside', (where == 1) ? true : false, true);
 			this.setState(obj_name + '.since', since, true);
 		}
@@ -845,9 +862,13 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetPetInsideToAdapter(hierarchy, pet) {
 		const petIndex = this.getPetIndex(pet);
-		const value = this.sureFlapStatePrev.pets[petIndex].position.where;
-		this.log.debug(`resetting pet inside for ${pet} to: ${value}`);
-		this.setState(hierarchy + '.pets.' + pet + '.inside', value, true);
+		if('position' in this.sureFlapStatePrev.pets[petIndex]) {
+			const value = this.sureFlapStatePrev.pets[petIndex].position.where;
+			this.log.debug(`resetting pet inside for ${pet} to: ${value}`);
+			this.setState(hierarchy + '.pets.' + pet + '.inside', value, true);
+		} else {
+			this.log.warn(`can not reset pet inside for ${pet} because there is no previous value`);
+		}
 	}
 
 	/************************************************
