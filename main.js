@@ -177,7 +177,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.0.4.d`);
+		this.log.debug(`starting SureFlap Adapter v1.0.5`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.getHouseholdFromApi())
@@ -387,7 +387,6 @@ class Sureflap extends utils.Adapter {
 				const name = this.sureFlapState.pets[i].name;
 				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[i].household_id);
 				const prefix = household_name + '.pets';
-				this.log.debug(`reading pet position of ${name} @ getPets()`);
 				if('position' in this.sureFlapState.pets[i]) {
 					const where = this.sureFlapState.pets[i].position.where;
 					const since = this.sureFlapState.pets[i].position.since;
@@ -778,7 +777,6 @@ class Sureflap extends utils.Adapter {
 	setPetStatusWithPositionToAdapter(prefix, name, where, since, petIndex) {
 		this.setPetStatusToAdapter(prefix, name, petIndex);
 		const obj_name = prefix + '.' + name;
-		this.log.debug(`reading previous pet position of ${name} @ setPetStatusWithPositionToAdapter()`);
 		if (!this.sureFlapStatePrev.pets || !('position' in this.sureFlapStatePrev.pets[petIndex]) || (where !== this.sureFlapStatePrev.pets[petIndex].position.where) || (since !== this.sureFlapStatePrev.pets[petIndex].position.since)) {
 			this.setState(obj_name + '.inside', (where == 1) ? true : false, true);
 			this.setState(obj_name + '.since', since, true);
@@ -865,7 +863,6 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetPetInsideToAdapter(hierarchy, pet) {
 		const petIndex = this.getPetIndex(pet);
-		this.log.debug(`reading previous pet position of ${pet} @ resetPetInsideToAdapter()`);
 		if('position' in this.sureFlapStatePrev.pets[petIndex]) {
 			const value = this.sureFlapStatePrev.pets[petIndex].position.where;
 			this.log.debug(`resetting pet inside for ${pet} to: ${value}`);
