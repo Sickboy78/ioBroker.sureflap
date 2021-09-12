@@ -125,19 +125,38 @@ class Sureflap extends utils.Adapter {
 		// desired value is set
 		if(id && state && state.ack === false) {
 			const l = id.split('.');
-			if ((l.length > 5) && l[l.length - 2] == 'control') {
-				// change in control section
+			if ((l.length > 6) && l[l.length - 2] == 'control' && (l[l.length - 1] == 'curfew' || l[l.length - 1] == 'lockmode' || l[l.length - 1] == 'type') ) {
+				// change in control section of sureflap
 				const hierarchy = l.slice(2,l.length-2).join('.');
 				const device = l[4];
 				const control = l[l.length - 1];
 
 				if(control === 'curfew') {
 					this.changeCurfew(hierarchy, device, state.val === true);
-				} else if(typeof(state.val) === 'number') {
+				} else if(control === 'lockmode' && typeof(state.val) === 'number') {
 					this.changeLockmode(hierarchy, device, state.val);
+				} else if(control === 'type' && typeof(state.val) === 'number') {
+					const tag_id = this.getPetTagId(l[l.length - 3]);
+					this.changePetType(hierarchy, device, tag_id, state.val);
 				}
 				return;
-			} else if((l.length > 4) && l[l.length - 3] == 'pets' && l[l.length - 1] == 'inside') {
+			} else if ((l.length > 6) && l[l.length - 2] == 'control' && l[l.length - 1] == 'close_delay' ) {
+				// change in control section of feeder
+				const hierarchy = l.slice(2,l.length-2).join('.');
+				const device = l[4];
+				const control = l[l.length - 1];
+
+				if(control === 'close_delay' && typeof(state.val) === 'number') {
+					this.changeCloseDelay(hierarchy, device, state.val);
+				}
+				return;
+			} else if ((l.length > 5) && l[l.length-2] == 'control' && l[l.length-1] == 'led_mode') {
+				// change hub led mode
+				const hierarchy = l.slice(2,l.length-3).join('.');
+				const hub = l[l.length-3];
+				this.changeHubLedMode(hierarchy, hub, Number(state.val));
+				return;
+			} else if ((l.length > 4) && l[l.length - 3] == 'pets' && l[l.length - 1] == 'inside') {
 				// change of pet location
 				const hierarchy = l.slice(2,l.length-3).join('.');
 				const pet = l[l.length-2];
@@ -177,7 +196,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.0.5`);
+		this.log.debug(`starting SureFlap Adapter v1.0.6`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.getHouseholdFromApi())
@@ -360,8 +379,9 @@ class Sureflap extends utils.Adapter {
 								// Sureflap Connect
 								this.setSureflapConnectToAdapter(prefix,hierarchy,d);
 							} else if (this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
-								// Feeding Bowl Connect currently not supported
-								// TODO: implement
+								// Feeder Connect
+								// TODO: implement more
+								this.setFeederConnectToAdapter(prefix,hierarchy,d);
 							}
 							this.setBatteryStatusToAdapter(prefix,hierarchy,d);
 						} else {
@@ -410,6 +430,29 @@ class Sureflap extends utils.Adapter {
 	 * @param {string} device
 	 * @param {number} value
 	 */
+	changeCloseDelay(hierarchy, device, value) {
+		if(value != 0 && value != 4 && value != 20) {
+			this.log.warn(`invalid value for close delay: ${value}`);
+			this.resetControlCloseDelayToAdapter(hierarchy, device);
+			return;
+		}
+
+		this.log.debug(`changing close delay to ${value}...`);
+		this.setCloseDelay(device, value)
+			.then(() => {
+				this.log.info(`close delay changed to ${value}`);
+			}).catch(err => {
+				this.log.error(`changing close delay failed: ${err}`);
+				this.resetControlCloseDelayToAdapter(hierarchy, device);
+			});
+	}
+
+	/**
+	 * changes the lockmode
+	 * @param {string} hierarchy
+	 * @param {string} device
+	 * @param {number} value
+	 */
 	changeLockmode(hierarchy, device, value) {
 		if(value < 0 || value > 3) {
 			this.log.warn(`invalid value for lock mode: ${value}`);
@@ -424,6 +467,30 @@ class Sureflap extends utils.Adapter {
 			}).catch(err => {
 				this.log.error(`changing lock mode failed: ${err}`);
 				this.resetControlLockmodeToAdapter(hierarchy, device);
+			});
+	}
+
+	/**
+	 * changes the pet type (indoor or outdoor)
+	 * @param {string} hierarchy
+	 * @param {string} device
+	 * @param {number} tag
+	 * @param {number} value
+	 */
+	changePetType(hierarchy, device, tag, value) {
+		if(value < 2 || value > 3) {
+			this.log.warn(`invalid value for pet type: ${value}`);
+			this.resetControlPetTypeToAdapter(hierarchy, device, tag);
+			return;
+		}
+
+		this.log.debug(`changing pet type to ${value}...`);
+		this.setPetType(device, tag, value)
+			.then(() => {
+				this.log.info(`pet type changed to ${value}`);
+			}).catch(err => {
+				this.log.error(`changing pet type failed: ${err}`);
+				this.resetControlPetTypeToAdapter(hierarchy, device, tag);
 			});
 	}
 
@@ -516,6 +583,62 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * changes the hub led mode
+	 * @param {string} hierarchy
+	 * @param {string} hub
+	 * @param {number} value
+	 */
+	changeHubLedMode(hierarchy, hub, value) {
+		this.setHubLedMode(hierarchy, hub, value).then(() => {
+			this.log.info(`hub led mode succesfully set`);
+		}).catch(error => {
+			this.log.error(`could not set hub led mode because: ${error}`);
+			this.resetHubLedModeToAdapter(hierarchy, hub);
+		});
+	}
+
+	/**
+	 * sets the close delay
+	 * @param {string} device
+	 * @param {number} close_delay
+	 * @return {Promise}
+	 */
+	setCloseDelay(device, close_delay) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const device_id = this.getDeviceId(device);
+			const postData = JSON.stringify( {'lid': { 'close_delay':close_delay } } );
+			const options = this.buildOptions('/api/device/' + device_id + '/control', 'PUT', this.sureFlapState['token']);
+
+			this.httpRequest('set_close_delay', options, postData).then(() => {
+				return resolve();
+			}).catch(error => {
+				return reject(error);
+			});
+		}));
+	}
+
+	/**
+	 * sets the pet type
+	 * @param {string} device
+	 * @param {number} tag
+	 * @param {number} type
+	 * @return {Promise}
+	 */
+	setPetType(device, tag, type) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const device_id = this.getDeviceId(device);
+			const postData = JSON.stringify( { 'profile':type } );
+			const options = this.buildOptions('/api/device/' + device_id + '/tag/' + tag, 'PUT', this.sureFlapState['token']);
+
+			this.httpRequest('set_pet_type', options, postData).then(() => {
+				return resolve();
+			}).catch(error => {
+				return reject(error);
+			});
+		}));
+	}
+
+	/**
 	 * sets the lockmode
 	 * @param {string} device
 	 * @param {number} lockmode
@@ -576,6 +699,26 @@ class Sureflap extends utils.Adapter {
 		}));
 	}
 
+	/**
+	 * sets hub led mode
+	 * @param {string} hierarchy
+	 * @param {string} hub
+	 * @param {number} value
+	 * @return {Promise}
+	 */
+	setHubLedMode(hierarchy, hub, value) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const hub_id = this.getDeviceId(hub);
+			const postData = JSON.stringify( { 'led_mode':value } );
+			const options = this.buildOptions('/api/device/' + hub_id + '/control', 'PUT', this.sureFlapState['token']);
+			this.httpRequest('set_led_mode', options, postData).then(() => {
+				return resolve();
+			}).catch(error => {
+				return reject(error);
+			});
+		}));
+	}
+
 	/****************************************
 	 * methods to set values to the adapter *
 	 ****************************************/
@@ -608,7 +751,7 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * sets locking mode and curfew to the adapter
+	 * sets sureflap attributes to the adapter
 	 * @param {string} prefix
 	 * @param {string} hierarchy
 	 * @param {number} deviceIndex
@@ -655,10 +798,41 @@ class Sureflap extends utils.Adapter {
 		} catch(error) {
 			this.log.error(`could not set curfew_active to adapter (${error})`);
 		}
+
+		// assigned pets type
+		for(let t = 0; t < this.sureFlapState.devices[deviceIndex].tags.length; t++) {
+			if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].tags[t].profile !== this.sureFlapStatePrev.devices[deviceIndex].tags[t].profile)) {
+				const name = this.getPetNameForTagId(this.sureFlapState.devices[deviceIndex].tags[t].id);
+				const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.assigned_pets.' + name + '.control' + '.type';
+				try {
+					this.setState(obj_name, this.sureFlapState.devices[deviceIndex].tags[t].profile, true);
+				} catch(error) {
+					this.log.error(`could not set pet type to adapter (${error})`);
+				}
+			}
+		}
 	}
 
 	/**
-	 * sets curfew to the adapter
+	 * sets feeder attributes to the adapter
+	 * @param {string} prefix
+	 * @param {string} hierarchy
+	 * @param {number} deviceIndex
+	 */
+	setFeederConnectToAdapter(prefix, hierarchy, deviceIndex) {
+		// lock mode
+		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].control.lid.close_delay !== this.sureFlapStatePrev.devices[deviceIndex].control.lid.close_delay)) {
+			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.close_delay';
+			try {
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].control.lid.close_delay, true);
+			} catch(error) {
+				this.log.error(`could not set close delay to adapter (${error})`);
+			}
+		}
+	}
+
+	/**
+	 * sets curfew of flap to the adapter
 	 * @param {string} prefix
 	 * @param {string} hierarchy
 	 * @param {number} deviceIndex
@@ -732,7 +906,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	setHubStatusToAdapter(prefix,deviceIndex) {
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.led_mode !== this.sureFlapStatePrev.devices[deviceIndex].status.led_mode)) {
-			const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'led_mode';
+			const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + 'led_mode';
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.led_mode, true);
 		}
 	}
@@ -833,6 +1007,18 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * resets the control closw delay adapter value to the state value
+	 * @param {string} hierarchy
+	 * @param {string} device
+	 */
+	resetControlCloseDelayToAdapter(hierarchy, device) {
+		const deviceIndex = this.getDeviceIndex(device);
+		const value = this.sureFlapState.devices[deviceIndex].control.lid.close_delay;
+		this.log.debug(`resetting control close delay for ${device} to: ${value}`);
+		this.setState(hierarchy + '.control' + '.close_delay', value, true);
+	}
+
+	/**
 	 * resets the control lockmode adapter value to the state value
 	 * @param {string} hierarchy
 	 * @param {string} device
@@ -842,6 +1028,21 @@ class Sureflap extends utils.Adapter {
 		const value = this.sureFlapState.devices[deviceIndex].status.locking.mode;
 		this.log.debug(`resetting control lockmode for ${device} to: ${value}`);
 		this.setState(hierarchy + '.control' + '.lockmode', value, true);
+	}
+
+	/**
+	 * resets the pet type adapter value to the state value
+	 * @param {string} hierarchy
+	 * @param {string} device
+	 * @param {number} tag
+	 */
+	resetControlPetTypeToAdapter(hierarchy, device, tag) {
+		const deviceIndex = this.getDeviceIndex(device);
+		const tagIndex = this.getTagIndexForDeviceIndex(deviceIndex, tag);
+		const name = this.getPetNameForTagId(tag);
+		const value = this.sureFlapState.devices[deviceIndex].tags[tagIndex].profile;
+		this.log.debug(`resetting control pet type for ${device} and ${name} to: ${value}`);
+		this.setState(hierarchy + '.control' + '.type', value, true);
 	}
 
 	/**
@@ -872,6 +1073,22 @@ class Sureflap extends utils.Adapter {
 		}
 	}
 
+	/**
+	 * resets the hub led mode value to the state value
+	 * @param {string} hierarchy
+	 * @param {string} hub
+	 */
+	resetHubLedModeToAdapter(hierarchy, hub) {
+		const hubIndex = this.getDeviceIndex(hub);
+		if('devices' in this.sureFlapStatePrev == true && 'status' in this.sureFlapStatePrev.devices[hubIndex] == true && 'led_mode' in this.sureFlapStatePrev.devices[hubIndex].status == true) {
+			const value = this.sureFlapStatePrev.devices[hubIndex].status.led_mode;
+			this.log.debug(`resetting hub led mode for ${hub} to: ${value}`);
+			this.setState(hierarchy + '.' + hub + 'control.led_mode', value, true);
+		} else {
+			this.log.warn(`can not reset hub led mode for ${hub} because there is no previous value`);
+		}
+	}
+
 	/************************************************
 	 * methods to initially create object hierarchy *
 	 ************************************************/
@@ -886,11 +1103,109 @@ class Sureflap extends utils.Adapter {
 				this.createHouseholdsAndHubsToAdapter()
 					.then(() => this.createDevicesToAdapter())
 					.then(() => this.createPetsToAdapter())
+					.then(() => this.removeObsoleteDataFromAdapter())
 					.then(() => { return resolve(); })
 					.catch(() => { return reject(); });
 			} else {
 				return resolve();
 			}
+		}));
+	}
+
+	/**
+	 * removes obsolte data structures from the adapter
+	 * when there are changes to the data structures
+	 * obsolete entries go here
+	 * @return {Promise}
+	 */
+	removeObsoleteDataFromAdapter() {
+		return /** @type {Promise<void>} */(new Promise((resolve) => {
+			this.log.debug(`searching and removing obsolete objects`);
+			for(let h = 0; h < this.sureFlapState.households.length; h++) {
+				const prefix = this.sureFlapState.households[h].name;
+				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
+					if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
+						// hub
+						if (!('parent' in this.sureFlapState.devices[d])) {
+							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
+
+							// made led_mode changeable and moved it to control.led_mode
+							this.getObject(obj_name + '.led_mode', (err, obj) => {
+								if (!err && obj) {
+									this.log.debug(`obsolete object ${obj_name}.led_mode found. trying to delete`);
+									this.delObject(obj._id, (err) => {
+										if(err) {
+											this.log.warn(`can not delete obsolete object ${obj_name}.led_mode because: ${err}`);
+										}
+									});
+								}
+							});
+						}
+						else
+						{
+							// feeding bowl
+							if(this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
+								// feeding bowl
+								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
+
+								// feeder had unnessessary attributes of flap
+								this.getObject(obj_name + '.curfew', (err, obj) => {
+									if (!err && obj) {
+										this.log.debug(`obsolete object ${obj_name}.curfew found. trying to delete`);
+										this.delObject(obj._id, (err) => {
+											if(err) {
+												this.log.warn(`can not delete obsolete object ${obj_name}.curfew because: ${err}`);
+											}
+										});
+									}
+								});
+								this.getObject(obj_name + '.last_curfew', (err, obj) => {
+									if (!err && obj) {
+										this.log.debug(`obsolete object ${obj_name}.last_curfew found. trying to delete`);
+										this.delObject(obj._id, (err) => {
+											if(err) {
+												this.log.warn(`can not delete obsolete object ${obj_name}.last_curfew because: ${err}`);
+											}
+										});
+									}
+								});
+								this.getObject(obj_name + '.curfew_active', (err, obj) => {
+									if (!err && obj) {
+										this.log.debug(`obsolete object ${obj_name}.curfew_active found. trying to delete`);
+										this.delObject(obj._id, (err) => {
+											if(err) {
+												this.log.warn(`can not delete obsolete object ${obj_name}.curfew_active because: ${err}`);
+											}
+										});
+									}
+								});
+								this.getObject(obj_name + '.control.lockmode', (err, obj) => {
+									if (!err && obj) {
+										this.log.debug(`obsolete object ${obj_name}.control.lockmode found. trying to delete`);
+										this.delObject(obj._id, (err) => {
+											if(err) {
+												this.log.warn(`can not delete obsolete object ${obj_name}.control.lockmode because: ${err}`);
+											}
+										});
+									}
+								});
+								this.getObject(obj_name + '.control.curfew', (err, obj) => {
+									if (!err && obj) {
+										this.log.debug(`obsolete object ${obj_name}.control.curfew found. trying to delete`);
+										this.delObject(obj._id, (err) => {
+											if(err) {
+												this.log.warn(`can not delete obsolete object ${obj_name}.control.curfew because: ${err}`);
+											}
+										});
+									}
+								});
+							}
+						}
+					}
+				}
+			}
+			this.log.debug(`searching and removing of obsolete objects complete`);
+			return resolve();
 		}));
 	}
 
@@ -915,9 +1230,11 @@ class Sureflap extends utils.Adapter {
 								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
 								this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
-									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.led_mode', this.buildStateObject('led mode', 'indicator', 'number', true, {0: 'OFF', 1:'HIGH', 4:'DIMMED' })));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control', this.buildChannelObject('control switches')));
 									Promise.all(promiseArray).then(() => {
-										return resolve();
+										this.setObjectNotExists(obj_name + '.control.led_mode', this.buildStateObject('led mode', 'indicator', 'number', false, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }), () => {
+											return resolve();
+										});
 									}).catch(error => {
 										this.log.warn(`could not create household and hub hierarchy (${error})`);
 										return reject();
@@ -947,28 +1264,123 @@ class Sureflap extends utils.Adapter {
 					if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
 						if ('parent' in this.sureFlapState.devices[d]) {
 							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
-							this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew', this.buildChannelObject('curfew settings')));
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.last_curfew', this.buildChannelObject('last curfew settings')));
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew_active', this.buildStateObject('If curfew is active','indicator')));
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
-								this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
-									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH'})));
-									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.curfew', this.buildStateObject('curfew', 'switch', 'boolean', false)));
-									Promise.all(promiseArray).then(() => {
-										return resolve();
-									}).catch(error => {
-										this.log.warn(`could not create adapter device hierarchy (${error})`);
-										return reject();
-									});
-								});
-							});
+							switch(this.sureFlapState.devices[d].product_id) {
+								case DEVICE_TYPE_PET_FLAP:
+									// pet flap
+								// eslint-disable-next-line no-fallthrough
+								case DEVICE_TYPE_CAT_FLAP:
+									// cat flap
+									promiseArray.push(this.createFlapDevicesToAdapter(d, obj_name));
+									break;
+								case DEVICE_TYPE_FEEDER:
+									// feeding bowl
+									promiseArray.push(this.createFeederDevicesToAdapter(d, obj_name));
+									break;
+								default:
+									this.log.debug(`device with unknown id (${this.sureFlapState.devices[d].product_id}) found`);
+									break;
+							}
 						}
 					}
 				}
 			}
+			Promise.all(promiseArray).then(() => {
+				return resolve();
+			}).catch(error => {
+				this.log.warn(`could not create adapter device hierarchy (${error})`);
+				return reject();
+			});
+		}));
+	}
+
+	/**
+	 * creates cat and pet flap device hierarchy data structures in the adapter
+	 * @param {number} device
+	 * @param {string} obj_name
+	 * @return {Promise}
+	 */
+	createFlapDevicesToAdapter(device, obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[device].name_org + '\' (' + this.sureFlapState.devices[device].id + ')'), () => {
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew', this.buildChannelObject('curfew settings')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.last_curfew', this.buildChannelObject('last curfew settings')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew_active', this.buildStateObject('If curfew is active','indicator')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+				this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
+					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH'})));
+					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.curfew', this.buildStateObject('curfew', 'switch', 'boolean', false)));
+					this.setObjectNotExists(obj_name + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
+						for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
+							promiseArray.push(this.createAssignedPetsTypeControl(device, t, obj_name));
+						}
+						Promise.all(promiseArray).then(() => {
+							return resolve();
+						}).catch(error => {
+							this.log.warn(`could not create adapter flap device hierarchy (${error})`);
+							return reject();
+						});
+					});
+				});
+			});
+		}));
+	}
+
+	/**
+	 * creates assigned pets and their type control for sureflap adapter
+	 * @param {number} device
+	 * @param {number} tag
+	 * @param {string} obj_name
+	 * @return {Promise}
+	 */
+	createAssignedPetsTypeControl(device, tag, obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[tag].id);
+			this.setObjectNotExists(obj_name + '.assigned_pets.' + name, this.buildChannelObject('Pet \'' + name + '\' (' + this.getPetId(name) + ')'), () => {
+				this.setObjectNotExists(obj_name + '.assigned_pets.' + name + '.control', this.buildChannelObject('control switches'), () => {
+					this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name + '.control' + '.type', this.buildStateObject('pet type', 'switch.mode.type', 'number', false, { 2: 'OUTDOOR PET', 3: 'INDOOR PET' }))
+						.then(() => {
+							return resolve();
+						}).catch(error => {
+							this.log.warn(`could not create adapter flap device assigned pets hierarchy (${error})`);
+							return reject();
+						});
+				});
+			});
+		}));
+	}
+
+	/**
+	 * creates feeder bowl device hierarchy data structures in the adapter
+	 * @param {number} device
+	 * @param {string} obj_name
+	 * @return {Promise}
+	 */
+	createFeederDevicesToAdapter(device, obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[device].name_org + '\' (' + this.sureFlapState.devices[device].id + ')'), () => {
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+				this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
+					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.close_delay', this.buildStateObject('closing delay of lid', 'switch.mode.delay', 'number', false, {0: 'FAST', 4:'NORMAL', 20:'SLOW'})));
+					this.setObjectNotExists(obj_name + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
+						for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
+							const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
+						}
+						Promise.all(promiseArray).then(() => {
+							return resolve();
+						}).catch(error => {
+							this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
+							return reject();
+						});
+					});
+				});
+			});
 		}));
 	}
 
@@ -1120,6 +1532,21 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * returns the device index
+	 * @param {number} device
+	 * @param {number} tag
+	 * @return {number} tag index
+	 */
+	getTagIndexForDeviceIndex(device, tag) {
+		for (let i=0; i < this.sureFlapState.devices[device].tags.length; i++) {
+			if (this.sureFlapState.devices[device].tags[i].id === tag) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	/**
 	 * returns the device id of the device
 	 * @param {string} name
 	 * @return {string} device id
@@ -1176,6 +1603,20 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * returns the tag id of the pet
+	 * @param {string} name
+	 * @return {number} tag id
+	 */
+	getPetTagId(name) {
+		for (let i=0; i < this.sureFlapState.pets.length; i++) {
+			if (this.sureFlapState.pets[i].name === name) {
+				return this.sureFlapState.pets[i].tag_id;
+			}
+		}
+		return -1;
+	}
+
+	/**
 	 * returns the pet index of the pet
 	 * @param {string} name
 	 * @return {number} pet index
@@ -1187,6 +1628,20 @@ class Sureflap extends utils.Adapter {
 			}
 		}
 		return -1;
+	}
+
+	/**
+	 * returns the pet name of the tag id
+	 * @param {number} tag_id
+	 * @return {string} pet name
+	 */
+	getPetNameForTagId(tag_id) {
+		for (let i=0; i < this.sureFlapState.pets.length; i++) {
+			if (this.sureFlapState.pets[i].tag_id === tag_id) {
+				return this.sureFlapState.pets[i].name;
+			}
+		}
+		return '';
 	}
 
 	/**

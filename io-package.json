@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.0.5",
+		"version": "1.0.6",
 		"news": {
+			"1.0.6": {
+				"en": "feeder support",
+				"de": "Unterstützung Futterautomat",
+				"ru": "Питатель опора",
+				"pt": "Suporte alimentador",
+				"nl": "Feeder-ondersteuning",
+				"fr": "Support d'alimentation",
+				"it": "Supporto dell'alimentatore",
+				"es": "Soporte del alimentador",
+				"pl": "Wsparcie podajnika",
+				"zh-cn": "馈线支持"
+			},
 			"1.0.5": {
 				"en": "initial release",
 				"de": "Erstveröffentlichung",
