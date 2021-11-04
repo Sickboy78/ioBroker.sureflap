@@ -47,6 +47,10 @@ class Sureflap extends utils.Adapter {
 		this.sureFlapState = {};
 		// previous state
 		this.sureFlapStatePrev = {};
+		// history
+		this.sureFlapHistory = [];
+		// previous history
+		this.sureFlapHistoryPrev = [];
 
 		// promisify setObjectNotExists
 		this.setObjectNotExistsPromise = util.promisify(this.setObjectNotExists);
@@ -247,9 +251,11 @@ class Sureflap extends utils.Adapter {
 	updateLoop() {
 		clearTimeout(this.timerId);
 		this.getDataFromApi()
+			.then(() => this.getEventHistoryFromApi())
 			.then(() => this.createAdapterObjectHierarchy())
-			.then(() => this.getStatus())
-			.then(() => this.getPets())
+			.then(() => this.getDeviceStatusFromData())
+			.then(() => this.getPetStatusFromData())
+			.then(() => this.getEventHistoryFromData())
 			.then(() => this.setUpdateTimer())
 			.catch(error => {
 				this.log.error(error);
@@ -328,13 +334,13 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * gets the data from surepet API
+	 * gets the data for devices and pets from surepet API
 	 * @return {Promise}
 	 */
 	getDataFromApi() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const options = this.buildOptions('/api/me/start', 'GET', this.sureFlapState['token']);
-			this.httpRequest('get_control', options, '').then(result => {
+			this.httpRequest('get_data', options, '').then(result => {
 				if (result == undefined || result.data == undefined) {
 					return reject(new Error(`getting data failed. retrying login in 10 seconds`));
 				} else {
@@ -346,12 +352,80 @@ class Sureflap extends utils.Adapter {
 					this.makeCurfewArray();
 					this.normalizeLockMode();
 					this.setOfflineDevices();
+					this.setLastUpdateToAdapter();
 					return resolve();
 				}
 			}).catch(error => {
 				return reject(error);
 			});
 
+		}));
+	}
+
+	/**
+	 * gets the event history from surepet API
+	 * @return {Promise}
+	 */
+	getEventHistoryFromApi() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			for(let h = 0; h < this.sureFlapState.households.length; h++) {
+				promiseArray.push(this.getEventHistoryForHouseholdFromApi(this.sureFlapState.households[h].id));
+			}
+			Promise.all(promiseArray).then((values) => {
+				for(let h = 0; h < this.sureFlapState.households.length; h++) {
+					if (values[h] == undefined) {
+						return reject(new Error(`getting history failed. retrying login in 10 seconds`));
+					} else {
+						if(this.sureFlapHistory[h] !== undefined) {
+							this.sureFlapHistoryPrev[h] = JSON.parse(JSON.stringify(this.sureFlapHistory[h]));
+						}
+						this.sureFlapHistory[h] = values[h];
+					}
+				}
+				return resolve();
+			}).catch(err => {
+				return reject(err);
+			});
+		}));
+	}
+
+	/**
+	 * gets the event history from surepet API for the household with id
+	 * @param {Number} id
+	 * @return {Promise} of a JSon object
+	 */
+	getEventHistoryForHouseholdFromApi(id) {
+		return (new Promise((resolve, reject) => {
+			//const promiseArray = [];
+			let options = this.buildOptions('/api/timeline/household/' + id, 'GET', this.sureFlapState['token']);
+			this.httpRequest('get_history', options, '').then(result => {
+				if (result == undefined || result.data == undefined) {
+					return reject(new Error(`getting history failed. retrying login in 10 seconds`));
+				} else {
+					if(result.data.length == 0 || result.data[0].id == undefined) {
+						return resolve(result.data);
+					} else {
+						options = this.buildOptions('/api/timeline/household/' + id + '?since_id=' + result.data[0].id + '&page_size=1000', 'GET', this.sureFlapState['token']);
+						this.httpRequest('get_history_since', options, '').then(sinceResult => {
+							if (sinceResult == undefined) {
+								return reject(new Error(`getting additional history failed. retrying login in 10 seconds`));
+							} else {
+								if(sinceResult.data == undefined || sinceResult.data.length == 0) {
+									return resolve(result.data);
+								} else {
+									const data = [...sinceResult.data,...result.data];
+									return resolve(data.length > 25 ? data.slice(0,25) : data);
+								}
+							}
+						}).catch(err => {
+							return reject(err);
+						});
+					}
+				}
+			}).catch(err => {
+				return reject(err);
+			});
 		}));
 	}
 
@@ -363,7 +437,7 @@ class Sureflap extends utils.Adapter {
 	 * gets the status from surepet state object
 	 * @return {Promise}
 	 */
-	getStatus() {
+	getDeviceStatusFromData() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
 			this.setGlobalOnlineStatusToAdapter();
 
@@ -399,7 +473,7 @@ class Sureflap extends utils.Adapter {
 	 * gets the pets from surepet state object
 	 * @return {Promise}
 	 */
-	getPets() {
+	getPetStatusFromData() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
 			const numPets = this.sureFlapState.pets.length;
 
@@ -415,6 +489,36 @@ class Sureflap extends utils.Adapter {
 					this.setPetStatusToAdapter(prefix, name, i);
 				}
 
+			}
+			return resolve();
+		}));
+	}
+
+	/**
+	 * gets the history from surepet history object
+	 * @return {Promise}
+	 */
+	getEventHistoryFromData() {
+		return /** @type {Promise<void>} */(new Promise((resolve) => {
+			for(let h = 0; h < this.sureFlapState.households.length; h++) {
+				const prefix = this.sureFlapState.households[h].name;
+
+				if(this.sureFlapHistoryPrev[h] == undefined || JSON.stringify(this.sureFlapHistory[h]) !== JSON.stringify(this.sureFlapHistoryPrev[h])) {
+					this.log.debug(`updating event history for household '${prefix}'`);
+					/* structure of history changes, so we need to delete and recreate history event structure on change */
+					this.deleteEventHistoryForHousehold(h).then(() => {
+						if(this.sureFlapHistory.length > h) {
+							this.log.debug(`updating event history with ${this.sureFlapHistory[h].length} events`);
+							for(let i = 0; i < this.sureFlapHistory[h].length; i++) {
+								this.setHistoryEventToAdapter(prefix,h,i);
+							}
+							return resolve();
+						}
+					}).catch(err => {
+						this.log.error(`updating event history failed (${err})`);
+						return resolve();
+					});
+				}
 			}
 			return resolve();
 		}));
@@ -688,7 +792,7 @@ class Sureflap extends utils.Adapter {
 	setPetLocation(hierarchy, pet, value) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const pet_id = this.getPetId(pet);
-			const postData = JSON.stringify( { 'where':(value ? '1' : '2'), 'since':this.getCurrentDateFormatted() } );
+			const postData = JSON.stringify( { 'where':(value ? '1' : '2'), 'since':this.getCurrentDateFormattedForSurepetApi() } );
 			const options = this.buildOptions('/api/pet/' + pet_id + '/position', 'POST', this.sureFlapState['token']);
 
 			this.httpRequest('set_pet_location', options, postData).then(() => {
@@ -749,6 +853,17 @@ class Sureflap extends utils.Adapter {
 			this.setState(obj_name, this.sureFlapState.all_devices_online, true);
 		}
 	}
+
+	/**
+	 * sets the last time data was recieved from surepet api
+	 */
+	setLastUpdateToAdapter() {
+		/* object created via io-package.json, no need to create them here
+		this.setObjectNotExists('info.last_update', this.buildStateObject('Last time data recieved from surepetcare api', 'date','string'));
+		*/
+		this.setState('info.last_update', this.getCurrentDateFormattedAsISO(), true);
+	}
+
 
 	/**
 	 * sets sureflap attributes to the adapter
@@ -958,56 +1073,53 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * reads curfew data from the adapter
-	 * @param {string} obj_name
-	 * @return {Promise} Promise of a curfew JSon object
+	 * sets history event to the adapter
+	 * @param {string} prefix
+	 * @param {number} household
+	 * @param {number} index
 	 */
-	getCurfewFromAdapter(obj_name) {
-		return new Promise((resolve, reject) => {
-			this.getCurfewCountFromAdapter(obj_name).then(num_curfew => {
-				const curfew = [];
-				const promiseArray = [];
-				for(let h = 0; h < num_curfew; h++) {
-					curfew[h] = {};
-					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'enabled'));
-					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'lock_time'));
-					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'unlock_time'));
-				}
-				Promise.all(promiseArray).then((values) => {
-					for(let h = 0; h < num_curfew; h++) {
-						curfew[h]['enabled'] = values[h*3];
-						curfew[h]['lock_time'] = values[h*3+1];
-						curfew[h]['unlock_time'] = values[h*3+2];
+	setHistoryEventToAdapter(prefix, household, index) {
+		this.createAdapterStructureFromJson(prefix + '.history.' + index, this.sureFlapHistory[household][index], 'history event ' + index);
+	}
+
+	/**
+	 * creates folders and states from a json object to the adapter
+	 * @param {string} prefix
+	 * @param {object} json
+	 * @param {string} desc
+	 */
+	createAdapterStructureFromJson(prefix, json, desc) {
+		if(Array.isArray(json)) {
+			if(this.arrayContainsObjects(json)) {
+				this.setObjectNotExists(prefix, this.buildFolderObject(desc), () => {
+					for(let i = 0; i < json.length; i++) {
+						this.createAdapterStructureFromJson(prefix + '.' + i, json[i], i.toString());
 					}
-					return resolve(curfew);
-				}).catch(err => {
-					return reject(err);
 				});
-			}).catch(err => {
-				return reject(err);
+			} else {
+				this.setObjectNotExists(prefix, this.buildStateObject(desc, 'indicator', 'string'), () => {
+					this.createAdapterStructureFromJson(prefix, JSON.stringify(json), desc);
+				});
+			}
+		} else if(typeof(json) === 'object') {
+			this.setObjectNotExists(prefix, this.buildFolderObject(desc), () => {
+				Object.entries(json).forEach(([key,value]) => {
+					this.createAdapterStructureFromJson(prefix + '.' + key, value, key);
+				});
 			});
-		});
+		} else {
+			this.setObjectNotExists(prefix, this.buildStateObject(desc, 'indicator', typeof(json)), () => {
+				this.setState(prefix, json, true);
+			});
+		}
 	}
 
-	/**
-	 * reads the number of curfews from the adapter
-	 * @param {string} obj_name
-	 * @return {Promise} Promise of a curfew count number
-	 */
-	getCurfewCountFromAdapter(obj_name) {
-		return new Promise((resolve) => {
-			this.getForeignObjects(this.name + '.' + this.instance + '.' + obj_name + '.*', 'channel', [], (err, obj) => {
-				if(obj) {
-					return resolve(Object.keys(obj).length);
-				} else {
-					return resolve(0);
-				}
-			});
-		});
-	}
+	/*******************************************************************
+	 * methods to reset values to the adapter to their previous values *
+	 *******************************************************************/
 
 	/**
-	 * resets the control closw delay adapter value to the state value
+	 * resets the control close delay adapter value to the state value
 	 * @param {string} hierarchy
 	 * @param {string} device
 	 */
@@ -1089,26 +1201,111 @@ class Sureflap extends utils.Adapter {
 		}
 	}
 
-	/************************************************
-	 * methods to initially create object hierarchy *
-	 ************************************************/
+	/******************************************
+	 * methods to get values from the adapter *
+	 ******************************************/
 
 	/**
-	 * creates the adapters object hierarchy
+	 * reads curfew data from the adapter
+	 * @param {string} obj_name
+	 * @return {Promise} Promise of a curfew JSon object
+	 */
+	getCurfewFromAdapter(obj_name) {
+		return new Promise((resolve, reject) => {
+			this.getCurfewCountFromAdapter(obj_name).then(num_curfew => {
+				const curfew = [];
+				const promiseArray = [];
+				for(let h = 0; h < num_curfew; h++) {
+					curfew[h] = {};
+					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'enabled'));
+					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'lock_time'));
+					promiseArray.push(this.getStateValueFromAdapter(obj_name + '.' + h + '.' + 'unlock_time'));
+				}
+				Promise.all(promiseArray).then((values) => {
+					for(let h = 0; h < num_curfew; h++) {
+						curfew[h]['enabled'] = values[h*3];
+						curfew[h]['lock_time'] = values[h*3+1];
+						curfew[h]['unlock_time'] = values[h*3+2];
+					}
+					return resolve(curfew);
+				}).catch(err => {
+					return reject(err);
+				});
+			}).catch(err => {
+				return reject(err);
+			});
+		});
+	}
+
+	/**
+	 * reads the number of curfews from the adapter
+	 * @param {string} obj_name
+	 * @return {Promise} Promise of a curfew count number
+	 */
+	getCurfewCountFromAdapter(obj_name) {
+		return new Promise((resolve) => {
+			this.getForeignObjects(this.name + '.' + this.instance + '.' + obj_name + '.*', 'channel', [], (err, obj) => {
+				if(obj) {
+					return resolve(Object.keys(obj).length);
+				} else {
+					return resolve(0);
+				}
+			});
+		});
+	}
+
+	/*********************************************
+	 * methods to delete values from the adapter *
+	 *********************************************/
+
+	/**
+	 * deletes an object from the adapter
+	 * @param {string} obj_name
+	 * @param {boolean} recursive
 	 * @return {Promise}
 	 */
-	createAdapterObjectHierarchy() {
+	deleteObjectFormAdapter(obj_name, recursive) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			if(this.firstLoop === true) {
-				this.createHouseholdsAndHubsToAdapter()
-					.then(() => this.createDevicesToAdapter())
-					.then(() => this.createPetsToAdapter())
-					.then(() => this.removeObsoleteDataFromAdapter())
-					.then(() => { return resolve(); })
-					.catch(() => { return reject(); });
-			} else {
-				return resolve();
+			this.log.silly(`deleting object '${obj_name}'`);
+			this.getObject(obj_name, (err, obj) => {
+				if (!err && obj) {
+					this.log.silly(`found object '${obj_name}'. trying to delete`);
+					this.delObject(obj._id, {'recursive': recursive}, (err) => {
+						if(err) {
+							this.log.error(`could not delete object '${obj_name}' (${err})`);
+							return reject();
+						} else {
+							this.log.silly(`deleted object '${obj_name}'`);
+							return resolve();
+						}
+					});
+				} else {
+					this.log.debug(`object '${obj_name}' not found`);
+					return resolve();
+				}
+			});
+		}));
+	}
+
+	/**
+	 * deletes the history for a household from the adapter
+	 * @param {number} index
+	 * @return {Promise}
+	 */
+	deleteEventHistoryForHousehold(index) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			const prefix = this.sureFlapState.households[index].name;
+
+			this.log.debug(`deleting event history from adapter`);
+			for(let i = 0; i < this.sureFlapHistory[index].length; i++) {
+				promiseArray.push(this.deleteObjectFormAdapter(prefix + '.history.' + i, true));
 			}
+			Promise.all(promiseArray).then(() => {
+				return resolve();
+			}).catch(err => {
+				return reject(err);
+			});
 		}));
 	}
 
@@ -1209,6 +1406,29 @@ class Sureflap extends utils.Adapter {
 		}));
 	}
 
+	/************************************************
+	 * methods to initially create object hierarchy *
+	 ************************************************/
+
+	/**
+	 * creates the adapters object hierarchy
+	 * @return {Promise}
+	 */
+	createAdapterObjectHierarchy() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			if(this.firstLoop === true) {
+				this.createHouseholdsAndHubsToAdapter()
+					.then(() => this.createDevicesToAdapter())
+					.then(() => this.createPetsToAdapter())
+					.then(() => this.removeObsoleteDataFromAdapter())
+					.then(() => { return resolve(); })
+					.catch(() => { return reject(); });
+			} else {
+				return resolve();
+			}
+		}));
+	}
+
 	/**
 	 * creates houshold and hub data structures in the adapter
 	 * @return {Promise}
@@ -1222,27 +1442,29 @@ class Sureflap extends utils.Adapter {
 
 				// create household folder
 				this.setObjectNotExists(this.sureFlapState.households[h].name, this.buildFolderObject('Household \'' + this.sureFlapState.households[h].name_org + '\' (' + this.sureFlapState.households[h].id + ')'), () => {
-
-					// create hub (devices in household without parent)
-					for(let d = 0; d < this.sureFlapState.devices.length; d++) {
-						if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
-							if (!('parent' in this.sureFlapState.devices[d])) {
-								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
-								this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
-									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
-									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control', this.buildChannelObject('control switches')));
-									Promise.all(promiseArray).then(() => {
-										this.setObjectNotExists(obj_name + '.control.led_mode', this.buildStateObject('led mode', 'indicator', 'number', false, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }), () => {
-											return resolve();
+					// create history folder
+					this.setObjectNotExists(this.sureFlapState.households[h].name + '.history', this.buildFolderObject('Event History'), () => {
+						// create hub (devices in household without parent)
+						for(let d = 0; d < this.sureFlapState.devices.length; d++) {
+							if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
+								if (!('parent' in this.sureFlapState.devices[d])) {
+									const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
+									this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
+										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
+										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control', this.buildChannelObject('control switches')));
+										Promise.all(promiseArray).then(() => {
+											this.setObjectNotExists(obj_name + '.control.led_mode', this.buildStateObject('led mode', 'indicator', 'number', false, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }), () => {
+												return resolve();
+											});
+										}).catch(error => {
+											this.log.warn(`could not create household and hub hierarchy (${error})`);
+											return reject();
 										});
-									}).catch(error => {
-										this.log.warn(`could not create household and hub hierarchy (${error})`);
-										return reject();
 									});
-								});
+								}
 							}
 						}
-					}
+					});
 				});
 			}
 		}));
@@ -1721,13 +1943,59 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * returns wether the array contains an object
+	 * @param {Array} arr an array
+	 * @returns true if the array contains an entry of type object, false otherwise
+	 */
+	arrayContainsObjects(arr) {
+		if(Array.isArray(arr)) {
+			for(let i = 0; i < arr.length; i++) {
+				if(typeof(arr[i]) === 'object') {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * returns the current date and time as Y-m-d H:i
 	 * @return {string}
 	 */
-	getCurrentDateFormatted()
+	getCurrentDateFormattedForSurepetApi()
 	{
 		const date = new Date().toISOString();
 		return date.slice(0,10) + ' ' + date.slice(11,16);
+	}
+
+	/**
+	 * returns the current date in ISO format with timezone
+	 * @return {string}
+	 */
+	getCurrentDateFormattedAsISO()
+	{
+		const date = new Date();
+		const tzo = -date.getTimezoneOffset();
+		const dif = tzo >= 0 ? '+' : '-';
+
+		return date.getFullYear() +
+			'-' + this.padZero(date.getMonth() + 1) +
+			'-' + this.padZero(date.getDate()) +
+			'T' + this.padZero(date.getHours()) +
+			':' + this.padZero(date.getMinutes()) +
+			':' + this.padZero(date.getSeconds()) +
+			dif + this.padZero(tzo / 60) +
+			':' + this.padZero(tzo % 60);
+	}
+
+	/**
+	 * a time part with a leading 0 if smaller then 10
+	 * @param {number} num
+	 * @return {string}
+	 */
+	padZero(num) {
+		const norm = Math.floor(Math.abs(num));
+		return (norm < 10 ? '0' : '') + norm;
 	}
 
 	/**
@@ -1765,6 +2033,8 @@ class Sureflap extends utils.Adapter {
 				'Referer' : 'https://surepetcare.io/',
 				'Content-Type' : 'application/json;charset=utf-8',
 				'Origin' :  'https://surepetcare.io',
+				'Cache-Control' : 'no-cache',
+				'Pragma' : 'no-cache'
 			}
 		};
 
@@ -1880,8 +2150,8 @@ class Sureflap extends utils.Adapter {
 	 */
 	httpRequest(tag, options, postData) {
 		return new Promise((resolve, reject) => {
+			this.log.silly(`doing http request with tag ${tag}`);
 			const req = https.request(options, (res) => {
-
 				if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
 					req.on('error', error => {
 						this.log.error(`error: ${error.toString()}`);
@@ -1904,7 +2174,9 @@ class Sureflap extends utils.Adapter {
 							const obj = JSON.parse(data.join(''));
 							return resolve(obj);
 						} catch(err) {
-							this.log.error(err.message);
+							if(err instanceof Error) {
+								this.log.error(err.message);
+							}
 							return reject(new Error(`JSon parse error in ${data}`));
 						}
 					});

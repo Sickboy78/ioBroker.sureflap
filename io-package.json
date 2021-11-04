@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.0.6",
+		"version": "1.0.7",
 		"news": {
+			"1.0.7": {
+				"en": "added history",
+				"de": "Chronik hinzugefügt",
+				"ru": "Хроника добавлена",
+				"pt": "Crónica acrescentada",
+				"nl": "Kroniek toegevoegd",
+				"fr": "Chronique ajoutée",
+				"it": "Cronaca aggiunta",
+				"es": "Crónica añadida",
+				"pl": "Kronika dodała",
+				"zh-cn": "纪要》补充说"
+			},
 			"1.0.6": {
 				"en": "feeder support",
 				"de": "Unterstützung Futterautomat",
@@ -130,6 +142,19 @@
 				"role": "indicator.reachable",
 				"name": "If all devices are online",
 				"type": "boolean",
+				"read": true,
+				"write": false,
+				"def": false
+			},
+			"native": {}
+		},
+		{
+			"_id": "info.last_update",
+			"type": "state",
+			"common": {
+				"role": "date",
+				"name": "Last time data recieved from surepetcare api",
+				"type": "string",
 				"read": true,
 				"write": false,
 				"def": false
