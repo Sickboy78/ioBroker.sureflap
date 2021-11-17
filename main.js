@@ -1097,7 +1097,7 @@ class Sureflap extends utils.Adapter {
 					}
 				});
 			} else {
-				this.setObjectNotExists(prefix, this.buildStateObject(desc, 'indicator', 'string'), () => {
+				this.setObjectNotExists(prefix, this.buildStateObject(desc, desc.endsWith('_at') ? 'date' : 'indicator', 'string'), () => {
 					this.createAdapterStructureFromJson(prefix, JSON.stringify(json), desc);
 				});
 			}
@@ -1108,7 +1108,7 @@ class Sureflap extends utils.Adapter {
 				});
 			});
 		} else {
-			this.setObjectNotExists(prefix, this.buildStateObject(desc, 'indicator', typeof(json)), () => {
+			this.setObjectNotExists(prefix, this.buildStateObject(desc, desc.endsWith('_at') ? 'date' : 'indicator', typeof(json)), () => {
 				this.setState(prefix, json, true);
 			});
 		}
