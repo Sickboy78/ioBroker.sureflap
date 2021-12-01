@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.0.7",
+		"version": "1.0.8",
 		"news": {
+			"1.0.8": {
+				"en": "added food statistics for pet and feeder",
+				"de": "Futterstatistik für Tier und Futterautomat hinzugefügt",
+				"ru": "статистика питания для домашних животных и кормушек",
+				"pt": "estatísticas alimentares para animais de estimação e alimentadores",
+				"nl": "voedselstatistieken voor huisdier en voeder",
+				"fr": "statistiques sur l'alimentation des animaux de compagnie et des mangeurs",
+				"it": "statistiche alimentari per animali domestici e mangiatoie",
+				"es": "estadísticas de alimentos para mascotas y comederos",
+				"pl": "statystyka żywności dla zwierząt domowych i karmiących",
+				"zh-cn": "宠物和饲主的食物统计"
+			},
 			"1.0.7": {
 				"en": "added history",
 				"de": "Chronik hinzugefügt",

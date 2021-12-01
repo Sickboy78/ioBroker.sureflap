@@ -19,10 +19,19 @@ const utils = require('@iobroker/adapter-core');
 const https = require('https');
 const util = require('util');
 
-// Constants
+// Constants - data update frequency
+const RETRY_FREQUENCY_LOGIN = 60;
+const UPDATE_FREQUENCY_DATA = 10;
+const UPDATE_FREQUENCY_HISTORY = 60;
+const UPDATE_FREQUENCY_REPORT = 60;
+// Constants - device types
 const DEVICE_TYPE_PET_FLAP = 3;
 const DEVICE_TYPE_FEEDER = 4;
 const DEVICE_TYPE_CAT_FLAP = 6;
+// Constants - feeder parameter
+const FEEDER_SINGLE_BOWL = 1;
+const FEEDER_FOOD_WET = 1;
+const FEEDER_FOOD_DRY = 2;
 
 class Sureflap extends utils.Adapter {
 
@@ -41,6 +50,12 @@ class Sureflap extends utils.Adapter {
 		this.numberOfLogins = 0;
 		// timer id
 		this.timerId = 0;
+		// flap connected to hub
+		this.hasFlap = false;
+		// feeder connected to hub
+		this.hasFeeder = false;
+		// water dispenser connected to hub
+		this.hasDispenser = false;
 		// is first update loop
 		this.firstLoop = true;
 		// current state
@@ -51,6 +66,24 @@ class Sureflap extends utils.Adapter {
 		this.sureFlapHistory = [];
 		// previous history
 		this.sureFlapHistoryPrev = [];
+		// aggregated report
+		this.sureFlapReport = [];
+		// previous aggregated report
+		this.sureFlapReportPrev = [];
+		// last history update timestamp
+		this.lastHistoryUpdate = 0;
+		// update history this loop
+		this.updateHistory = true;
+		// last aggregated report update timestamp
+		this.lastReportUpdate = 0;
+		// update aggregated report this loop
+		this.updateReport = true;
+
+		// remember repeatbale warnings to not spam iobroker log
+		this.petPositionObjectMissing = [];
+		this.petFeedingDataMissing = [];
+		this.feederConfigBowlObjectMissing = [];
+		this.feederFoodBowlObjectMissing = [];
 
 		// promisify setObjectNotExists
 		this.setObjectNotExistsPromise = util.promisify(this.setObjectNotExists);
@@ -200,16 +233,15 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.0.6`);
+		this.log.debug(`starting SureFlap Adapter v1.0.8`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
-			.then(() => this.getHouseholdFromApi())
 			.then(() => this.startUpdateLoop())
 			.catch(error => {
 				this.log.error(error);
 				this.log.info(`disconnected`);
 				// @ts-ignore
-				this.timerId = setTimeout(this.startLoadingData.bind(this), 10*1000);
+				this.timerId = setTimeout(this.startLoadingData.bind(this), UPDATE_FREQUENCY_DATA*1000);
 			});
 	}
 
@@ -246,12 +278,12 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * the update loop, refreshing the data every 10 seconds
+	 * the update loop, refreshing the data every UPDATE_FREQUENCY_DATA seconds
 	 */
 	updateLoop() {
 		clearTimeout(this.timerId);
 		this.getDataFromApi()
-			.then(() => this.getEventHistoryFromApi())
+			.then(() => this.getAdditionalDataFromApi())
 			.then(() => this.createAdapterObjectHierarchy())
 			.then(() => this.getDeviceStatusFromData())
 			.then(() => this.getPetStatusFromData())
@@ -259,10 +291,10 @@ class Sureflap extends utils.Adapter {
 			.then(() => this.setUpdateTimer())
 			.catch(error => {
 				this.log.error(error);
-				this.log.info(`loop stopped`);
+				this.log.info(`updfate loop stopped`);
 				this.log.info(`disconnected`);
 				// @ts-ignore
-				this.timerId = setTimeout(this.startLoadingData.bind(this), 10*1000);
+				this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN*1000);
 			})
 			.finally(() => {this.firstLoop=false;});
 	}
@@ -274,7 +306,7 @@ class Sureflap extends utils.Adapter {
 	setUpdateTimer() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
 			// @ts-ignore
-			this.timerId = setTimeout(this.updateLoop.bind(this), 10*1000);
+			this.timerId = setTimeout(this.updateLoop.bind(this), UPDATE_FREQUENCY_DATA*1000);
 			return resolve();
 		}));
 	}
@@ -300,7 +332,7 @@ class Sureflap extends utils.Adapter {
 			this.log.debug(`login count: ${this.numberOfLogins}`);
 			this.httpRequest('login', options, postData).then(result => {
 				if (result == undefined || result.data == undefined || !('token' in result.data)) {
-					return reject(new Error(`login failed. possible wrong login or pwd? retrying in 10 seconds`));
+					return reject(new Error(`login failed. possible wrong login or pwd? retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 				} else {
 					this.numberOfLogins = 0;
 					return resolve(result.data['token']);
@@ -312,28 +344,6 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * gets the households from surepet API
-	 * @return {Promise}
-	 */
-	getHouseholdFromApi() {
-		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			const options = this.buildOptions('/api/household?with[]=household', 'GET', this.sureFlapState['token']);
-			this.log.info(`reading households...`);
-			this.httpRequest('get_household', options, '').then(result => {
-				if (result == undefined || result.data == undefined) {
-					return reject(new Error(`getting household failed. retrying login in 10 seconds`));
-				} else {
-					this.sureFlapState['household'] = result.data[0]['id'];
-					this.log.info(`households read`);
-					return resolve();
-				}
-			}).catch(error => {
-				return reject(error);
-			});
-		}));
-	}
-
-	/**
 	 * gets the data for devices and pets from surepet API
 	 * @return {Promise}
 	 */
@@ -342,7 +352,7 @@ class Sureflap extends utils.Adapter {
 			const options = this.buildOptions('/api/me/start', 'GET', this.sureFlapState['token']);
 			this.httpRequest('get_data', options, '').then(result => {
 				if (result == undefined || result.data == undefined) {
-					return reject(new Error(`getting data failed. retrying login in 10 seconds`));
+					return reject(new Error(`getting data failed. retrying login in ${RETRY_FREQUENCY_LOGIN} seconds`));
 				} else {
 					this.sureFlapStatePrev = JSON.parse(JSON.stringify(this.sureFlapState));
 					this.sureFlapState.devices = result.data.devices;
@@ -352,6 +362,7 @@ class Sureflap extends utils.Adapter {
 					this.makeCurfewArray();
 					this.normalizeLockMode();
 					this.setOfflineDevices();
+					this.setConnectedDevices();
 					this.setLastUpdateToAdapter();
 					return resolve();
 				}
@@ -363,11 +374,43 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * gets additional data for history and reports from surepet API
+	 * @return {Promise}
+	 */
+	getAdditionalDataFromApi() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+
+			this.updateHistory = false;
+			this.updateReport = false;
+
+			// get history every UPDATE_FREQUENCY_HISTORY
+			if(this.lastHistoryUpdate + UPDATE_FREQUENCY_HISTORY * 1000 < Date.now()) {
+				promiseArray.push(this.getEventHistoryFromApi());
+			}
+			// get aggregated report every UPDATE_FREQUENCY_REPORT but not same time as history (dont spam surepet server) except for first loop
+			if((!this.updateHistory || this.firstLoop) && this.hasFeeder && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
+				promiseArray.push(this.getAggregatedReportFromApi());
+			}
+			if(promiseArray.length == 0) {
+				return resolve();
+			} else {
+				Promise.all(promiseArray).then(() => {
+					return resolve();
+				}).catch(err => {
+					return reject(err);
+				});
+			}
+		}));
+	}
+
+	/**
 	 * gets the event history from surepet API
 	 * @return {Promise}
 	 */
 	getEventHistoryFromApi() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			this.lastHistoryUpdate = Date.now();
 			const promiseArray = [];
 			for(let h = 0; h < this.sureFlapState.households.length; h++) {
 				promiseArray.push(this.getEventHistoryForHouseholdFromApi(this.sureFlapState.households[h].id));
@@ -375,7 +418,7 @@ class Sureflap extends utils.Adapter {
 			Promise.all(promiseArray).then((values) => {
 				for(let h = 0; h < this.sureFlapState.households.length; h++) {
 					if (values[h] == undefined) {
-						return reject(new Error(`getting history failed. retrying login in 10 seconds`));
+						return reject(new Error(`getting history failed. retrying login in ${RETRY_FREQUENCY_LOGIN} seconds`));
 					} else {
 						if(this.sureFlapHistory[h] !== undefined) {
 							this.sureFlapHistoryPrev[h] = JSON.parse(JSON.stringify(this.sureFlapHistory[h]));
@@ -383,6 +426,7 @@ class Sureflap extends utils.Adapter {
 						this.sureFlapHistory[h] = values[h];
 					}
 				}
+				this.updateHistory = true;
 				return resolve();
 			}).catch(err => {
 				return reject(err);
@@ -401,7 +445,7 @@ class Sureflap extends utils.Adapter {
 			let options = this.buildOptions('/api/timeline/household/' + id, 'GET', this.sureFlapState['token']);
 			this.httpRequest('get_history', options, '').then(result => {
 				if (result == undefined || result.data == undefined) {
-					return reject(new Error(`getting history failed. retrying login in 10 seconds`));
+					return reject(new Error(`getting history failed. retrying login in ${RETRY_FREQUENCY_LOGIN} seconds`));
 				} else {
 					if(result.data.length == 0 || result.data[0].id == undefined) {
 						return resolve(result.data);
@@ -409,7 +453,7 @@ class Sureflap extends utils.Adapter {
 						options = this.buildOptions('/api/timeline/household/' + id + '?since_id=' + result.data[0].id + '&page_size=1000', 'GET', this.sureFlapState['token']);
 						this.httpRequest('get_history_since', options, '').then(sinceResult => {
 							if (sinceResult == undefined) {
-								return reject(new Error(`getting additional history failed. retrying login in 10 seconds`));
+								return reject(new Error(`getting additional history failed. retrying login in ${RETRY_FREQUENCY_LOGIN} seconds`));
 							} else {
 								if(sinceResult.data == undefined || sinceResult.data.length == 0) {
 									return resolve(result.data);
@@ -422,6 +466,57 @@ class Sureflap extends utils.Adapter {
 							return reject(err);
 						});
 					}
+				}
+			}).catch(err => {
+				return reject(err);
+			});
+		}));
+	}
+
+	/**
+	 * gets the aggregated report from surepet API
+	 * @return {Promise}
+	 */
+	getAggregatedReportFromApi() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			this.lastReportUpdate = Date.now();
+			const promiseArray = [];
+			for(let p = 0; p < this.sureFlapState.pets.length; p++) {
+				promiseArray.push(this.getReportForHouseholdAndPetFromApi(this.sureFlapState.pets[p].household_id, this.sureFlapState.pets[p].id));
+			}
+			Promise.all(promiseArray).then((values) => {
+				for(let p = 0; p < this.sureFlapState.pets.length; p++) {
+					if (values[p] == undefined) {
+						return reject(new Error(`getting report data for pet '${this.sureFlapState.pets[p].name}' failed. retrying login in ${RETRY_FREQUENCY_LOGIN} seconds`));
+					} else {
+						if(this.sureFlapReport[p] !== undefined) {
+							this.sureFlapReportPrev[p] = JSON.parse(JSON.stringify(this.sureFlapReport[p]));
+						}
+						this.sureFlapReport[p] = values[p];
+					}
+				}
+				this.updateReport = true;
+				return resolve();
+			}).catch(err => {
+				return reject(err);
+			});
+		}));
+	}
+
+	/**
+	 * gets the aggregeated report from surepet API for the household with household_id and pet with pet_id
+	 * @param {Number} household_id
+	 * @param {Number} pet_id
+	 * @return {Promise} of a JSon object
+	 */
+	getReportForHouseholdAndPetFromApi(household_id, pet_id) {
+		return (new Promise((resolve, reject) => {
+			const options = this.buildOptions('/api/report/household/' + household_id + '/pet/' + pet_id + '/aggregate', 'GET', this.sureFlapState['token']);
+			this.httpRequest('get_report', options, '').then(result => {
+				if (result == undefined || result.data == undefined) {
+					return reject(new Error(`getting report for household '${household_id}' and pet '${pet_id}' failed. retrying login in ${RETRY_FREQUENCY_LOGIN} seconds`));
+				} else {
+					return resolve(result.data);
 				}
 			}).catch(err => {
 				return reject(err);
@@ -454,9 +549,9 @@ class Sureflap extends utils.Adapter {
 								this.setSureflapConnectToAdapter(prefix,hierarchy,d);
 							} else if (this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
 								// Feeder Connect
-								// TODO: implement more
 								this.setFeederConnectToAdapter(prefix,hierarchy,d);
 							}
+							// TODO: add water dispenser
 							this.setBatteryStatusToAdapter(prefix,hierarchy,d);
 						} else {
 							this.setHubStatusToAdapter(prefix,d);
@@ -477,18 +572,30 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
 			const numPets = this.sureFlapState.pets.length;
 
-			for (let i = 0; i < numPets; i++) {
-				const name = this.sureFlapState.pets[i].name;
-				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[i].household_id);
+			for (let p = 0; p < numPets; p++) {
+				const pet_name = this.sureFlapState.pets[p].name;
+				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[p].household_id);
 				const prefix = household_name + '.pets';
-				if('position' in this.sureFlapState.pets[i]) {
-					const where = this.sureFlapState.pets[i].position.where;
-					const since = this.sureFlapState.pets[i].position.since;
-					this.setPetStatusWithPositionToAdapter(prefix, name, where, since, i);
+				if(this.hasFlap) {
+					if('position' in this.sureFlapState.pets[p]) {
+						const where = this.sureFlapState.pets[p].position.where;
+						const since = this.sureFlapState.pets[p].position.since;
+						this.setPetStatusWithPositionToAdapter(prefix, pet_name, where, since, p);
+						this.petPositionObjectMissing[p] = false;
+					} else {
+						this.setPetStatusToAdapter(prefix, pet_name, p);
+						if(!this.petPositionObjectMissing[p]) {
+							this.log.warn(`no position object found for pet '${this.sureFlapState.pets[p].name}'`);
+							this.petPositionObjectMissing[p] = true;
+						}
+					}
+					// add time spent outside and number of entries
 				} else {
-					this.setPetStatusToAdapter(prefix, name, i);
+					this.setPetStatusToAdapter(prefix, pet_name, p);
 				}
-
+				if(this.hasFeeder && this.updateReport) {
+					this.setPetFeedingToAdapter(prefix + '.' + pet_name + '.food', p);
+				}
 			}
 			return resolve();
 		}));
@@ -500,24 +607,26 @@ class Sureflap extends utils.Adapter {
 	 */
 	getEventHistoryFromData() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
-			for(let h = 0; h < this.sureFlapState.households.length; h++) {
-				const prefix = this.sureFlapState.households[h].name;
+			if(this.updateHistory) {
+				for(let h = 0; h < this.sureFlapState.households.length; h++) {
+					const prefix = this.sureFlapState.households[h].name;
 
-				if(this.sureFlapHistoryPrev[h] == undefined || JSON.stringify(this.sureFlapHistory[h]) !== JSON.stringify(this.sureFlapHistoryPrev[h])) {
-					this.log.debug(`updating event history for household '${prefix}'`);
-					/* structure of history changes, so we need to delete and recreate history event structure on change */
-					this.deleteEventHistoryForHousehold(h).then(() => {
-						if(this.sureFlapHistory.length > h) {
-							this.log.debug(`updating event history with ${this.sureFlapHistory[h].length} events`);
-							for(let i = 0; i < this.sureFlapHistory[h].length; i++) {
-								this.setHistoryEventToAdapter(prefix,h,i);
+					if(this.sureFlapHistoryPrev[h] == undefined || JSON.stringify(this.sureFlapHistory[h]) !== JSON.stringify(this.sureFlapHistoryPrev[h])) {
+						this.log.debug(`updating event history for household '${prefix}'`);
+						/* structure of history changes, so we need to delete and recreate history event structure on change */
+						this.deleteEventHistoryForHousehold(h).then(() => {
+							if(this.sureFlapHistory.length > h) {
+								this.log.debug(`updating event history with ${this.sureFlapHistory[h].length} events`);
+								for(let i = 0; i < this.sureFlapHistory[h].length; i++) {
+									this.setHistoryEventToAdapter(prefix,h,i);
+								}
+								return resolve();
 							}
+						}).catch(err => {
+							this.log.error(`updating event history failed (${err})`);
 							return resolve();
-						}
-					}).catch(err => {
-						this.log.error(`updating event history failed (${err})`);
-						return resolve();
-					});
+						});
+					}
 				}
 			}
 			return resolve();
@@ -916,7 +1025,7 @@ class Sureflap extends utils.Adapter {
 
 		// assigned pets type
 		for(let t = 0; t < this.sureFlapState.devices[deviceIndex].tags.length; t++) {
-			if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].tags[t].profile !== this.sureFlapStatePrev.devices[deviceIndex].tags[t].profile)) {
+			if (!this.sureFlapStatePrev.devices || !this.sureFlapStatePrev.devices[deviceIndex].tags[t] || (this.sureFlapState.devices[deviceIndex].tags[t].profile !== this.sureFlapStatePrev.devices[deviceIndex].tags[t].profile)) {
 				const name = this.getPetNameForTagId(this.sureFlapState.devices[deviceIndex].tags[t].id);
 				const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.assigned_pets.' + name + '.control' + '.type';
 				try {
@@ -935,13 +1044,65 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} deviceIndex
 	 */
 	setFeederConnectToAdapter(prefix, hierarchy, deviceIndex) {
-		// lock mode
+		const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name;
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].control.lid.close_delay !== this.sureFlapStatePrev.devices[deviceIndex].control.lid.close_delay)) {
-			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.close_delay';
-			try {
-				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].control.lid.close_delay, true);
-			} catch(error) {
-				this.log.error(`could not set close delay to adapter (${error})`);
+			this.setState(obj_name + '.control' + '.close_delay', this.sureFlapState.devices[deviceIndex].control.lid.close_delay, true);
+		}
+		// feeder config data from sureFlapState
+		if (!this.sureFlapStatePrev.devices || (JSON.stringify(this.sureFlapState.devices[deviceIndex].control.bowls.settings) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].control.bowls.settings))) {
+			for(let b = 0; b < this.sureFlapState.devices[deviceIndex].control.bowls.settings.length; b++) {
+				this.getObject(obj_name + '.bowls.' + b, (err, obj) => {
+					if (!err && obj) {
+						this.setState(obj_name + '.bowls.' + b + '.food_type', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].food_type, true);
+						this.setState(obj_name + '.bowls.' + b + '.target', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target, true);
+						this.feederConfigBowlObjectMissing[deviceIndex] = false;
+					} else {
+						if(!this.feederConfigBowlObjectMissing[deviceIndex]) {
+							this.log.warn(`got feeder config data for object '${obj_name + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed. Restart adapter. If warning persists, contact developer.`);
+							this.feederConfigBowlObjectMissing[deviceIndex] = true;
+						}
+					}
+				});
+			}
+		}
+		// feeder remaining food data from sureFlepReport
+		if(this.updateReport && (this.sureFlapReportPrev == undefined || this.sureFlapReportPrev.length == 0 || JSON.stringify(this.sureFlapReport) != JSON.stringify(this.sureFlapReportPrev))) {
+			const device_id = this.sureFlapState.devices[deviceIndex].id;
+			let last_datapoint;
+			// look in feeding data for every pet
+			for(let p = 0; p < this.sureFlapState.pets.length; p++) {
+				// look in feeding datapoints starting with latest (last)
+				for(let i = this.sureFlapReport[p].feeding.datapoints.length-1; i>=0; i--) {
+					// check if datapoint is for this feeder
+					if(this.sureFlapReport[p].feeding.datapoints[i].device_id == device_id) {
+						// check if datapoint is newer then saved datapoint
+						if(last_datapoint == undefined || last_datapoint.to == undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].feeding.datapoints[i].to)) {
+							last_datapoint = this.sureFlapReport[p].feeding.datapoints[i];
+							break;
+						}
+					}
+				}
+			}
+			// if datapoint with food data found for this device, write it to adapter
+			if(last_datapoint != undefined) {
+				for(let b = 0; b < last_datapoint.weights.length; b++) {
+					this.getState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', (err, obj) => {
+						if (!err && obj) {
+							if(obj.val != last_datapoint.weights[b].weight) {
+								this.log.debug(`updating remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
+								this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
+							}
+							this.feederFoodBowlObjectMissing[deviceIndex] = false;
+						} else {
+							if(!this.feederFoodBowlObjectMissing[deviceIndex]) {
+								this.log.warn(`got feeder remaining food data for object '${obj_name + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed. Restart adapter. If warning persists, contact developer.`);
+								this.feederFoodBowlObjectMissing[deviceIndex] = true;
+							}
+						}
+					});
+				}
+			} else {
+				this.log.warn(`no remaining food data for feeder '${this.sureFlapState.devices[deviceIndex].name}' found`);
 			}
 		}
 	}
@@ -1049,7 +1210,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} petIndex
 	 */
 	setPetStatusToAdapter(prefix, name, petIndex) {
-		if (!this.sureFlapStatePrev.pets || (name !== this.sureFlapStatePrev.pets[petIndex].name)) {
+		if (!this.sureFlapStatePrev.pets || !this.sureFlapStatePrev.pets[petIndex] || (name !== this.sureFlapStatePrev.pets[petIndex].name)) {
 			const obj_name = prefix + '.' + name;
 			this.setState(obj_name + '.name', name, true);
 		}
@@ -1066,9 +1227,34 @@ class Sureflap extends utils.Adapter {
 	setPetStatusWithPositionToAdapter(prefix, name, where, since, petIndex) {
 		this.setPetStatusToAdapter(prefix, name, petIndex);
 		const obj_name = prefix + '.' + name;
-		if (!this.sureFlapStatePrev.pets || !('position' in this.sureFlapStatePrev.pets[petIndex]) || (where !== this.sureFlapStatePrev.pets[petIndex].position.where) || (since !== this.sureFlapStatePrev.pets[petIndex].position.since)) {
+		if (!this.sureFlapStatePrev.pets || !this.sureFlapStatePrev.pets[petIndex] || !('position' in this.sureFlapStatePrev.pets[petIndex]) || (where !== this.sureFlapStatePrev.pets[petIndex].position.where) || (since !== this.sureFlapStatePrev.pets[petIndex].position.since)) {
 			this.setState(obj_name + '.inside', (where == 1) ? true : false, true);
 			this.setState(obj_name + '.since', since, true);
+		}
+	}
+
+	/**
+	 * sets pet feeding to the adapter
+	 * @param {string} prefix
+	 * @param {number} p
+	 */
+	setPetFeedingToAdapter(prefix, p) {
+		if(!this.sureFlapReport[p].feeding != undefined && this.sureFlapReport[p].feeding.datapoints != undefined && this.sureFlapReport[p].feeding.datapoints.length >0) {
+			if(!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].feeding || JSON.stringify(this.sureFlapReport[p].feeding) !== JSON.stringify(this.sureFlapReportPrev[p].feeding)) {
+				const consumption_data = this.calculateFoodConsumption(p);
+				this.log.debug(`updating food consumed for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(consumption_data)}'`);
+				this.setState(prefix + '.last_time_eaten', consumption_data.last_time, true);
+				this.setState(prefix + '.times_eaten', consumption_data.count, true);
+				this.setState(prefix + '.time_spent', consumption_data.time_spent, true);
+				this.setState(prefix + '.wet.weight', consumption_data.weight[FEEDER_FOOD_WET], true);
+				this.setState(prefix + '.dry.weight', consumption_data.weight[FEEDER_FOOD_DRY], true);
+			}
+			this.petFeedingDataMissing[p] = false;
+		} else {
+			if(!this.petFeedingDataMissing[p]) {
+				this.log.warn(`aggregated report for pet '${this.sureFlapState.pets[p].name}' does not contain feeding data`);
+				this.petFeedingDataMissing[p] = true;
+			}
 		}
 	}
 
@@ -1498,6 +1684,7 @@ class Sureflap extends utils.Adapter {
 									// feeding bowl
 									promiseArray.push(this.createFeederDevicesToAdapter(d, obj_name));
 									break;
+								// TODO: add water dispenser
 								default:
 									this.log.debug(`device with unknown id (${this.sureFlapState.devices[d].product_id}) found`);
 									break;
@@ -1584,21 +1771,49 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
 			this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[device].name_org + '\' (' + this.sureFlapState.devices[device].id + ')'), () => {
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online','indicator.reachable')));
 				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
 				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+
 				this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
 					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.close_delay', this.buildStateObject('closing delay of lid', 'switch.mode.delay', 'number', false, {0: 'FAST', 4:'NORMAL', 20:'SLOW'})));
+
 					this.setObjectNotExists(obj_name + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
 						for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
 							const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
 							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
 						}
-						Promise.all(promiseArray).then(() => {
-							return resolve();
-						}).catch(error => {
-							this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
-							return reject();
+
+						this.setObjectNotExists(obj_name + '.bowls', this.buildChannelObject('feeding bowls'), () => {
+							this.setObjectNotExists(obj_name + '.bowls.0', this.buildChannelObject('feeding bowl 0'), () => {
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.target', this.buildStateObject('target weight','value', 'number')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.weight', this.buildStateObject('weight','value', 'number')));
+
+								if(this.sureFlapState.devices[device].control.bowls.type == FEEDER_SINGLE_BOWL) {
+									// remove bowl 1 (e.g. after change from dual to single bowl)
+									promiseArray.push(this.deleteObjectFormAdapter(obj_name + '.bowls.1', true));
+									Promise.all(promiseArray).then(() => {
+										return resolve();
+									}).catch(error => {
+										this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
+										return reject();
+									});
+								} else {
+									this.setObjectNotExists(obj_name + '.bowls.1', this.buildChannelObject('feeding bowl 1'), () => {
+										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
+										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.target', this.buildStateObject('target weight','value', 'number')));
+										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.weight', this.buildStateObject('weight','value', 'number')));
+
+										Promise.all(promiseArray).then(() => {
+											return resolve();
+										}).catch(error => {
+											this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
+											return reject();
+										});
+									});
+								}
+							});
 						});
 					});
 				});
@@ -1649,14 +1864,39 @@ class Sureflap extends utils.Adapter {
 			this.setObjectNotExists(prefix, this.buildDeviceObject('Pets in Household ' + household_name),() => {
 				this.setObjectNotExists(obj_name, this.buildChannelObject('Pet \'' + name_org + '\' (' + id + ')'),() => {
 					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.name', this.buildStateObject(name_org, 'text', 'string')));
-					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.inside', this.buildStateObject('is ' + name + ' inside', 'indicator', 'boolean', false)));
-					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.since', this.buildStateObject('last location change', 'date', 'string')));
-					Promise.all(promiseArray).then(() => {
-						return resolve();
-					}).catch(error => {
-						this.log.warn(`could not create adapter pet hierarchy (${error})`);
-						return reject();
-					});
+					if(this.hasFlap) {
+						promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.inside', this.buildStateObject('is ' + name + ' inside', 'indicator', 'boolean', false)));
+						promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.since', this.buildStateObject('last location change', 'date', 'string')));
+					}
+					if(this.hasFeeder) {
+						this.setObjectNotExists(obj_name + '.food', this.buildFolderObject('food'), () => {
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.food' + '.last_time_eaten', this.buildStateObject('last time food consumed', 'date', 'string')));
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.food' + '.times_eaten', this.buildStateObject('number of times food consumed today', 'value', 'number')));
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.food' + '.time_spent', this.buildStateObject('time spent in seconds at feeder today', 'value', 'number')));
+
+							this.setObjectNotExists(obj_name + '.food.wet', this.buildFolderObject('wet food (1)'), () => {
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.food.wet' + '.weight', this.buildStateObject('wet food consumed today', 'value', 'number')));
+
+								this.setObjectNotExists(obj_name + '.food.dry', this.buildFolderObject('dry food (2)'), () => {
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.food.dry' + '.weight', this.buildStateObject('dry food consumed today', 'value', 'number')));
+
+									Promise.all(promiseArray).then(() => {
+										return resolve();
+									}).catch(error => {
+										this.log.warn(`could not create adapter pet hierarchy (${error})`);
+										return reject();
+									});
+								});
+							});
+						});
+					} else {
+						Promise.all(promiseArray).then(() => {
+							return resolve();
+						}).catch(error => {
+							this.log.warn(`could not create adapter pet hierarchy (${error})`);
+							return reject();
+						});
+					}
 				});
 			});
 		}));
@@ -1681,6 +1921,56 @@ class Sureflap extends utils.Adapter {
 				this.sureFlapState.devices[d].status.battery_percentage = this.calculateBatteryPercentage(this.sureFlapState.devices[d].status.battery);
 			}
 		}
+	}
+
+	/**
+	 * determines devices in the houshold from the surepet data
+	 */
+	setConnectedDevices() {
+		if(this.firstLoop) {
+			for (let d = 0; d < this.sureFlapState.devices.length; d++) {
+				switch (this.sureFlapState.devices[d].product_id) {
+					case DEVICE_TYPE_CAT_FLAP:
+					case DEVICE_TYPE_PET_FLAP:
+						this.hasFlap = true;
+						break;
+					case DEVICE_TYPE_FEEDER:
+						this.hasFeeder = true;
+						break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * calculates food consumption data for pet
+	 * @param {number} pet
+	 * @returns {object} food consumption data object
+	 */
+	calculateFoodConsumption(pet) {
+		const data = {};
+		data.count = 0;
+		data.last_time = this.getDateFormattedAsISO(new Date(0));
+		data.time_spent = 0;
+		data.weight = [];
+		data.weight[FEEDER_FOOD_WET] = 0;
+		data.weight[FEEDER_FOOD_DRY] = 0;
+		for (let i = 0; i < this.sureFlapReport[pet].feeding.datapoints.length; i++) {
+			const datapoint = this.sureFlapReport[pet].feeding.datapoints[i];
+			if (datapoint.context === 1) {
+				data.last_time = datapoint.to;
+				if (this.isToday(new Date(datapoint.to))) {
+					data.count++;
+					data.time_spent += new Date(datapoint.to).getTime() - new Date(datapoint.from).getTime();
+					this.log.silly(`datapoint '${i}' is food eaten today`);
+					for (let b = 0; b < datapoint.weights.length; b++) {
+						data.weight[datapoint.weights[b].food_type_id] -= datapoint.weights[b].change;
+					}
+				}
+			}
+		}
+		data.time_spent = Math.floor(data.time_spent / 1000);
+		return data;
 	}
 
 	/**
@@ -1943,7 +2233,7 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * returns wether the array contains an object
+	 * returns whether the array contains an object
 	 * @param {Array} arr an array
 	 * @returns true if the array contains an entry of type object, false otherwise
 	 */
@@ -1956,6 +2246,16 @@ class Sureflap extends utils.Adapter {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * returns whether the date is today
+	 * @param {Date} date
+	 * @returns true if the date is today, false otherwise
+	 */
+	isToday(date) {
+		const today = new Date();
+		return today.getFullYear() == date.getFullYear() && today.getMonth() == date.getMonth() && today.getDate() == date.getDate();
 	}
 
 	/**
@@ -1974,7 +2274,15 @@ class Sureflap extends utils.Adapter {
 	 */
 	getCurrentDateFormattedAsISO()
 	{
-		const date = new Date();
+		return this.getDateFormattedAsISO(new Date());
+	}
+
+	/**
+	 * returns the current date in ISO format with timezone
+	 * @return {string}
+	 */
+	getDateFormattedAsISO(date)
+	{
 		const tzo = -date.getTimezoneOffset();
 		const dif = tzo >= 0 ? '+' : '-';
 
@@ -2184,7 +2492,7 @@ class Sureflap extends utils.Adapter {
 			});
 
 			req.on('error', (err) => {
-				return reject(new Error(`Request error: ${err} retrying in 10 seconds`));
+				return reject(new Error(`Request error: ${err} retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 			});
 
 			req.write(postData);

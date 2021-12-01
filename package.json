@@ -1,6 +1,6 @@
 {
   "name": "iobroker.sureflap",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Adpater für Sureflap Katzen- und Haustierklappen von Sure Petcare",
   "author": {
     "name": "Sickboy78",
