@@ -58,7 +58,7 @@ adapter<br>
 │ │ │ ├ battery_percentage<br>
 │ │ │ ├ online<br>
 │ │ │ ├ assigned_pets<br>
-│ │ │ │ └ pet_nameclose_delay<br>
+│ │ │ │ └ pet_name<br>
 │ │ │ ├ bowls<br>
 │ │ │ │ └ 0..1<br>
 │ │ │ │ &nbsp;&nbsp;&nbsp; ├ food_type<br>
