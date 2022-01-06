@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.0.8",
+		"version": "1.0.9",
 		"news": {
+			"1.0.9": {
+				"en": "code improvements from review",
+				"de": "Codeverbesserungen vom Review",
+				"ru": "улучшения кода по результатам обзора",
+				"pt": "melhorias do código de revisão",
+				"nl": "code verbeteringen na herziening",
+				"fr": "améliorations du code suite à la révision",
+				"it": "miglioramenti al codice dalla revisione",
+				"es": "mejoras en el código a partir de la revisión",
+				"pl": "poprawki kodu z przeglądu",
+				"zh-cn": "审查后的代码改进"
+			},
 			"1.0.8": {
 				"en": "added food statistics for pet and feeder",
 				"de": "Futterstatistik für Tier und Futterautomat hinzugefügt",

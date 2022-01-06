@@ -50,6 +50,8 @@ class Sureflap extends utils.Adapter {
 		this.numberOfLogins = 0;
 		// timer id
 		this.timerId = 0;
+		// adapter unloaded
+		this.adapterUnloaded = false;
 		// flap connected to hub
 		this.hasFlap = false;
 		// feeder connected to hub
@@ -126,6 +128,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	onUnload(callback) {
 		try {
+			this.adapterUnloaded = true;
 			clearTimeout(this.timerId);
 			this.setConnectionStatusToAdapter(false);
 			this.log.info(`everything cleaned up`);
@@ -233,15 +236,17 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.0.8`);
+		this.log.debug(`starting SureFlap Adapter v1.0.9`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
 			.catch(error => {
 				this.log.error(error);
 				this.log.info(`disconnected`);
-				// @ts-ignore
-				this.timerId = setTimeout(this.startLoadingData.bind(this), UPDATE_FREQUENCY_DATA*1000);
+				if(!this.adapterUnloaded) {
+					// @ts-ignore
+					this.timerId = setTimeout(this.startLoadingData.bind(this), UPDATE_FREQUENCY_DATA*1000);
+				}
 			});
 	}
 
@@ -291,10 +296,12 @@ class Sureflap extends utils.Adapter {
 			.then(() => this.setUpdateTimer())
 			.catch(error => {
 				this.log.error(error);
-				this.log.info(`updfate loop stopped`);
+				this.log.info(`update loop stopped`);
 				this.log.info(`disconnected`);
-				// @ts-ignore
-				this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN*1000);
+				if(!this.adapterUnloaded) {
+					// @ts-ignore
+					this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN*1000);
+				}
 			})
 			.finally(() => {this.firstLoop=false;});
 	}
@@ -304,10 +311,14 @@ class Sureflap extends utils.Adapter {
 	 * @return {Promise}
 	 */
 	setUpdateTimer() {
-		return /** @type {Promise<void>} */(new Promise((resolve) => {
-			// @ts-ignore
-			this.timerId = setTimeout(this.updateLoop.bind(this), UPDATE_FREQUENCY_DATA*1000);
-			return resolve();
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			if(!this.adapterUnloaded) {
+				// @ts-ignore
+				this.timerId = setTimeout(this.updateLoop.bind(this), UPDATE_FREQUENCY_DATA*1000);
+				return resolve();
+			} else {
+				return reject(new Error(`cannot set timer. Adapter already unloaded.`));
+			}
 		}));
 	}
 

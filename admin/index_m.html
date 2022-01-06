@@ -19,45 +19,12 @@
 
 	<script type="text/javascript">
 		let timerId = 0;
-		let secret;
-		// de/encrypt functions for backward compatibility
-		// eslint-disable-next-line no-undef
-		if (!encrypt || typeof encrypt !== 'function') {
-			// eslint-disable-next-line no-unused-vars, no-inner-declarations
-			function encrypt(key, value) {
-				if (value === undefined) {
-					value = key;
-					key = secret;
-				}
-				let result = '';
-				for (let i = 0; i < value.length; ++i) {
-					result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
-				}
-				return result;
-			}
-		}
-		// eslint-disable-next-line no-undef
-		if (!decrypt || typeof decrypt !== 'function') {
-			// eslint-disable-next-line no-unused-vars, no-inner-declarations
-			function decrypt(key, value) {
-				if (value === undefined) {
-					value = key;
-					key = secret;
-				}
-				let result = '';
-				for (let i = 0; i < value.length; ++i) {
-					result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
-				}
-				return result;
-			}
-		}
 
 		// This will be called by the admin adapter when the settings page loads
 		// eslint-disable-next-line no-unused-vars
 		function load(settings, onChange) {
 			// eslint-disable-next-line no-undef
-			socket.emit('getObject', 'system.config', function (err, obj) {
-				secret = (obj.native ? obj.native.secret : '') || 'Zgfr56gFe87jJOM';
+			socket.emit('getObject', 'system.config', function () {
 				loadHelper(settings, onChange);
 			});
 
@@ -71,11 +38,6 @@
 			$('.value').each(function () {
 				const $key = $(this);
 				const id = $key.attr('id');
-				// eslint-disable-next-line no-undef
-				if (id === 'password' && (typeof supportsFeature !== 'function' || !supportsFeature('ADAPTER_AUTO_DECRYPT_NATIVE'))) {
-					// eslint-disable-next-line no-undef
-					settings[id] = decrypt(secret, settings[id]);
-				}
 				if ($key.attr('type') === 'checkbox') {
 					// do not call onChange direct, because onChange could expect some arguments
 					$key.prop('checked', settings[id])
@@ -113,14 +75,7 @@
 				} else {
 					if(id === 'password') {
 						settings.password = $this.val();
-						// eslint-disable-next-line no-undef
-						if (typeof supportsFeature !== 'function' || !supportsFeature('ADAPTER_AUTO_DECRYPT_NATIVE')) {
-							// encrypt password
-							// eslint-disable-next-line no-undef
-							obj[id] = encrypt(secret, $this.val());
-						} else {
-							obj[id] = $this.val();
-						}
+						obj[id] = $this.val();
 					} else if(id === 'username') {
 						settings.username = $this.val();
 						obj[id] = $this.val();
@@ -276,7 +231,7 @@
 		}
 
 		/**
-		 * shows an message box with surepet data
+		 * shows a message box with surepet data
 		 * @param {object} data
 		 */
 		function showSurepetData(data) {
