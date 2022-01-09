@@ -1097,17 +1097,26 @@ class Sureflap extends utils.Adapter {
 			// if datapoint with food data found for this device, write it to adapter
 			if(last_datapoint != undefined) {
 				for(let b = 0; b < last_datapoint.weights.length; b++) {
-					this.getState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', (err, obj) => {
+					this.getObject(obj_name + '.bowls.' + last_datapoint.weights[b].index, (err, obj) => {
 						if (!err && obj) {
-							if(obj.val != last_datapoint.weights[b].weight) {
-								this.log.debug(`updating remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
-								this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
-							}
-							this.feederFoodBowlObjectMissing[deviceIndex] = false;
-						} else if(!err && obj == null) {
-							this.log.debug(`setting remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
-							this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
-							this.feederFoodBowlObjectMissing[deviceIndex] = false;
+							this.getState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', (err, obj) => {
+								if (!err && obj) {
+									if(obj.val != last_datapoint.weights[b].weight) {
+										this.log.debug(`updating remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
+										this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
+									}
+									this.feederFoodBowlObjectMissing[deviceIndex] = false;
+								} else if(!err && obj == null) {
+									this.log.debug(`setting remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
+									this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
+									this.feederFoodBowlObjectMissing[deviceIndex] = false;
+								} else {
+									if(!this.feederFoodBowlObjectMissing[deviceIndex]) {
+										this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}.weight' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+										this.feederFoodBowlObjectMissing[deviceIndex] = true;
+									}
+								}
+							});
 						} else {
 							if(!this.feederFoodBowlObjectMissing[deviceIndex]) {
 								this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
