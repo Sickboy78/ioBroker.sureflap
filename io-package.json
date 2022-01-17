@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.0.9",
+		"version": "1.1.0",
 		"news": {
+			"1.1.0": {
+				"en": "bugfix and security updates",
+				"de": "Bugfix und Sicherheitsupdates",
+				"ru": "исправления ошибок и обновления безопасности",
+				"pt": "correcção de bugs e actualizações de segurança",
+				"nl": "bugfix en beveiligingsupdates",
+				"fr": "corrections de bugs et mises à jour de sécurité",
+				"it": "aggiornamenti di sicurezza e bugfix",
+				"es": "actualizaciones de seguridad y corrección de errores",
+				"pl": "poprawki błędów i aktualizacje zabezpieczeń",
+				"zh-cn": "错误修复和安全更新"
+			},
 			"1.0.9": {
 				"en": "code improvements from review",
 				"de": "Codeverbesserungen vom Review",
