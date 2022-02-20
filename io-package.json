@@ -193,7 +193,7 @@
 				"type": "string",
 				"read": true,
 				"write": false,
-				"def": false
+				"def": ""
 			},
 			"native": {}
 		}
