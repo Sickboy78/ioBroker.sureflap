@@ -2402,7 +2402,8 @@ class Sureflap extends utils.Adapter {
 				'Origin' :  'https://surepetcare.io',
 				'Cache-Control' : 'no-cache',
 				'Pragma' : 'no-cache'
-			}
+			},
+			timeout: 60000
 		};
 
 		if (token != undefined && token != '') {
@@ -2532,6 +2533,10 @@ class Sureflap extends utils.Adapter {
 					});
 					return reject(new Error(`Request returned status code ${res.statusCode}`));
 				} else {
+					req.on('error', error => {
+						this.log.error(`error: ${error.toString()}`);
+						return reject(new Error(`Request returned an error`));
+					});
 					const data = [];
 					res.on('data', (chunk) => {
 						data.push(chunk);
@@ -2552,6 +2557,10 @@ class Sureflap extends utils.Adapter {
 
 			req.on('error', (err) => {
 				return reject(new Error(`Request error: ${err} retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
+			});
+
+			req.on('timeout', () => {
+				return reject(new Error(`Request timeout: retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 			});
 
 			req.write(postData);
