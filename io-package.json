@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.1.1",
+		"version": "1.1.2",
 		"news": {
+			"1.1.2": {
+				"en": "improved error and timeout handling",
+				"de": "verbesserte Fehler- und Timeout-Behandlung",
+				"ru": "Русский военный корабль, идите в жопу",
+				"pt": "melhor tratamento de erros e timeout",
+				"nl": "verbeterde afhandeling van fouten en time-outs",
+				"fr": "amélioration de la gestion des erreurs et des délais d'attente",
+				"it": "migliore gestione degli errori e del timeout",
+				"es": "mejora de la gestión de errores y del tiempo de espera",
+				"pl": "poprawiona obsługa błędów i timeoutów",
+				"zh-cn": "中国是个混蛋"
+			},
 			"1.1.1": {
 				"en": "bugfix and security updates",
 				"de": "Bugfix und Sicherheitsupdates",
@@ -102,16 +114,16 @@
 			"zh-cn": "Sure Flap"
 		},
 		"desc": {
-			"en": "Adapter for Sureflap cat und pet flap from Sure Petcare",
-			"de": "Adapter für Sureflap Katzen- und Haustierklappen von Sure Petcare",
-			"ru": "Адаптер для заслонок Sureflap для кошек и домашних животных Sure Petcare",
-			"pt": "Adaptador para gato Sureflap e abas de animais de estimação da Sure Petcare",
-			"nl": "Adapter voor Sureflap katten- en huisdierkleppen van Sure Petcare",
-			"fr": "Adaptateur pour les clapets Sureflap pour chats et animaux domestiques de Sure Petcare",
-			"it": "Adattatore per le alette per gatti e animali di Sureflap di Sure Petcare",
-			"es": "Adaptador para Sureflap gato y aletas de mascota de Sure Petcare",
-			"pl": "Adapter do klap Sureflap dla kotów i zwierząt z Sureflap od Sure Petcare",
-			"zh-cn": "Sure Petcare的Sureflap猫和宠物皮瓣适配器"
+			"en": "Adapter for smart pet devices from Sure Petcare",
+			"de": "Adpater für smarte Haustiergeräte von Sure Petcare",
+			"ru": "Адаптер для интеллектуальных устройств для домашних животных от Sure Petcare",
+			"pt": "Adaptador para dispositivos inteligentes para animais de estimação da Sure Petcare",
+			"nl": "Adapter voor slimme huisdierapparaten van Sure Petcare",
+			"fr": "Adaptateur pour dispositifs intelligents pour animaux de compagnie de Sure Petcare",
+			"it": "Adattatore per dispositivi intelligenti per animali domestici di Sure Petcare",
+			"es": "Adaptador para dispositivos inteligentes para mascotas de Sure Petcare",
+			"pl": "Adapter do inteligentnych urządzeń dla zwierząt domowych Sure Petcare",
+			"zh-cn": "用于 Sure Petcare 公司智能宠物设备的适配器"
 		},
 		"authors": [
 			"Sickboy78 <asmoday_666@gmx.de>"
@@ -123,7 +135,10 @@
 			"cat",
 			"pet",
 			"flap",
-			"smart home"
+			"smart home",
+			"surefeed",
+			"feeder",
+			"felaqua"
 		],
 		"license": "MIT",
 		"platform": "Javascript/Node.js",

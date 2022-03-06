@@ -1,7 +1,7 @@
 {
   "name": "iobroker.sureflap",
-  "version": "1.1.1",
-  "description": "Adpater für Sureflap Katzen- und Haustierklappen von Sure Petcare",
+  "version": "1.1.2",
+  "description": "Adpater für smarte Haustiergeräte von Sure Petcare",
   "author": {
     "name": "Sickboy78",
     "email": "asmoday_666@gmx.de"
@@ -13,7 +13,12 @@
     "surepetcare",
     "petcare",
     "cat",
-    "flap"
+    "pet",
+    "flap",
+    "smart home",
+    "surefeed",
+    "feeder",
+    "felaqua"
   ],
   "repository": {
     "type": "git",

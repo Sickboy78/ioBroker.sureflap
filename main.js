@@ -46,20 +46,25 @@ class Sureflap extends utils.Adapter {
 
 		// class variables
 
+		/* update loop status */
+		// is first update loop
+		this.firstLoop = true;
 		// number of logins
 		this.numberOfLogins = 0;
 		// timer id
 		this.timerId = 0;
 		// adapter unloaded
 		this.adapterUnloaded = false;
+
+		/* connected devices */
 		// flap connected to hub
 		this.hasFlap = false;
 		// feeder connected to hub
 		this.hasFeeder = false;
 		// water dispenser connected to hub
 		this.hasDispenser = false;
-		// is first update loop
-		this.firstLoop = true;
+
+		/* current and previous data from surepet API */
 		// current state
 		this.sureFlapState = {};
 		// previous state
@@ -81,7 +86,7 @@ class Sureflap extends utils.Adapter {
 		// update aggregated report this loop
 		this.updateReport = true;
 
-		// remember repeatbale warnings to not spam iobroker log
+		/* remember repeatbale warnings to not spam iobroker log */
 		this.petPositionObjectMissing = [];
 		this.petFeedingDataMissing = [];
 		this.feederConfigBowlObjectMissing = [];
@@ -116,7 +121,8 @@ class Sureflap extends utils.Adapter {
 		// this.subscribeStates("lights.*");
 		// Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
 		// this.subscribeStates("*");
-		this.subscribeStates('*');
+		this.subscribeStates('*.control.*');
+		this.subscribeStates('*.pets.*.inside');
 
 		// start loading the data from the surepetcare API
 		this.startLoadingData();
@@ -236,7 +242,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.1.1`);
+		this.log.debug(`starting SureFlap Adapter v1.1.2`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
