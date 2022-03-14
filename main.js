@@ -1043,14 +1043,16 @@ class Sureflap extends utils.Adapter {
 
 		// assigned pets type
 		if(isCatFlap) {
-			for(let t = 0; t < this.sureFlapState.devices[deviceIndex].tags.length; t++) {
-				if (!this.sureFlapStatePrev.devices || !this.sureFlapStatePrev.devices[deviceIndex].tags[t] || (this.sureFlapState.devices[deviceIndex].tags[t].profile !== this.sureFlapStatePrev.devices[deviceIndex].tags[t].profile)) {
-					const name = this.getPetNameForTagId(this.sureFlapState.devices[deviceIndex].tags[t].id);
-					const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.assigned_pets.' + name + '.control' + '.type';
-					try {
-						this.setState(obj_name, this.sureFlapState.devices[deviceIndex].tags[t].profile, true);
-					} catch(error) {
-						this.log.error(`could not set pet type to adapter (${error})`);
+			if('tags' in this.sureFlapState.devices[deviceIndex]) {
+				for(let t = 0; t < this.sureFlapState.devices[deviceIndex].tags.length; t++) {
+					if (!this.sureFlapStatePrev.devices || !this.sureFlapStatePrev.devices[deviceIndex].tags[t] || (this.sureFlapState.devices[deviceIndex].tags[t].profile !== this.sureFlapStatePrev.devices[deviceIndex].tags[t].profile)) {
+						const name = this.getPetNameForTagId(this.sureFlapState.devices[deviceIndex].tags[t].id);
+						const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.assigned_pets.' + name + '.control' + '.type';
+						try {
+							this.setState(obj_name, this.sureFlapState.devices[deviceIndex].tags[t].profile, true);
+						} catch(error) {
+							this.log.error(`could not set pet type to adapter (${error})`);
+						}
 					}
 				}
 			}
@@ -1622,24 +1624,25 @@ class Sureflap extends utils.Adapter {
 								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
 
 								// pet flap had pet type control which is a exclusive feature of cat flap
-								for(let t = 0; t < this.sureFlapState.devices[d].tags.length; t++) {
-									const name = this.getPetNameForTagId(this.sureFlapState.devices[d].tags[t].id);
-									this.getObject(obj_name + '.assigned_pets.' + name, (err, obj) => {
-										if (!err && obj) {
-											if(obj.type == 'channel') {
-												this.log.debug(`obsolete channel object ${obj_name}.assigned_pets.${name} found. trying to delete recursively`);
+								if('tags' in this.sureFlapState.devices[d]) {
+									for(let t = 0; t < this.sureFlapState.devices[d].tags.length; t++) {
+										const name = this.getPetNameForTagId(this.sureFlapState.devices[d].tags[t].id);
+										this.getObject(obj_name + '.assigned_pets.' + name, (err, obj) => {
+											if (!err && obj) {
+												if(obj.type == 'channel') {
+													this.log.debug(`obsolete channel object ${obj_name}.assigned_pets.${name} found. trying to delete recursively`);
 
-												this.deleteObjectFormAdapter(obj_name + '.assigned_pets.' + name, true)
-													.then(() => {
-														this.log.info(`deleted assigned pets for pet flap ${obj_name} because of obsolete control for pet type. please restart adapter to show assigned pets again.`);
-													}).catch(() => {
-														this.log.warn(`can not delete obsolete object ${obj_name}.assigned_pets.${name}`);
-													});
+													this.deleteObjectFormAdapter(obj_name + '.assigned_pets.' + name, true)
+														.then(() => {
+															this.log.info(`deleted assigned pets for pet flap ${obj_name} because of obsolete control for pet type. please restart adapter to show assigned pets again.`);
+														}).catch(() => {
+															this.log.warn(`can not delete obsolete object ${obj_name}.assigned_pets.${name}`);
+														});
+												}
 											}
-										}
-									});
+										});
+									}
 								}
-
 							}
 						}
 					}
@@ -1781,12 +1784,14 @@ class Sureflap extends utils.Adapter {
 					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH'})));
 					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.curfew', this.buildStateObject('curfew', 'switch', 'boolean', false)));
 					this.setObjectNotExists(obj_name + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
-						for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
-							if(isCatFlap) {
-								promiseArray.push(this.createAssignedPetsTypeControl(device, t, obj_name));
-							} else {
-								const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
+						if('tags' in this.sureFlapState.devices[device]) {
+							for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
+								if(isCatFlap) {
+									promiseArray.push(this.createAssignedPetsTypeControl(device, t, obj_name));
+								} else {
+									const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
+								}
 							}
 						}
 						Promise.all(promiseArray).then(() => {
@@ -1843,42 +1848,51 @@ class Sureflap extends utils.Adapter {
 					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.close_delay', this.buildStateObject('closing delay of lid', 'switch.mode.delay', 'number', false, {0: 'FAST', 4:'NORMAL', 20:'SLOW'})));
 
 					this.setObjectNotExists(obj_name + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
-						for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
-							const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
-							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
-						}
+						if('tags' in this.sureFlapState.devices[device]) {
+							for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
+								const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
+							}
 
-						this.setObjectNotExists(obj_name + '.bowls', this.buildChannelObject('feeding bowls'), () => {
-							this.setObjectNotExists(obj_name + '.bowls.0', this.buildChannelObject('feeding bowl 0'), () => {
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.target', this.buildStateObject('target weight','value', 'number')));
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.weight', this.buildStateObject('weight','value', 'number')));
+							this.setObjectNotExists(obj_name + '.bowls', this.buildChannelObject('feeding bowls'), () => {
+								this.setObjectNotExists(obj_name + '.bowls.0', this.buildChannelObject('feeding bowl 0'), () => {
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.target', this.buildStateObject('target weight','value', 'number')));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.weight', this.buildStateObject('weight','value', 'number')));
 
-								if(this.sureFlapState.devices[device].control.bowls.type == FEEDER_SINGLE_BOWL) {
-									// remove bowl 1 (e.g. after change from dual to single bowl)
-									promiseArray.push(this.deleteObjectFormAdapter(obj_name + '.bowls.1', true));
-									Promise.all(promiseArray).then(() => {
-										return resolve();
-									}).catch(error => {
-										this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
-										return reject();
-									});
-								} else {
-									this.setObjectNotExists(obj_name + '.bowls.1', this.buildChannelObject('feeding bowl 1'), () => {
-										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
-										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.target', this.buildStateObject('target weight','value', 'number')));
-										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.weight', this.buildStateObject('weight','value', 'number')));
-
+									if(this.sureFlapState.devices[device].control.bowls.type == FEEDER_SINGLE_BOWL) {
+										// remove bowl 1 (e.g. after change from dual to single bowl)
+										promiseArray.push(this.deleteObjectFormAdapter(obj_name + '.bowls.1', true));
 										Promise.all(promiseArray).then(() => {
 											return resolve();
 										}).catch(error => {
 											this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
 											return reject();
 										});
-									});
-								}
+									} else {
+										this.setObjectNotExists(obj_name + '.bowls.1', this.buildChannelObject('feeding bowl 1'), () => {
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.target', this.buildStateObject('target weight','value', 'number')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.weight', this.buildStateObject('weight','value', 'number')));
+
+											Promise.all(promiseArray).then(() => {
+												return resolve();
+											}).catch(error => {
+												this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
+												return reject();
+											});
+										});
+									}
+								});
 							});
-						});
+						} else {
+							Promise.all(promiseArray).then(() => {
+								return resolve();
+							}).catch(error => {
+								this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
+								return reject();
+							});
+						}
 					});
 				});
 			});
@@ -2115,9 +2129,11 @@ class Sureflap extends utils.Adapter {
 	 * @return {number} tag index
 	 */
 	getTagIndexForDeviceIndex(device, tag) {
-		for (let i=0; i < this.sureFlapState.devices[device].tags.length; i++) {
-			if (this.sureFlapState.devices[device].tags[i].id === tag) {
-				return i;
+		if('tags' in this.sureFlapState.devices[device]) {
+			for (let i=0; i < this.sureFlapState.devices[device].tags.length; i++) {
+				if (this.sureFlapState.devices[device].tags[i].id === tag) {
+					return i;
+				}
 			}
 		}
 		return -1;
@@ -2400,6 +2416,7 @@ class Sureflap extends utils.Adapter {
 			port: 443,
 			path: path,
 			method: method,
+			timeout: 60000,
 			headers: {
 				'Host' : 'app.api.surehub.io',
 				'Accept' : 'application/json, text/plain, */*',
@@ -2408,8 +2425,7 @@ class Sureflap extends utils.Adapter {
 				'Origin' :  'https://surepetcare.io',
 				'Cache-Control' : 'no-cache',
 				'Pragma' : 'no-cache'
-			},
-			timeout: 60000
+			}
 		};
 
 		if (token != undefined && token != '') {
@@ -2527,22 +2543,8 @@ class Sureflap extends utils.Adapter {
 			this.log.silly(`doing http request with tag ${tag}`);
 			const req = https.request(options, (res) => {
 				if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-					req.on('error', error => {
-						this.log.error(`error: ${error.toString()}`);
-					});
-					const data = [];
-					res.on('data', (chunk) => {
-						data.push(chunk);
-					});
-					res.on('end', () => {
-						this.log.debug(`result: ${data.join('')}`);
-					});
 					return reject(new Error(`Request returned status code ${res.statusCode}`));
 				} else {
-					req.on('error', error => {
-						this.log.error(`error: ${error.toString()}`);
-						return reject(new Error(`Request returned an error`));
-					});
 					const data = [];
 					res.on('data', (chunk) => {
 						data.push(chunk);
@@ -2558,14 +2560,21 @@ class Sureflap extends utils.Adapter {
 							return reject(new Error(`JSon parse error in ${data}`));
 						}
 					});
+					res.on('error', (err) => {
+						this.log.error(`Response error: ${err.toString()}`);
+						return reject(new Error(`Response error: ${err} retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
+					});
 				}
 			});
 
 			req.on('error', (err) => {
+				this.log.error(`Request error: ${err.toString()}`);
 				return reject(new Error(`Request error: ${err} retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 			});
 
 			req.on('timeout', () => {
+				this.log.error(`Request timeout`);
+				req.destroy();
 				return reject(new Error(`Request timeout: retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 			});
 
