@@ -114,6 +114,7 @@ adapter<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ ├ time_spent<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ ├ times_eaten<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ └ dry..wet<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; └ weight<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ water<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ last_time_drunk<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ time_spent<br>
