@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.1.3",
+		"version": "1.1.4",
 		"news": {
+			"1.1.4": {
+				"en": "Felaqua support",
+				"de": "Unterstützung für Felaqua",
+				"ru": "Слава Украины",
+				"pt": "Apoio de Felaqua",
+				"nl": "Felaqua steun",
+				"fr": "Soutien de Felaqua",
+				"it": "Supporto Felaqua",
+				"es": "Felaqua toetus",
+				"pl": "Wsparcie Felaqua",
+				"zh-cn": "支持Felaqua"
+			},
 			"1.1.3": {
 				"en": "more code improvements",
 				"de": "Codeverbesserungen",

@@ -28,6 +28,7 @@ const UPDATE_FREQUENCY_REPORT = 60;
 const DEVICE_TYPE_PET_FLAP = 3;
 const DEVICE_TYPE_FEEDER = 4;
 const DEVICE_TYPE_CAT_FLAP = 6;
+const DEVICE_TYPE_WATER_DISPENSER = 8;
 // Constants - feeder parameter
 const FEEDER_SINGLE_BOWL = 1;
 const FEEDER_FOOD_WET = 1;
@@ -91,6 +92,8 @@ class Sureflap extends utils.Adapter {
 		this.petFeedingDataMissing = [];
 		this.feederConfigBowlObjectMissing = [];
 		this.feederFoodBowlObjectMissing = [];
+		this.waterDispenserWaterObjectMissing = [];
+		this.petDrinkingDataMissing = [];
 
 		// promisify setObjectNotExists
 		this.setObjectNotExistsPromise = util.promisify(this.setObjectNotExists);
@@ -251,7 +254,7 @@ class Sureflap extends utils.Adapter {
 				this.log.info(`disconnected`);
 				if(!this.adapterUnloaded) {
 					// @ts-ignore
-					this.timerId = setTimeout(this.startLoadingData.bind(this), UPDATE_FREQUENCY_DATA*1000);
+					this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN*1000);
 				}
 			});
 	}
@@ -378,7 +381,9 @@ class Sureflap extends utils.Adapter {
 					this.makeNamesCanonical();
 					this.makeCurfewArray();
 					this.normalizeLockMode();
+					this.smoothBatteryOutliers();
 					this.setOfflineDevices();
+					this.calculateBatteryPercentageForDevices();
 					this.setConnectedDevices();
 					this.setLastUpdateToAdapter();
 					return resolve();
@@ -406,7 +411,7 @@ class Sureflap extends utils.Adapter {
 				promiseArray.push(this.getEventHistoryFromApi());
 			}
 			// get aggregated report every UPDATE_FREQUENCY_REPORT but not same time as history (dont spam surepet server) except for first loop
-			if((!this.updateHistory || this.firstLoop) && this.hasFeeder && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
+			if((!this.updateHistory || this.firstLoop) && (this.hasFeeder || this.hasDispenser) && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
 				promiseArray.push(this.getAggregatedReportFromApi());
 			}
 			if(promiseArray.length == 0) {
@@ -567,8 +572,10 @@ class Sureflap extends utils.Adapter {
 							} else if (this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
 								// Feeder Connect
 								this.setFeederConnectToAdapter(prefix,hierarchy,d);
+							} else if(this.sureFlapState.devices[d].product_id == DEVICE_TYPE_WATER_DISPENSER) {
+								// water dispenser
+								this.setWaterDispenserConnectToAdapter(prefix,hierarchy,d);
 							}
-							// TODO: add water dispenser
 							this.setBatteryStatusToAdapter(prefix,hierarchy,d);
 						} else {
 							this.setHubStatusToAdapter(prefix,d);
@@ -612,6 +619,9 @@ class Sureflap extends utils.Adapter {
 				}
 				if(this.hasFeeder && this.updateReport) {
 					this.setPetFeedingToAdapter(prefix + '.' + pet_name + '.food', p);
+				}
+				if(this.hasDispenser && this.updateReport) {
+					this.setPetDrinkingToAdapter(prefix + '.' + pet_name + '.water', p);
 				}
 			}
 			return resolve();
@@ -1143,6 +1153,67 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * sets water dispenser attributes to the adapter
+	 * @param {string} prefix
+	 * @param {string} hierarchy
+	 * @param {number} deviceIndex
+	 */
+	setWaterDispenserConnectToAdapter(prefix, hierarchy, deviceIndex) {
+		const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name;
+		// water dispenser remaining water data from sureFlapReport
+		if(this.updateReport && (this.sureFlapReportPrev == undefined || this.sureFlapReportPrev.length == 0 || JSON.stringify(this.sureFlapReport) != JSON.stringify(this.sureFlapReportPrev))) {
+			const device_id = this.sureFlapState.devices[deviceIndex].id;
+			let last_datapoint;
+			// look in drinking data for every pet
+			for(let p = 0; p < this.sureFlapState.pets.length; p++) {
+				// look in drinking datapoints starting with latest (last)
+				for(let i = this.sureFlapReport[p].drinking.datapoints.length-1; i>=0; i--) {
+					// check if datapoint is for this water dispenser
+					if(this.sureFlapReport[p].drinking.datapoints[i].device_id == device_id) {
+						// check if datapoint is newer then saved datapoint
+						if(last_datapoint == undefined || last_datapoint.to == undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].drinking.datapoints[i].to)) {
+							last_datapoint = this.sureFlapReport[p].drinking.datapoints[i];
+							break;
+						}
+					}
+				}
+			}
+			// if datapoint with drinking data found for this device, write it to adapter
+			if(last_datapoint != undefined && last_datapoint.weights.length > 0) {
+				this.getObject(obj_name + '.water', (err, obj) => {
+					if (!err && obj) {
+						this.getState(obj_name + '.water.weight', (err, obj) => {
+							if (!err && obj) {
+								if(obj.val != last_datapoint.weights[0].weight) {
+									this.log.debug(`updating remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
+									this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
+								}
+								this.waterDispenserWaterObjectMissing[deviceIndex] = false;
+							} else if(!err && obj == null) {
+								this.log.debug(`setting remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
+								this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
+								this.waterDispenserWaterObjectMissing[deviceIndex] = false;
+							} else {
+								if(!this.waterDispenserWaterObjectMissing[deviceIndex]) {
+									this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
+									this.waterDispenserWaterObjectMissing[deviceIndex] = true;
+								}
+							}
+						});
+					} else {
+						if(!this.waterDispenserWaterObjectMissing[deviceIndex]) {
+							this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
+							this.waterDispenserWaterObjectMissing[deviceIndex] = true;
+						}
+					}
+				});
+			} else {
+				this.log.warn(`no remaining water data for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' found`);
+			}
+		}
+	}
+
+	/**
 	 * sets curfew of flap to the adapter
 	 * @param {string} prefix
 	 * @param {string} hierarchy
@@ -1289,6 +1360,30 @@ class Sureflap extends utils.Adapter {
 			if(!this.petFeedingDataMissing[p]) {
 				this.log.warn(`aggregated report for pet '${this.sureFlapState.pets[p].name}' does not contain feeding data`);
 				this.petFeedingDataMissing[p] = true;
+			}
+		}
+	}
+
+	/**
+	 * sets pet drinking to the adapter
+	 * @param {string} prefix
+	 * @param {number} p
+	 */
+	setPetDrinkingToAdapter(prefix, p) {
+		if(!this.sureFlapReport[p].drinking != undefined && this.sureFlapReport[p].drinking.datapoints != undefined && this.sureFlapReport[p].drinking.datapoints.length >0) {
+			if(!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].drinking || JSON.stringify(this.sureFlapReport[p].drinking) !== JSON.stringify(this.sureFlapReportPrev[p].drinking)) {
+				const consumption_data = this.calculateWaterConsumption(p);
+				this.log.debug(`updating water consumed for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(consumption_data)}'`);
+				this.setState(prefix + '.last_time_drunk', consumption_data.last_time, true);
+				this.setState(prefix + '.times_drunk', consumption_data.count, true);
+				this.setState(prefix + '.time_spent', consumption_data.time_spent, true);
+				this.setState(prefix + '.weight', consumption_data.weight, true);
+			}
+			this.petDrinkingDataMissing[p] = false;
+		} else {
+			if(!this.petDrinkingDataMissing[p]) {
+				this.log.warn(`aggregated report for pet '${this.sureFlapState.pets[p].name}' does not contain drinking data`);
+				this.petDrinkingDataMissing[p] = true;
 			}
 		}
 	}
@@ -1745,7 +1840,10 @@ class Sureflap extends utils.Adapter {
 									// feeding bowl
 									promiseArray.push(this.createFeederDevicesToAdapter(d, obj_name));
 									break;
-								// TODO: add water dispenser
+								case DEVICE_TYPE_WATER_DISPENSER:
+									// water dispenser
+									promiseArray.push(this.createWaterDispenserDevicesToAdapter(d, obj_name));
+									break;
 								default:
 									this.log.debug(`device with unknown id (${this.sureFlapState.devices[d].product_id}) found`);
 									break;
@@ -1900,6 +1998,41 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * creates water dispenser device hierarchy data structures in the adapter
+	 * @param {number} device
+	 * @param {string} obj_name
+	 * @return {Promise}
+	 */
+	createWaterDispenserDevicesToAdapter(device, obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[device].name_org + '\' (' + this.sureFlapState.devices[device].id + ')'), () => {
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online','indicator.reachable')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+
+				this.setObjectNotExists(obj_name + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
+					if('tags' in this.sureFlapState.devices[device]) {
+						for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
+							const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
+						}
+					}
+					this.setObjectNotExists(obj_name + '.water', this.buildChannelObject('remaining water'), () => {
+						promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water.weight', this.buildStateObject('weight','value', 'number')));
+						Promise.all(promiseArray).then(() => {
+							return resolve();
+						}).catch(error => {
+							this.log.warn(`could not create adapter water dispenser device hierarchy (${error})`);
+							return reject();
+						});
+					});
+				});
+			});
+		}));
+	}
+
+	/**
 	 * creates pet hierarchy data structures in the adapter
 	 * @return {Promise}
 	 */
@@ -1959,22 +2092,54 @@ class Sureflap extends utils.Adapter {
 								this.setObjectNotExists(obj_name + '.food.dry', this.buildFolderObject('dry food (2)'), () => {
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.food.dry' + '.weight', this.buildStateObject('dry food consumed today', 'value', 'number')));
 
-									Promise.all(promiseArray).then(() => {
-										return resolve();
-									}).catch(error => {
-										this.log.warn(`could not create adapter pet hierarchy (${error})`);
-										return reject();
-									});
+									if(this.hasDispenser) {
+										this.setObjectNotExists(obj_name + '.water', this.buildFolderObject('water'), () => {
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water' + '.last_time_drunk', this.buildStateObject('last time water consumed', 'date', 'string')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water' + '.times_drunk', this.buildStateObject('number of times water consumed today', 'value', 'number')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water' + '.time_spent', this.buildStateObject('time spent in seconds at water dispenser today', 'value', 'number')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water' + '.weight', this.buildStateObject('water consumed today', 'value', 'number')));
+
+											Promise.all(promiseArray).then(() => {
+												return resolve();
+											}).catch(error => {
+												this.log.warn(`could not create adapter pet hierarchy (${error})`);
+												return reject();
+											});
+										});
+									} else {
+										Promise.all(promiseArray).then(() => {
+											return resolve();
+										}).catch(error => {
+											this.log.warn(`could not create adapter pet hierarchy (${error})`);
+											return reject();
+										});
+									}
 								});
 							});
 						});
 					} else {
-						Promise.all(promiseArray).then(() => {
-							return resolve();
-						}).catch(error => {
-							this.log.warn(`could not create adapter pet hierarchy (${error})`);
-							return reject();
-						});
+						if(this.hasDispenser) {
+							this.setObjectNotExists(obj_name + '.water', this.buildFolderObject('water'), () => {
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water' + '.last_time_drunk', this.buildStateObject('last time water consumed', 'date', 'string')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water' + '.times_drunk', this.buildStateObject('number of times water consumed today', 'value', 'number')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water' + '.time_spent', this.buildStateObject('time spent in seconds at water dispenser today', 'value', 'number')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water' + '.weight', this.buildStateObject('water consumed today', 'value', 'number')));
+
+								Promise.all(promiseArray).then(() => {
+									return resolve();
+								}).catch(error => {
+									this.log.warn(`could not create adapter pet hierarchy (${error})`);
+									return reject();
+								});
+							});
+						} else {
+							Promise.all(promiseArray).then(() => {
+								return resolve();
+							}).catch(error => {
+								this.log.warn(`could not create adapter pet hierarchy (${error})`);
+								return reject();
+							});
+						}
 					}
 				});
 			});
@@ -1996,8 +2161,16 @@ class Sureflap extends utils.Adapter {
 			if (!this.sureFlapState.devices[d].status.online) {
 				this.sureFlapState.offline_devices.push(this.sureFlapState.devices[d].name);
 			}
+		}
+	}
+
+	/**
+	 * sets the battery percentage from the battery value
+	 */
+	calculateBatteryPercentageForDevices() {
+		for (let d = 0; d < this.sureFlapState.devices.length; d++) {
 			if (this.sureFlapState.devices[d].status.battery) {
-				this.sureFlapState.devices[d].status.battery_percentage = this.calculateBatteryPercentage(this.sureFlapState.devices[d].status.battery);
+				this.sureFlapState.devices[d].status.battery_percentage = this.calculateBatteryPercentage(this.sureFlapState.devices[d].product_id, this.sureFlapState.devices[d].status.battery);
 			}
 		}
 	}
@@ -2015,6 +2188,9 @@ class Sureflap extends utils.Adapter {
 						break;
 					case DEVICE_TYPE_FEEDER:
 						this.hasFeeder = true;
+						break;
+					case DEVICE_TYPE_WATER_DISPENSER:
+						this.hasDispenser = true;
 						break;
 				}
 			}
@@ -2045,6 +2221,33 @@ class Sureflap extends utils.Adapter {
 					for (let b = 0; b < datapoint.weights.length; b++) {
 						data.weight[datapoint.weights[b].food_type_id] -= datapoint.weights[b].change;
 					}
+				}
+			}
+		}
+		data.time_spent = Math.floor(data.time_spent / 1000);
+		return data;
+	}
+
+	/**
+	 * calculates water consumption data for pet
+	 * @param {number} pet
+	 * @returns {object} water consumption data object
+	 */
+	calculateWaterConsumption(pet) {
+		const data = {};
+		data.count = 0;
+		data.last_time = this.getDateFormattedAsISO(new Date(0));
+		data.time_spent = 0;
+		data.weight = 0;
+		for (let i = 0; i < this.sureFlapReport[pet].drinking.datapoints.length; i++) {
+			const datapoint = this.sureFlapReport[pet].drinking.datapoints[i];
+			if (datapoint.context === 1) {
+				data.last_time = datapoint.to;
+				if (this.isToday(new Date(datapoint.to))) {
+					data.count++;
+					data.time_spent += new Date(datapoint.to).getTime() - new Date(datapoint.from).getTime();
+					this.log.silly(`datapoint '${i}' is water drunk today`);
+					data.weight -= datapoint.weights[0].change;
 				}
 			}
 		}
@@ -2283,6 +2486,21 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * applies a smooth filter to flatten outliers in battery values
+	 */
+	smoothBatteryOutliers() {
+		if (this.sureFlapStatePrev.devices) {
+			for (let d = 0; d < this.sureFlapState.devices.length; d++) {
+				if(this.sureFlapState.devices[d].status.battery > this.sureFlapStatePrev.devices[d].status.battery) {
+					this.sureFlapState.devices[d].status.battery = Math.ceil(this.sureFlapState.devices[d].status.battery * 10 + this.sureFlapStatePrev.devices[d].status.battery * 990) / 1000;
+				} else if(this.sureFlapState.devices[d].status.battery < this.sureFlapStatePrev.devices[d].status.battery) {
+					this.sureFlapState.devices[d].status.battery = Math.floor(this.sureFlapState.devices[d].status.battery * 10 + this.sureFlapStatePrev.devices[d].status.battery * 990) / 1000;
+				}
+			}
+		}
+	}
+
+	/**
 	 * removes whitespaces and special characters from device, household and pet names
 	 */
 	makeNamesCanonical() {
@@ -2389,18 +2607,35 @@ class Sureflap extends utils.Adapter {
 
 	/**
 	 * returns the battery percentage
+	 * @param {number} deviceId
 	 * @param {number} battery
 	 * @return {number}
 	 */
-	calculateBatteryPercentage(battery)
+	calculateBatteryPercentage(deviceId, battery)
 	{
-		if (battery <= 5) {
-			return 0;
-		} else if (battery >= 6) {
-			return 100;
-		} else {
-			return Math.round((1 - Math.pow(6 - battery,2)) * 100);
+		switch(deviceId) {
+			case DEVICE_TYPE_FEEDER:
+				// feeding bowl
+			// eslint-disable-next-line no-fallthrough
+			case DEVICE_TYPE_WATER_DISPENSER:
+				// water dispenser
+				if (battery <= 5.2) {
+					return 0;
+				} else if (battery >= 6.2) {
+					return 100;
+				} else {
+					return Math.round((1 - (6.2 - battery)) * 100);
+				}
+			default:
+				if (battery <= 5.1) {
+					return 0;
+				} else if (battery >= 6.1) {
+					return 100;
+				} else {
+					return Math.round((1 - (6.1 - battery)) * 100);
+				}
 		}
+
 	}
 
 	/**
