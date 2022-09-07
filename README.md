@@ -16,9 +16,11 @@
 
 ## Adpater for smart pet devices from Sure Petcare®
 <p align="center">
-  <img src="/admin/Sure_Petcare_Felaqua_Connect.png" />
   <img src="/admin/SureFlap_Pet_Door_Connect_Hub_Phone.png" />
+</p>
+<p align="center">
   <img src="/admin/Sure_Petcare_Surefeed_Feeder_Connect.png" />
+  <img src="/admin/Sure_Petcare_Felaqua_Connect.png" />
 </p>
 
 ## Configuration
