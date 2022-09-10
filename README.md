@@ -56,12 +56,14 @@ adapter<br>
 ├ household_name<br>
 │ ├ hub_name<br>
 │ │ ├ online<br>
+│ │ ├ serial_number<br>
 │ │ ├ control<br>
 │ │ │ └ led_mode<br>
 │ │ ├ felaqua_name<br>
 │ │ │ ├ battery<br>
 │ │ │ ├ battery_percentage<br>
 │ │ │ ├ online<br>
+│ │ │ ├ serial_number<br>
 │ │ │ ├ assigned_pets<br>
 │ │ │ │ └ pet_name<br>
 │ │ │ └ water<br>
@@ -70,6 +72,7 @@ adapter<br>
 │ │ │ ├ battery<br>
 │ │ │ ├ battery_percentage<br>
 │ │ │ ├ online<br>
+│ │ │ ├ serial_number<br>
 │ │ │ ├ assigned_pets<br>
 │ │ │ │ └ pet_name<br>
 │ │ │ ├ bowls<br>
@@ -84,6 +87,7 @@ adapter<br>
 │ │ &nbsp;&nbsp;&nbsp; ├ battery_percentage<br>
 │ │ &nbsp;&nbsp;&nbsp; ├ curfew_active<br>
 │ │ &nbsp;&nbsp;&nbsp; ├ online<br>
+│ │ &nbsp;&nbsp;&nbsp; ├ serial_number<br>
 │ │ &nbsp;&nbsp;&nbsp; ├ control<br>
 │ │ &nbsp;&nbsp;&nbsp; │ ├ curfew<br>
 │ │ &nbsp;&nbsp;&nbsp; │ └ lockmode<br>
@@ -132,6 +136,9 @@ SureFlap®, Sure Petcare® and Felaqua® are registered trademarks of [SureFlap 
 The pictures of the SureFlap® devices are provided free to use from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
+
+### 1.1.5 (2022-09-10)
+* (Sickboy78) added display of serial numbers
 
 ### 1.1.4 (2022-09-07)
 * (Sickboy78) added Felaqua support

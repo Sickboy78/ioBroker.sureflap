@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.1.4",
+		"version": "1.1.5",
 		"news": {
+			"1.1.5": {
+				"en": "display of serial numbers",
+				"de": "Anzeige der Seriennummern",
+				"ru": "Слава Украины",
+				"pt": "Exibição dos números de série",
+				"nl": "Weergave van serienummers",
+				"fr": "Affichage des numéros de série",
+				"it": "Visualizzazione dei numeri di serie",
+				"es": "Seerianumbrite kuvamine",
+				"pl": "Wyświetlanie numerów seryjnych",
+				"zh-cn": "显示序列号"
+			},
 			"1.1.4": {
 				"en": "Felaqua support",
 				"de": "Unterstützung für Felaqua",

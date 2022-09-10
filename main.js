@@ -245,7 +245,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.1.4`);
+		this.log.debug(`starting SureFlap Adapter v1.1.5`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -577,6 +577,7 @@ class Sureflap extends utils.Adapter {
 								this.setWaterDispenserConnectToAdapter(prefix,hierarchy,d);
 							}
 							this.setBatteryStatusToAdapter(prefix,hierarchy,d);
+							this.setSerialNumberToAdapter(prefix,hierarchy,d);
 						} else {
 							this.setHubStatusToAdapter(prefix,d);
 						}
@@ -1269,15 +1270,26 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} deviceIndex
 	 */
 	setBatteryStatusToAdapter(prefix, hierarchy, deviceIndex) {
-		// battery status
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery !== this.sureFlapStatePrev.devices[deviceIndex].status.battery)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery';
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery, true);
 		}
-
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== this.sureFlapStatePrev.devices[deviceIndex].status.battery_percentage)) {
 			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery_percentage';
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery_percentage, true);
+		}
+	}
+
+	/**
+	 * sets the serial number to the adapter
+	 * @param {string} prefix
+	 * @param {string} hierarchy
+	 * @param {number} deviceIndex
+	 */
+	setSerialNumberToAdapter(prefix, hierarchy, deviceIndex) {
+		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].serial_number !== this.sureFlapStatePrev.devices[deviceIndex].serial_number)) {
+			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'serial_number';
+			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].serial_number, true);
 		}
 	}
 
@@ -1290,6 +1302,10 @@ class Sureflap extends utils.Adapter {
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.led_mode !== this.sureFlapStatePrev.devices[deviceIndex].status.led_mode)) {
 			const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + 'led_mode';
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.led_mode, true);
+		}
+		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].serial_number !== this.sureFlapStatePrev.devices[deviceIndex].serial_number)) {
+			const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.serial_number';
+			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].serial_number, true);
 		}
 	}
 
@@ -1792,7 +1808,8 @@ class Sureflap extends utils.Adapter {
 								if (!('parent' in this.sureFlapState.devices[d])) {
 									const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
 									this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
-										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
+										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online', 'indicator.reachable')));
+										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.serial_number', this.buildStateObject('serial number of device', 'text', 'string')));
 										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control', this.buildChannelObject('control switches')));
 										Promise.all(promiseArray).then(() => {
 											this.setObjectNotExists(obj_name + '.control.led_mode', this.buildStateObject('led mode', 'indicator', 'number', false, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }), () => {
@@ -1862,6 +1879,28 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * creates online, battery, battery_percentage and serial_number data structures in the adapter
+	 * @param {number} device
+	 * @param {string} obj_name
+	 * @return {Promise}
+	 */
+	createCommonStatusToAdapter(device, obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online', 'indicator.reachable')));
+			promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
+			promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+			promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.serial_number', this.buildStateObject('serial number of device', 'text', 'string')));
+			Promise.all(promiseArray).then(() => {
+				return resolve();
+			}).catch(error => {
+				this.log.warn(`could not create adapter common status hierarchy for device ${this.sureFlapState.devices[device].name} (${error})`);
+				return reject();
+			});
+		}));
+	}
+
+	/**
 	 * creates cat and pet flap device hierarchy data structures in the adapter
 	 * @param {number} device
 	 * @param {string} obj_name
@@ -1875,9 +1914,7 @@ class Sureflap extends utils.Adapter {
 				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew', this.buildChannelObject('curfew settings')));
 				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.last_curfew', this.buildChannelObject('last curfew settings')));
 				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.curfew_active', this.buildStateObject('If curfew is active','indicator')));
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('If device is online','indicator.reachable')));
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+				promiseArray.push(this.createCommonStatusToAdapter(device, obj_name));
 				this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
 					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.lockmode', this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {0: 'OPEN', 1:'LOCK INSIDE', 2:'LOCK OUTSIDE', 3:'LOCK BOTH'})));
 					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.curfew', this.buildStateObject('curfew', 'switch', 'boolean', false)));
@@ -1905,30 +1942,6 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * creates assigned pets and their type control for sureflap adapter
-	 * @param {number} device
-	 * @param {number} tag
-	 * @param {string} obj_name
-	 * @return {Promise}
-	 */
-	createAssignedPetsTypeControl(device, tag, obj_name) {
-		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[tag].id);
-			this.setObjectNotExists(obj_name + '.assigned_pets.' + name, this.buildChannelObject('Pet \'' + name + '\' (' + this.getPetId(name) + ')'), () => {
-				this.setObjectNotExists(obj_name + '.assigned_pets.' + name + '.control', this.buildChannelObject('control switches'), () => {
-					this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name + '.control' + '.type', this.buildStateObject('pet type', 'switch.mode.type', 'number', false, { 2: 'OUTDOOR PET', 3: 'INDOOR PET' }))
-						.then(() => {
-							return resolve();
-						}).catch(error => {
-							this.log.warn(`could not create adapter flap device assigned pets hierarchy (${error})`);
-							return reject();
-						});
-				});
-			});
-		}));
-	}
-
-	/**
 	 * creates feeder bowl device hierarchy data structures in the adapter
 	 * @param {number} device
 	 * @param {string} obj_name
@@ -1938,9 +1951,7 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
 			this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[device].name_org + '\' (' + this.sureFlapState.devices[device].id + ')'), () => {
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online','indicator.reachable')));
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+				promiseArray.push(this.createCommonStatusToAdapter(device, obj_name));
 
 				this.setObjectNotExists(obj_name + '.control', this.buildChannelObject('control switches'), () => {
 					promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control' + '.close_delay', this.buildStateObject('closing delay of lid', 'switch.mode.delay', 'number', false, {0: 'FAST', 4:'NORMAL', 20:'SLOW'})));
@@ -2007,9 +2018,7 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
 			this.setObjectNotExists(obj_name, this.buildDeviceObject('Device \'' + this.sureFlapState.devices[device].name_org + '\' (' + this.sureFlapState.devices[device].id + ')'), () => {
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online','indicator.reachable')));
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
+				promiseArray.push(this.createCommonStatusToAdapter(device, obj_name));
 
 				this.setObjectNotExists(obj_name + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
 					if('tags' in this.sureFlapState.devices[device]) {
@@ -2027,6 +2036,30 @@ class Sureflap extends utils.Adapter {
 							return reject();
 						});
 					});
+				});
+			});
+		}));
+	}
+
+	/**
+	 * creates assigned pets and their type control for sureflap adapter
+	 * @param {number} device
+	 * @param {number} tag
+	 * @param {string} obj_name
+	 * @return {Promise}
+	 */
+	createAssignedPetsTypeControl(device, tag, obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[tag].id);
+			this.setObjectNotExists(obj_name + '.assigned_pets.' + name, this.buildChannelObject('Pet \'' + name + '\' (' + this.getPetId(name) + ')'), () => {
+				this.setObjectNotExists(obj_name + '.assigned_pets.' + name + '.control', this.buildChannelObject('control switches'), () => {
+					this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name + '.control' + '.type', this.buildStateObject('pet type', 'switch.mode.type', 'number', false, { 2: 'OUTDOOR PET', 3: 'INDOOR PET' }))
+						.then(() => {
+							return resolve();
+						}).catch(error => {
+							this.log.warn(`could not create adapter flap device assigned pets hierarchy (${error})`);
+							return reject();
+						});
 				});
 			});
 		}));
