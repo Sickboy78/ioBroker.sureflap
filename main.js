@@ -2682,7 +2682,6 @@ class Sureflap extends utils.Adapter {
 		// this.config:
 		this.log.info('checking adapter configuration...');
 		if (!this.config.sureflap_battery_full || !this.config.sureflap_battery_empty || this.config.sureflap_battery_full <= this.config.sureflap_battery_empty) {
-			//this.log.warn(`Battery voltage values for sureflap are invalid, using default values (${this.systemConfig.native.sureflap_battery_full}).`);
 			this.config.sureflap_battery_full = 6.1;
 			this.config.sureflap_battery_empty = 5.1;
 		}
