@@ -27,6 +27,8 @@
 
 Add username and password from your Sure Petcare® account on the adapter configuration page.
 
+Also battery full and empty thresholds can be adapted here when using accus. This affects the battery percentage values.
+
 ## Description
 
 The adapter provides information about the settings and status of your pet flap, cat flap, feeder or water dispenser.
