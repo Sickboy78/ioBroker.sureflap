@@ -14,28 +14,52 @@ systemDictionary = {
 		"pl": "Ustawienia adaptera dla sureflap",
 		"zh-cn": "sureflap的适配器设置"
 	},
-	"option1": {
-		"en": "option 1",
-		"de": "Option 1",
-		"ru": "Опция 1",
-		"pt": "Opção 1",
-		"nl": "Optie 1",
-		"fr": "Option 1",
-		"it": "opzione 1",
-		"es": "Opción 1",
-		"pl": "opcja 1",
-		"zh-cn": "选项1"
+	"username": {
+		"en": "username",
+		"de": "Login",
+		"ru": "логин",
+		"pt": "nome de utilizador",
+		"nl": "username",
+		"fr": "nom d'utilisateur",
+		"it": "nome utente",
+		"es": "nombre de usuario",
+		"pl": "nazwa użytkownika",
+		"zh-cn": "帐号"
 	},
-	"option2": {
-		"en": "option 2",
-		"de": "Option 2",
-		"ru": "option 2",
-		"pt": "opção 2",
-		"nl": "Optie 2",
-		"fr": "Option 2",
-		"it": "opzione 2",
-		"es": "opcion 2",
-		"pl": "Opcja 2",
-		"zh-cn": "选项2"
+	"password": {
+		"en": "password",
+		"de": "Passwort",
+		"ru": "Пароль",
+		"pt": "Senha",
+		"nl": "Paswoord",
+		"fr": "Mot de passe",
+		"it": "Password",
+		"es": "Contraseña",
+		"pl": "Hasło",
+		"zh-cn": "密码"
+	},
+	"battery voltage full": {
+		"en": "battery voltage full",
+		"de": "Batteriespannung voll",
+		"ru": "Напряжение батареи полное",
+		"pt": "Voltagem da bateria cheia",
+		"nl": "Batterijspanning vol",
+		"fr": "Tension de batterie pleine",
+		"it": "Tensione della batteria piena",
+		"es": "Voltaje de la batería lleno",
+		"pl": "Napięcie akumulatora pełne",
+		"zh-cn": "电池电压已满"
+	},
+	"battery voltage empty": {
+		"en": "battery voltage empty",
+		"de": "Batteriespannung leer",
+		"ru": "Напряжение батареи разряжено",
+		"pt": "Voltagem da bateria vazia",
+		"nl": "Batterijspanning leeg",
+		"fr": "Tension de batterie vide",
+		"it": "Tensione della batteria esaurita",
+		"es": "Voltaje de la batería vacío",
+		"pl": "Brak napięcia akumulatora",
+		"zh-cn": "电池电压为空"
 	}
 };

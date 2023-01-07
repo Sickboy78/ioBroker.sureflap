@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.1.5",
+		"version": "1.1.6",
 		"news": {
+			"1.1.6": {
+				"en": "configurable battery voltages",
+				"de": "konfigurierbare Batteriespannungen",
+				"ru": "Слава Украины",
+				"pt": "tensões configuráveis das baterias",
+				"nl": "configureerbare batterijspanningen",
+				"fr": "tensions de batterie configurables",
+				"it": "tensioni della batteria configurabili",
+				"es": "tensiones de batería configurables",
+				"pl": "konfigurowalne napięcia baterii",
+				"zh-cn": "可配置的电池电压"
+			},
 			"1.1.5": {
 				"en": "display of serial numbers",
 				"de": "Anzeige der Seriennummern",
@@ -203,7 +215,13 @@
 	},
 	"native": {
         "username": "",
-        "password": ""
+        "password": "",
+		"sureflap_battery_full": 6.1,
+		"sureflap_battery_empty": 5.1,
+		"surefeed_battery_full": 6.2,
+		"surefeed_battery_empty": 5.2,
+		"felaqua_battery_full": 6.2,
+		"felaqua_battery_empty": 5.2
 	},
 	"encryptedNative":[
         "password"

@@ -114,10 +114,8 @@ class Sureflap extends utils.Adapter {
 		// Reset the connection indicator during startup
 		this.setConnectionStatusToAdapter(false);
 
-		// The adapters config (in the instance object everything under the attribute "native") is accessible via
-		// this.config:
-		//this.log.info("config option1: " + this.config.option1);
-		//this.log.info("config option2: " + this.config.option2);
+		// check adapter config for invalid values
+		this.checkAdapterConfig();
 
 		// In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
 		// You can also add a subscription for multiple states. The following line watches all states starting with "lights."
@@ -245,7 +243,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.1.5`);
+		this.log.debug(`starting SureFlap Adapter v1.1.6`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -346,9 +344,7 @@ class Sureflap extends utils.Adapter {
 			this.sureFlapState = {};
 			this.numberOfLogins++;
 			this.log.info(`connecting...`);
-			this.log.debug(`email_address: ${this.buildLoginJsonData().email_address}`);
-			this.log.debug(`password: ${this.buildLoginJsonData().password}`);
-			this.log.debug(`json: ${postData}`);
+			this.log.debug(`json: ${this.replacePassword(postData)}`);
 			this.log.debug(`login count: ${this.numberOfLogins}`);
 			this.httpRequest('login', options, postData).then(result => {
 				if (result == undefined || result.data == undefined || !('token' in result.data)) {
@@ -2649,26 +2645,64 @@ class Sureflap extends utils.Adapter {
 		switch(deviceId) {
 			case DEVICE_TYPE_FEEDER:
 				// feeding bowl
-			// eslint-disable-next-line no-fallthrough
+				if (battery <= this.config.felaqua_battery_empty) {
+					return 0;
+				} else if (battery >= this.config.felaqua_battery_full) {
+					return 100;
+				} else {
+					return Math.round(((battery - this.config.felaqua_battery_empty)/(this.config.felaqua_battery_full - this.config.felaqua_battery_empty)) * 100);
+				}
 			case DEVICE_TYPE_WATER_DISPENSER:
 				// water dispenser
-				if (battery <= 5.2) {
+				if (battery <= this.config.surefeed_battery_empty) {
 					return 0;
-				} else if (battery >= 6.2) {
+				} else if (battery >= this.config.surefeed_battery_full) {
 					return 100;
 				} else {
-					return Math.round((1 - (6.2 - battery)) * 100);
+					return Math.round(((battery - this.config.surefeed_battery_empty)/(this.config.surefeed_battery_full - this.config.surefeed_battery_empty)) * 100);
 				}
 			default:
-				if (battery <= 5.1) {
+				// flaps
+				if (battery <= this.config.sureflap_battery_empty) {
 					return 0;
-				} else if (battery >= 6.1) {
+				} else if (battery >= this.config.sureflap_battery_full) {
 					return 100;
 				} else {
-					return Math.round((1 - (6.1 - battery)) * 100);
+					return Math.round(((battery - this.config.sureflap_battery_empty)/(this.config.sureflap_battery_full - this.config.sureflap_battery_empty)) * 100);
 				}
 		}
 
+	}
+
+	/**
+	 * checks and logs the values of the adapter configuration and sets default values in case of invalid values
+	 */
+	checkAdapterConfig() {
+		// The adapters config (in the instance object everything under the attribute "native") is accessible via
+		// this.config:
+		this.log.info('checking adapter configuration...');
+		if (!this.config.sureflap_battery_full || !this.config.sureflap_battery_empty || this.config.sureflap_battery_full <= this.config.sureflap_battery_empty) {
+			//this.log.warn(`Battery voltage values for sureflap are invalid, using default values (${this.systemConfig.native.sureflap_battery_full}).`);
+			this.config.sureflap_battery_full = 6.1;
+			this.config.sureflap_battery_empty = 5.1;
+		}
+		if (!this.config.surefeed_battery_full || !this.config.surefeed_battery_empty || this.config.surefeed_battery_full <= this.config.surefeed_battery_empty) {
+			this.log.warn(`Battery voltage values for surefeed are invalid, using default values.`);
+			this.config.surefeed_battery_full = 6.2;
+			this.config.surefeed_battery_empty = 5.2;
+		}
+		if (!this.config.felaqua_battery_full || !this.config.felaqua_battery_empty || this.config.felaqua_battery_full <= this.config.felaqua_battery_empty) {
+			this.log.warn(`Battery voltage values for felaqua are invalid, using default values.`);
+			this.config.felaqua_battery_full = 6.2;
+			this.config.felaqua_battery_empty = 5.2;
+		}
+		this.log.info('sureflap battery voltage full: ' + this.config.sureflap_battery_full);
+		this.log.info('sureflap battery voltage empty: ' + this.config.sureflap_battery_empty);
+		this.log.info('surefeed battery voltage full: ' + this.config.surefeed_battery_full);
+		this.log.info('surefeed battery voltage empty: ' + this.config.surefeed_battery_empty);
+		this.log.info('felaqua battery voltage full: ' + this.config.felaqua_battery_full);
+		this.log.info('felaqua battery voltage empty: ' + this.config.felaqua_battery_empty);
+		this.log.info('adapter configuration ok');
 	}
 
 	/**
@@ -2715,6 +2749,17 @@ class Sureflap extends utils.Adapter {
 			'password': this.config.password,
 			'device_id':'1050547954'
 		};
+	}
+
+	/**
+	 * replaces password from json data with ******
+	 * @param {string} jsonString
+	 * @return {string}
+	 */
+	replacePassword(jsonString) {
+		const json = JSON.parse(jsonString);
+		json.password = '******';
+		return JSON.stringify(json);
 	}
 
 	/**
