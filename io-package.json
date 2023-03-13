@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.1.6",
+		"version": "1.1.7",
 		"news": {
+			"1.1.7": {
+				"en": "fixed false login error",
+				"de": "falscher Login-Fehler behoben",
+				"ru": "Слава Украины",
+				"pt": "corrigido erro de login falso",
+				"nl": "foutieve login fout hersteld",
+				"fr": "correction d'une erreur de fausse connexion",
+				"it": "corretto il falso errore di login",
+				"es": "Corregido error de login falso",
+				"pl": "naprawiony błąd fałszywego logowania",
+				"zh-cn": "修复了错误的登录错误"
+			},
 			"1.1.6": {
 				"en": "configurable battery voltages",
 				"de": "konfigurierbare Batteriespannungen",

@@ -260,12 +260,14 @@
 					class: 'pet-text',
 					text: pet.name + ' (' + pet.id + ')'
 				});
-				const petImage = $('<img>',{
-					class: 'pet-image',
-					alt: pet.name,
-					src: pet.photo.location
-				});
-				petImage.appendTo(petDiv);
+				if(pet.photo !== undefined && pet.photo.location !== undefined) {
+					const petImage = $('<img>',{
+						class: 'pet-image',
+						alt: pet.name,
+						src: pet.photo.location
+					});
+					petImage.appendTo(petDiv);
+				}
 				petText.appendTo(petDiv);
 				petDiv.appendTo(div);
 			});
