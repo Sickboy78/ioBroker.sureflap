@@ -2723,6 +2723,7 @@ class Sureflap extends utils.Adapter {
 				'Accept' : 'application/json, text/plain, */*',
 				'Referer' : 'https://surepetcare.io/',
 				'Content-Type' : 'application/json;charset=utf-8',
+				'User-Agent': 'ioBroker/7.0',
 				'Origin' :  'https://surepetcare.io',
 				'Cache-Control' : 'no-cache',
 				'Pragma' : 'no-cache'
