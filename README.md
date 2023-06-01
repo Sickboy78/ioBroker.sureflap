@@ -139,6 +139,9 @@ The pictures of the SureFlap® devices are provided free to use from [Sure Petca
 
 ## Changelog
 
+### 1.1.8 (2023-06-01)
+* (Sickboy78) adjustments for Surepet API changes
+
 ### 1.1.7 (2023-03-13)
 * (Sickboy78) fixed false login error in case pet had no photo
 
