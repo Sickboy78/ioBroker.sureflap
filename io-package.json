@@ -1,8 +1,20 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.1.7",
+		"version": "1.1.8",
 		"news": {
+			"1.1.8": {
+				"en": "adjustments for Surepet API changes",
+				"de": "Anpassungen für Surepet API Änderungen",
+				"ru": "Слава Украины",
+				"pt": "adaptações para alterações da API Surepet",
+				"nl": "Aanpassingen voor Surepet API veranderingen",
+				"fr": "Adaptations pour les modifications de l'API Surepet",
+				"it": "Adattamenti per le modifiche API di Surepet",
+				"es": "Kohandused Surepet API muudatuste jaoks",
+				"pl": "Dostosowania do zmian w API Surepet",
+				"zh-cn": "为Surepet API的变化而进行的调整"
+			},
 			"1.1.7": {
 				"en": "fixed false login error",
 				"de": "falscher Login-Fehler behoben",

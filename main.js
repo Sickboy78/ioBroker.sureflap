@@ -243,7 +243,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.1.7`);
+		this.log.debug(`starting SureFlap Adapter v1.1.8`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
