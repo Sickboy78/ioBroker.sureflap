@@ -13,6 +13,7 @@
 				"it": "Adattamenti per le modifiche API di Surepet",
 				"es": "Kohandused Surepet API muudatuste jaoks",
 				"pl": "Dostosowania do zmian w API Surepet",
+				"uk": "Адаптація до змін в API Surepet",
 				"zh-cn": "为Surepet API的变化而进行的调整"
 			},
 			"1.1.7": {
@@ -25,6 +26,7 @@
 				"it": "corretto il falso errore di login",
 				"es": "Corregido error de login falso",
 				"pl": "naprawiony błąd fałszywego logowania",
+				"uk": "Виправлено помилку неправильного входу",
 				"zh-cn": "修复了错误的登录错误"
 			},
 			"1.1.6": {
@@ -37,6 +39,7 @@
 				"it": "tensioni della batteria configurabili",
 				"es": "tensiones de batería configurables",
 				"pl": "konfigurowalne napięcia baterii",
+				"uk": "Настроювана напруга акумулятора",
 				"zh-cn": "可配置的电池电压"
 			},
 			"1.1.5": {
@@ -49,6 +52,7 @@
 				"it": "Visualizzazione dei numeri di serie",
 				"es": "Seerianumbrite kuvamine",
 				"pl": "Wyświetlanie numerów seryjnych",
+				"uk": "Відображення серійних номерів",
 				"zh-cn": "显示序列号"
 			},
 			"1.1.4": {
@@ -61,6 +65,7 @@
 				"it": "Supporto Felaqua",
 				"es": "Felaqua toetus",
 				"pl": "Wsparcie Felaqua",
+				"uk": "Підтримка Felaqua",
 				"zh-cn": "支持Felaqua"
 			},
 			"1.1.3": {
@@ -73,6 +78,7 @@
 				"it": "miglioramenti al codice",
 				"es": "mejoras en el código",
 				"pl": "poprawki kodu",
+				"uk": "Покращення коду",
 				"zh-cn": "乌克兰的荣耀"
 			},
 			"1.1.2": {
@@ -85,6 +91,7 @@
 				"it": "migliore gestione degli errori e del timeout",
 				"es": "mejora de la gestión de errores y del tiempo de espera",
 				"pl": "poprawiona obsługa błędów i timeoutów",
+				"uk": "Покращена обробка помилок і тайм-аутів",
 				"zh-cn": "中国是个混蛋"
 			},
 			"1.1.1": {
@@ -97,6 +104,7 @@
 				"it": "aggiornamenti di sicurezza e bugfix",
 				"es": "actualizaciones de seguridad y corrección de errores",
 				"pl": "poprawki błędów i aktualizacje zabezpieczeń",
+				"uk": "Виправлення помилок та оновлення безпеки",
 				"zh-cn": "错误修复和安全更新"
 			},
 			"1.1.0": {
@@ -109,6 +117,7 @@
 				"it": "aggiornamenti di sicurezza e bugfix",
 				"es": "actualizaciones de seguridad y corrección de errores",
 				"pl": "poprawki błędów i aktualizacje zabezpieczeń",
+				"uk": "Виправлення помилок та оновлення безпеки",
 				"zh-cn": "错误修复和安全更新"
 			},
 			"1.0.9": {
@@ -121,6 +130,7 @@
 				"it": "miglioramenti al codice dalla revisione",
 				"es": "mejoras en el código a partir de la revisión",
 				"pl": "poprawki kodu z przeglądu",
+				"uk": "Покращення коду з огляду",
 				"zh-cn": "审查后的代码改进"
 			},
 			"1.0.8": {
@@ -133,6 +143,7 @@
 				"it": "statistiche alimentari per animali domestici e mangiatoie",
 				"es": "estadísticas de alimentos para mascotas y comederos",
 				"pl": "statystyka żywności dla zwierząt domowych i karmiących",
+				"uk": "Додано статистику корму для тварини та годівниці",
 				"zh-cn": "宠物和饲主的食物统计"
 			},
 			"1.0.7": {
@@ -145,6 +156,7 @@
 				"it": "Cronaca aggiunta",
 				"es": "Crónica añadida",
 				"pl": "Kronika dodała",
+				"uk": "Додано хроніку",
 				"zh-cn": "纪要》补充说"
 			},
 			"1.0.6": {
@@ -157,6 +169,7 @@
 				"it": "Supporto dell'alimentatore",
 				"es": "Soporte del alimentador",
 				"pl": "Wsparcie podajnika",
+				"uk": "Автоматична підтримка годівниці",
 				"zh-cn": "馈线支持"
 			},
 			"1.0.5": {
@@ -169,10 +182,10 @@
 				"it": "Versione iniziale",
 				"es": "Versión inicial",
 				"pl": "Pierwsze wydanie",
+				"uk": "Перша публікація",
 				"zh-cn": "首次出版"
 			}
 		},
-		"title": "Sure Flap",
 		"titleLang": {
 			"en": "Sure Flap",
 			"de": "Sure Flap",
@@ -183,6 +196,7 @@
 			"it": "Sure Flap",
 			"es": "Sure Flap",
 			"pl": "Sure Flap",
+			"uk": "Sure Flap",
 			"zh-cn": "Sure Flap"
 		},
 		"desc": {
@@ -195,6 +209,7 @@
 			"it": "Adattatore per dispositivi intelligenti per animali domestici di Sure Petcare",
 			"es": "Adaptador para dispositivos inteligentes para mascotas de Sure Petcare",
 			"pl": "Adapter do inteligentnych urządzeń dla zwierząt domowych Sure Petcare",
+			"uk": "Адаптер для розумних пристроїв для домашніх улюбленців від Sure Petcare",
 			"zh-cn": "用于 Sure Petcare 公司智能宠物设备的适配器"
 		},
 		"authors": [
@@ -207,7 +222,6 @@
 			"cat",
 			"pet",
 			"flap",
-			"smart home",
 			"surefeed",
 			"feeder",
 			"felaqua"

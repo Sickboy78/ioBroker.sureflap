@@ -12,6 +12,7 @@ systemDictionary = {
 		"it": "Impostazioni dell'adattatore per sureflap",
 		"es": "Ajustes del adaptador para sureflap",
 		"pl": "Ustawienia adaptera dla sureflap",
+		"uk": "Налаштування адаптера для sureflap",
 		"zh-cn": "sureflap的适配器设置"
 	},
 	"username": {
@@ -24,6 +25,7 @@ systemDictionary = {
 		"it": "nome utente",
 		"es": "nombre de usuario",
 		"pl": "nazwa użytkownika",
+		"uk": "Логін",
 		"zh-cn": "帐号"
 	},
 	"password": {
@@ -36,6 +38,7 @@ systemDictionary = {
 		"it": "Password",
 		"es": "Contraseña",
 		"pl": "Hasło",
+		"uk": "Пароль",
 		"zh-cn": "密码"
 	},
 	"battery voltage full": {
@@ -48,6 +51,7 @@ systemDictionary = {
 		"it": "Tensione della batteria piena",
 		"es": "Voltaje de la batería lleno",
 		"pl": "Napięcie akumulatora pełne",
+		"uk": "Заряд акумулятора повний",
 		"zh-cn": "电池电压已满"
 	},
 	"battery voltage empty": {
@@ -60,6 +64,7 @@ systemDictionary = {
 		"it": "Tensione della batteria esaurita",
 		"es": "Voltaje de la batería vacío",
 		"pl": "Brak napięcia akumulatora",
+		"uk": "Напруга акумулятора розряджена",
 		"zh-cn": "电池电压为空"
 	}
 };
