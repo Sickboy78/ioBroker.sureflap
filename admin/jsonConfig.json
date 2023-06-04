@@ -1,0 +1,157 @@
+{
+    "type": "tabs",
+    "i18n": true,
+    "items": {
+        "loginTab": {
+            "type": "panel",
+            "label": "account settings",
+            "items": {
+                "_header_login": {
+                    "type": "header",
+                    "size": 2,
+                    "text": "sure petcare account"
+                },
+                "username": {
+                    "type": "text",
+                    "label": "username",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4
+                },
+                "password": {
+                    "type": "password",
+                    "label": "password",
+                    "visible": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4
+                }
+            }
+        },
+        "batteryTab": {
+            "type": "panel",
+            "label": "battery voltages",
+            "items": {
+                "sureflapPanel": {
+                    "type": "panel",
+                    "label": "Sureflap",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "items": {
+                        "_header_sureflap": {
+                            "type": "header",
+                            "size": 2,
+                            "text": "Sureflap"
+                        },
+                        "sureflap_battery_full": {
+                            "type": "number",
+                            "label": "battery voltage full",
+                            "newLine": true,
+                            "min": 1,
+                            "max": 10,
+                            "step": 0.1,
+                            "xs": 12,
+                            "sm": 12,
+                            "md": 12,
+                            "lg": 12
+                        },
+                        "sureflap_battery_empty": {
+                            "type": "number",
+                            "label": "battery voltage empty",
+                            "newLine": true,
+                            "min": 1,
+                            "max": 10,
+                            "step": 0.1,
+                            "xs": 12,
+                            "sm": 12,
+                            "md": 12,
+                            "lg": 12
+                        }                        
+                    }
+                },
+                "surefeedPanel": {
+                    "type": "panel",
+                    "label": "Surefeed",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "items": {
+                        "_header_surefeed": {
+                            "type": "header",
+                            "size": 2,
+                            "text": "Surefeed"
+                        },
+                        "surefeed_battery_full": {
+                            "type": "number",
+                            "label": "battery voltage full",
+                            "newLine": true,
+                            "min": 1,
+                            "max": 10,
+                            "step": 0.1,
+                            "xs": 12,
+                            "sm": 12,
+                            "md": 12,
+                            "lg": 12
+                        },
+                        "surefeed_battery_empty": {
+                            "type": "number",
+                            "label": "battery voltage empty",
+                            "newLine": true,
+                            "min": 1,
+                            "max": 10,
+                            "step": 0.1,
+                            "xs": 12,
+                            "sm": 12,
+                            "md": 12,
+                            "lg": 12
+                        }                        
+                    }
+                },
+                "felaquaPanel": {
+                    "type": "panel",
+                    "label": "Felaqua",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "items": {
+                        "_header_felaqua": {
+                            "type": "header",
+                            "size": 2,
+                            "text": "Felaqua"
+                        },
+                        "felaqua_battery_full": {
+                            "type": "number",
+                            "label": "battery voltage full",
+                            "newLine": true,
+                            "min": 1,
+                            "max": 10,
+                            "step": 0.1,
+                            "xs": 12,
+                            "sm": 12,
+                            "md": 12,
+                            "lg": 12
+                        },
+                        "felaqua_battery_empty": {
+                            "type": "number",
+                            "label": "battery voltage empty",
+                            "newLine": true,
+                            "min": 1,
+                            "max": 10,
+                            "step": 0.1,
+                            "xs": 12,
+                            "sm": 12,
+                            "md": 12,
+                            "lg": 12
+                        }                        
+                    }
+                }
+            }
+        }
+    }
+}

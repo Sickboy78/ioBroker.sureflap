@@ -15,6 +15,32 @@ systemDictionary = {
 		"uk": "Налаштування адаптера для sureflap",
 		"zh-cn": "sureflap的适配器设置"
 	},
+	"account settings": {
+		"en": "account settings",
+		"de": "Kontoeinstellungen",
+		"ru": "настройки аккаунта",
+		"pt": "definições de conta",
+		"nl": "accountinstellingen",
+		"fr": "paramètres du compte",
+		"it": "impostazioni dell'account",
+		"es": "konto seaded",
+		"pl": "ustawienia konta",
+		"uk": "Акаунт Sure Petcare",
+		"zh-cn": "帐户设置"
+	},
+	"sure petcare account": {
+		"en": "Sure Petcare Account",
+		"de": "Sure Petcare Konto",
+		"ru": "Счет Sure Petcare",
+		"pt": "Conta Sure Petcare",
+		"nl": "Sure Petcare Account",
+		"fr": "Compte Sure Petcare",
+		"it": "Conto Sure Petcare",
+		"es": "Sure Petcare Konto",
+		"pl": "Konto Sure Petcare",
+		"uk": "Акаунт Sure Petcare",
+		"zh-cn": "确信宠物护理账户"
+	},
 	"username": {
 		"en": "username",
 		"de": "Login",
@@ -40,6 +66,19 @@ systemDictionary = {
 		"pl": "Hasło",
 		"uk": "Пароль",
 		"zh-cn": "密码"
+	},
+	"battery voltages": {
+		"en": "battery voltages",
+		"de": "Batteriespannungen",
+		"ru": "Напряжение батареи",
+		"pt": "Voltagem da bateria",
+		"nl": "Batterijspanning",
+		"fr": "Tension de batterie",
+		"it": "Tensione della batteria",
+		"es": "Voltaje de la batería",
+		"pl": "Napięcie akumulatora",
+		"uk": "напруги акумулятора",
+		"zh-cn": "电池电压"
 	},
 	"battery voltage full": {
 		"en": "battery voltage full",
