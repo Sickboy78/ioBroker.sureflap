@@ -1284,8 +1284,10 @@ class Sureflap extends utils.Adapter {
 	 */
 	setSerialNumberToAdapter(prefix, hierarchy, deviceIndex) {
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].serial_number !== this.sureFlapStatePrev.devices[deviceIndex].serial_number)) {
-			const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'serial_number';
-			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].serial_number, true);
+			if(this.sureFlapState.devices[deviceIndex].serial_number != undefined) {
+				const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'serial_number';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].serial_number, true);
+			}
 		}
 	}
 
@@ -1300,8 +1302,10 @@ class Sureflap extends utils.Adapter {
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.led_mode, true);
 		}
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].serial_number !== this.sureFlapStatePrev.devices[deviceIndex].serial_number)) {
-			const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.serial_number';
-			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].serial_number, true);
+			if(this.sureFlapState.devices[deviceIndex].serial_number != undefined) {
+				const obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.serial_number';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].serial_number, true);
+			}
 		}
 	}
 
