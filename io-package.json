@@ -1,8 +1,21 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.1.8",
+		"version": "1.1.9",
 		"news": {
+			"1.1.9": {
+				"en": "bugfix and updates",
+				"de": "Fehlerbehebung und Aktualisierungen",
+				"ru": "Слава Украины",
+				"pt": "correção de erros e actualizações",
+				"nl": "bugfix en updates",
+				"fr": "correction de bogues et mises à jour",
+				"it": "correzione di bug e aggiornamenti",
+				"es": "veaparandus ja uuendused",
+				"pl": "poprawki i aktualizacje",
+				"uk": "виправлення помилок та оновлення",
+				"zh-cn": "错误修正和更新"
+			},
 			"1.1.8": {
 				"en": "adjustments for Surepet API changes",
 				"de": "Anpassungen für Surepet API Änderungen",
