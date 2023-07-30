@@ -562,7 +562,7 @@ class Sureflap extends utils.Adapter {
 						if ('parent' in this.sureFlapState.devices[d]) {
 							const hierarchy = '.' + this.sureFlapState.devices[d].parent.name;
 
-							if (this.sureFlapState.devices[d].product_id == DEVICE_TYPE_PET_FLAP || this.sureFlapState.devices[d].product_id == DEVICE_TYPE_CAT_FLAP) {
+							if ([DEVICE_TYPE_PET_FLAP, DEVICE_TYPE_CAT_FLAP].includes(this.sureFlapState.devices[d].product_id)) {
 								// Sureflap Connect
 								this.setSureflapConnectToAdapter(prefix,hierarchy,d,this.sureFlapState.devices[d].product_id == DEVICE_TYPE_CAT_FLAP);
 							} else if (this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
@@ -1533,9 +1533,9 @@ class Sureflap extends utils.Adapter {
 		}
 	}
 
-	/******************************************
-	 * methods to get values from the adapter *
-	 ******************************************/
+	/******************************************************
+	 * methods to get objects and values from the adapter *
+	 ******************************************************/
 
 	/**
 	 * reads curfew data from the adapter
@@ -1585,6 +1585,37 @@ class Sureflap extends utils.Adapter {
 			});
 		});
 	}
+
+	/**
+	 * gets an object by pattern and type
+	 * @param {string} pattern
+	 * @param {object} type
+	 * @param {boolean} recursive
+	 * @return {Promise} Promise of objects
+	 */
+	getObjectsByPatternAndType(pattern, type, recursive) {
+		return new Promise((resolve, reject) => {
+			this.getForeignObjects(pattern, type, [], (err, obj) => {
+				if (!err && obj) {
+					if(recursive === false) {
+						const level = pattern.split('.').length;
+						const newObj = {};
+						Object.keys(obj).forEach((key) => {
+							if(obj[key]._id.split('.').length === level) {
+								newObj[key] = obj[key];
+							}
+						});
+						resolve(newObj);
+					} else {
+						resolve(obj);
+					}
+				} else {
+					reject(err);
+				}
+			});
+		});
+	}
+
 
 	/*********************************************
 	 * methods to delete values from the adapter *
@@ -1642,14 +1673,85 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * removes obsolte data structures from the adapter
-	 * when there are changes to the data structures
-	 * obsolete entries go here
+	 * removes deleted or renamed pets
 	 * @return {Promise}
 	 */
-	removeObsoleteDataFromAdapter() {
+	removeDeletedAndRenamedPetsFromAdapter() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			this.log.debug(`searching and removing of deleted and renamed pets`);
+
+			const getObjectsPromiseArray = [];
+			const numPets = this.sureFlapState.pets.length;
+			const petsChannelNames = [];
+
+			for (let i = 0; i < numPets; i++) {
+				const name_org = this.sureFlapState.pets[i].name_org;
+				const petId = this.sureFlapState.pets[i].id;
+				petsChannelNames.push('Pet \'' + name_org + '\' (' + petId + ')');
+			}
+
+			for(let h = 0; h < this.sureFlapState.households.length; h++) {
+				const prefix = this.sureFlapState.households[h].name;
+
+				// check for pets in households
+				getObjectsPromiseArray.push(this.getObjectsByPatternAndType(this.name + '.' + this.instance + '.' + prefix + '.pets.*', 'channel', false));
+
+				// check for assigned_pets in devices
+				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
+					if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
+						// all devices except hub
+						if (('parent' in this.sureFlapState.devices[d])) {
+							if([DEVICE_TYPE_FEEDER, DEVICE_TYPE_WATER_DISPENSER, DEVICE_TYPE_PET_FLAP, DEVICE_TYPE_CAT_FLAP].includes(this.sureFlapState.devices[d].product_id)) {
+								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
+
+								let type = 'channel';
+								if([DEVICE_TYPE_FEEDER, DEVICE_TYPE_WATER_DISPENSER].includes(this.sureFlapState.devices[d].product_id)) {
+									type = 'state';
+								}
+
+								getObjectsPromiseArray.push(this.getObjectsByPatternAndType(this.name + '.' + this.instance + '.' + obj_name + '.assigned_pets.*', type, false));
+							}
+						}
+					}
+				}
+			}
+
+			// wait for all get object promises
+			Promise.all(getObjectsPromiseArray).then((objs) => {
+				const deletePromiseArray = [];
+				objs.forEach((obj) => {
+					if(obj) {
+						Object.keys(obj).forEach((key) => {
+							if(!petsChannelNames.includes(obj[key].common.name)) {
+								this.log.debug(`deleted or renamed pet ${obj[key]._id} (${obj[key].common.name}) found. trying to delete`);
+								deletePromiseArray.push(this.deleteObjectFormAdapter(obj[key]._id, true));
+							}
+						});
+					}
+				});
+				Promise.all(deletePromiseArray).then(() => {
+					this.log.debug(`searching and removing of deleted and renamed pets complete`);
+					return resolve();
+				}).catch(() => {
+					this.log.debug(`searching and removing of deleted and renamed pets failed`);
+					return reject();
+				});
+			}).catch(() => {
+				this.log.debug(`searching and removing of deleted and renamed pets failed`);
+				return reject();
+			});
+		}));
+	}
+
+	/**
+	 * removes obsolte data structures from the adapter
+	 * When there are changes to the data structures
+	 * obsolete entries go here.
+	 * @return {Promise}
+	 */
+	removeDeprecatedDataFromAdapter() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
-			this.log.debug(`searching and removing obsolete objects`);
+			this.log.debug(`searching and removing of obsolete objects`);
 			for(let h = 0; h < this.sureFlapState.households.length; h++) {
 				const prefix = this.sureFlapState.households[h].name;
 				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
@@ -1776,9 +1878,10 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			if(this.firstLoop === true) {
 				this.createHouseholdsAndHubsToAdapter()
+					.then(() => this.removeDeprecatedDataFromAdapter())
+					.then(() => this.removeDeletedAndRenamedPetsFromAdapter())
 					.then(() => this.createDevicesToAdapter())
 					.then(() => this.createPetsToAdapter())
-					.then(() => this.removeObsoleteDataFromAdapter())
 					.then(() => { return resolve(); })
 					.catch(() => { return reject(); });
 			} else {
@@ -1960,7 +2063,7 @@ class Sureflap extends utils.Adapter {
 						if('tags' in this.sureFlapState.devices[device]) {
 							for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
 								const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
-								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
+								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (' + this.getPetId(name) + ')', 'text', 'string')));
 							}
 
 							this.setObjectNotExists(obj_name + '.bowls', this.buildChannelObject('feeding bowls'), () => {
@@ -2024,7 +2127,7 @@ class Sureflap extends utils.Adapter {
 					if('tags' in this.sureFlapState.devices[device]) {
 						for(let t = 0; t < this.sureFlapState.devices[device].tags.length; t++) {
 							const name = this.getPetNameForTagId(this.sureFlapState.devices[device].tags[t].id);
-							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[device].tags[t].id + '\')', 'text', 'string')));
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (' + this.getPetId(name) + ')', 'text', 'string')));
 						}
 					}
 					this.setObjectNotExists(obj_name + '.water', this.buildChannelObject('remaining water'), () => {
@@ -2080,11 +2183,9 @@ class Sureflap extends utils.Adapter {
 				const petId = this.sureFlapState.pets[i].id;
 				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[i].household_id);
 				const prefix = household_name + '.pets';
-
-				// TODO: remove deleted pets
-				// TODO: remove deleted pets from assigned pets
 				promiseArray.push(this.createPetHierarchyToAdapter(prefix, household_name, name, name_org, petId));
 			}
+
 			Promise.all(promiseArray).then(() => {
 				return resolve();
 			}).catch(() => {
