@@ -19,6 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const https = require('https');
 const util = require('util');
 
+const REQUEST_TIMEOUT = 90000;
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
 const UPDATE_FREQUENCY_DATA = 10;
@@ -2822,7 +2823,7 @@ class Sureflap extends utils.Adapter {
 			port: 443,
 			path: path,
 			method: method,
-			timeout: 60000,
+			timeout: REQUEST_TIMEOUT,
 			headers: {
 				'Host' : 'app.api.surehub.io',
 				'Accept' : 'application/json, text/plain, */*',
