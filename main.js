@@ -19,7 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const https = require('https');
 const util = require('util');
 
-const REQUEST_TIMEOUT = 90000;
+const REQUEST_TIMEOUT = 120000;
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
 const UPDATE_FREQUENCY_DATA = 10;
@@ -95,6 +95,8 @@ class Sureflap extends utils.Adapter {
 		this.feederFoodBowlObjectMissing = [];
 		this.waterDispenserWaterObjectMissing = [];
 		this.petDrinkingDataMissing = [];
+		this.lastError = null;
+		this.lastLoginError = null;
 
 		// promisify setObjectNotExists
 		this.setObjectNotExistsPromise = util.promisify(this.setObjectNotExists);
@@ -244,12 +246,17 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.1.9`);
+		this.log.debug(`starting SureFlap Adapter v1.2.0`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
 			.catch(error => {
-				this.log.error(error);
+				if(error.message === this.lastLoginError) {
+					this.log.debug(error);
+				} else {
+					this.log.error(error);
+					this.lastLoginError = error.message;
+				}
 				this.log.info(`disconnected`);
 				if(!this.adapterUnloaded) {
 					// @ts-ignore
@@ -282,6 +289,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	startUpdateLoop() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
+			this.lastLoginError = null;
 			this.log.info(`starting update loop...`);
 			this.firstLoop=true;
 			this.updateLoop();
@@ -303,7 +311,12 @@ class Sureflap extends utils.Adapter {
 			.then(() => this.getEventHistoryFromData())
 			.then(() => this.setUpdateTimer())
 			.catch(error => {
-				this.log.error(error);
+				if(error.message === this.lastError) {
+					this.log.debug(error);
+				} else {
+					this.log.error(error);
+					this.lastError = error.message;
+				}
 				this.log.info(`update loop stopped`);
 				this.log.info(`disconnected`);
 				if(!this.adapterUnloaded) {
@@ -2962,7 +2975,8 @@ class Sureflap extends utils.Adapter {
 			this.log.silly(`doing http request with tag ${tag}`);
 			const req = https.request(options, (res) => {
 				if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-					return reject(new Error(`Request returned status code ${res.statusCode}`));
+					this.log.debug(`Request (${tag}) returned status code ${res.statusCode}.`);
+					return reject(new Error(`Request returned status code ${res.statusCode}. Retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 				} else {
 					const data = [];
 					res.on('data', (chunk) => {
@@ -2974,27 +2988,28 @@ class Sureflap extends utils.Adapter {
 							return resolve(obj);
 						} catch(err) {
 							if(err instanceof Error) {
-								this.log.error(err.message);
+								this.log.debug(`JSon parse error in data: '${data}'`);
 							}
-							return reject(new Error(`JSon parse error in ${data}`));
+							this.log.debug(`Response (${tag}) error.`);
+							return reject(new Error(`Response error: '${err}'. Retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 						}
 					});
 					res.on('error', (err) => {
-						this.log.error(`Response error: ${err.toString()}`);
-						return reject(new Error(`Response error: ${err} retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
+						this.log.debug(`Response (${tag}) error.`);
+						return reject(new Error(`Response error: '${err}'. Retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 					});
 				}
 			});
 
 			req.on('error', (err) => {
-				this.log.error(`Request error: ${err.toString()}`);
-				return reject(new Error(`Request error: ${err} retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
+				this.log.debug(`Request (${tag}) error.`);
+				return reject(new Error(`Request error: '${err}'. Retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 			});
 
 			req.on('timeout', () => {
-				this.log.error(`Request timeout`);
 				req.destroy();
-				return reject(new Error(`Request timeout: retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
+				this.log.debug(`Request (${tag}) timeout.`);
+				return reject(new Error(`Request timeout. Retrying in ${RETRY_FREQUENCY_LOGIN} seconds`));
 			});
 
 			req.write(postData);

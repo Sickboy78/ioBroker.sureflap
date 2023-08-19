@@ -1,8 +1,21 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.1.9",
+		"version": "1.2.0",
 		"news": {
+			"1.2.0": {
+				"en": "improved error logging",
+				"de": "verbesserte Fehlerprotokollierung",
+				"ru": "Слава Украины",
+				"pt": "registo de erros melhorado",
+				"nl": "verbeterde foutregistratie",
+				"fr": "amélioration de la journalisation des erreurs",
+				"it": "miglioramento della registrazione degli errori",
+				"es": "parandatud vigade logimine",
+				"pl": "ulepszone rejestrowanie błędów",
+				"uk": "покращене протоколювання помилок",
+				"zh-cn": "改进了错误日志记录"
+			},
 			"1.1.9": {
 				"en": "bugfix and updates",
 				"de": "Fehlerbehebung und Aktualisierungen",
