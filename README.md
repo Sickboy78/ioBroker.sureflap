@@ -139,7 +139,9 @@ The pictures of the SureFlap® devices are provided free to use from [Sure Petca
 ## Changelog
 
 ### 1.2.1 (2023-10-02)
-* (Sickboy78) fixed get_history_since failing
+* (Sickboy78) fixed get_history_since call failing because of API changes
+* (Sickboy78) added workaround for removed parent object because of API changes
+* (Sickboy78) removed food_type from feeder bowls because of API changes
 
 ### 1.2.0 (2023-08-19)
 * (Sickboy78) repetitive errors are now logged as debug to avoid spamming the error log

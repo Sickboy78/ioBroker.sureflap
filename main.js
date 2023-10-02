@@ -573,8 +573,8 @@ class Sureflap extends utils.Adapter {
 
 				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
 					if (this.sureFlapState.devices[d].household_id ==  this.sureFlapState.households[h].id) {
-						if ('parent' in this.sureFlapState.devices[d]) {
-							const hierarchy = '.' + this.sureFlapState.devices[d].parent.name;
+						if ('parent_device_id' in this.sureFlapState.devices[d]) {
+							const hierarchy = '.' + this.getDeviceById(this.sureFlapState.devices[d].parent_device_id).name;
 
 							if ([DEVICE_TYPE_PET_FLAP, DEVICE_TYPE_CAT_FLAP].includes(this.sureFlapState.devices[d].product_id)) {
 								// Sureflap Connect
@@ -1096,7 +1096,7 @@ class Sureflap extends utils.Adapter {
 			for(let b = 0; b < this.sureFlapState.devices[deviceIndex].control.bowls.settings.length; b++) {
 				this.getObject(obj_name + '.bowls.' + b, (err, obj) => {
 					if (!err && obj) {
-						this.setState(obj_name + '.bowls.' + b + '.food_type', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].food_type, true);
+						//this.setState(obj_name + '.bowls.' + b + '.food_type', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].food_type, true);
 						this.setState(obj_name + '.bowls.' + b + '.target', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target, true);
 						this.feederConfigBowlObjectMissing[deviceIndex] = false;
 					} else {
@@ -1332,8 +1332,8 @@ class Sureflap extends utils.Adapter {
 		// online status
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.online !== this.sureFlapStatePrev.devices[deviceIndex].status.online)) {
 			let obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
-			if ('parent' in this.sureFlapState.devices[deviceIndex]) {
-				obj_name =  prefix + '.' + this.sureFlapState.devices[deviceIndex].parent.name + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
+			if ('parent_device_id' in this.sureFlapState.devices[deviceIndex]) {
+				obj_name =  prefix + '.' + this.getDeviceById(this.sureFlapState.devices[deviceIndex].parent_device_id).name + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
 			}
 			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.online, true);
 		}
@@ -1714,9 +1714,9 @@ class Sureflap extends utils.Adapter {
 				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
 					if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
 						// all devices except hub
-						if (('parent' in this.sureFlapState.devices[d])) {
+						if (('parent_device_id' in this.sureFlapState.devices[d])) {
 							if([DEVICE_TYPE_FEEDER, DEVICE_TYPE_WATER_DISPENSER, DEVICE_TYPE_PET_FLAP, DEVICE_TYPE_CAT_FLAP].includes(this.sureFlapState.devices[d].product_id)) {
-								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
+								const obj_name =  prefix + '.' + this.getDeviceById(this.sureFlapState.devices[d].parent_device_id).name + '.' + this.sureFlapState.devices[d].name;
 
 								let type = 'channel';
 								if([DEVICE_TYPE_FEEDER, DEVICE_TYPE_WATER_DISPENSER].includes(this.sureFlapState.devices[d].product_id)) {
@@ -1771,7 +1771,7 @@ class Sureflap extends utils.Adapter {
 				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
 					if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
 						// hub
-						if (!('parent' in this.sureFlapState.devices[d])) {
+						if (!('parent_device_id' in this.sureFlapState.devices[d])) {
 							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
 
 							// made led_mode changeable and moved it to control.led_mode
@@ -1791,7 +1791,29 @@ class Sureflap extends utils.Adapter {
 							// feeding bowl
 							if(this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
 								// feeding bowl
-								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
+								const obj_name =  prefix + '.' + this.getDeviceById(this.sureFlapState.devices[d].parent_device_id).name + '.' + this.sureFlapState.devices[d].name;
+
+								// food_type was removed on 2023_10_02
+								this.getObject(obj_name + '.bowls.0.food_type', (err, obj) => {
+									if (!err && obj) {
+										this.log.debug(`obsolete object ${obj_name}.bowls.0.food_type found. trying to delete`);
+										this.delObject(obj._id, (err) => {
+											if(err) {
+												this.log.warn(`can not delete obsolete object ${obj_name}.bowls.0.food_type because: ${err}`);
+											}
+										});
+									}
+								});
+								this.getObject(obj_name + '.bowls.1.food_type', (err, obj) => {
+									if (!err && obj) {
+										this.log.debug(`obsolete object ${obj_name}.bowls.1.food_type found. trying to delete`);
+										this.delObject(obj._id, (err) => {
+											if(err) {
+												this.log.warn(`can not delete obsolete object ${obj_name}.bowls.1.food_type because: ${err}`);
+											}
+										});
+									}
+								});
 
 								// feeder had unnessessary attributes of flap
 								this.getObject(obj_name + '.curfew', (err, obj) => {
@@ -1848,7 +1870,7 @@ class Sureflap extends utils.Adapter {
 							// pet flap
 							if(this.sureFlapState.devices[d].product_id == DEVICE_TYPE_PET_FLAP) {
 								// pet flap
-								const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
+								const obj_name =  prefix + '.' + this.getDeviceById(this.sureFlapState.devices[d].parent_device_id).name + '.' + this.sureFlapState.devices[d].name;
 
 								// pet flap had pet type control which is a exclusive feature of cat flap
 								if('tags' in this.sureFlapState.devices[d]) {
@@ -1922,7 +1944,7 @@ class Sureflap extends utils.Adapter {
 						// create hub (devices in household without parent)
 						for(let d = 0; d < this.sureFlapState.devices.length; d++) {
 							if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
-								if (!('parent' in this.sureFlapState.devices[d])) {
+								if (!('parent_device_id' in this.sureFlapState.devices[d])) {
 									const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
 									this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
 										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online', 'indicator.reachable')));
@@ -1960,8 +1982,8 @@ class Sureflap extends utils.Adapter {
 				// create devices in household with parent (sureflap and feeding bowl)
 				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
 					if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
-						if ('parent' in this.sureFlapState.devices[d]) {
-							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].parent.name + '.' + this.sureFlapState.devices[d].name;
+						if ('parent_device_id' in this.sureFlapState.devices[d]) {
+							const obj_name =  prefix + '.' + this.getDeviceById(this.sureFlapState.devices[d].parent_device_id).name + '.' + this.sureFlapState.devices[d].name;
 							switch(this.sureFlapState.devices[d].product_id) {
 								case DEVICE_TYPE_PET_FLAP:
 									// pet flap
@@ -2082,7 +2104,7 @@ class Sureflap extends utils.Adapter {
 
 							this.setObjectNotExists(obj_name + '.bowls', this.buildChannelObject('feeding bowls'), () => {
 								this.setObjectNotExists(obj_name + '.bowls.0', this.buildChannelObject('feeding bowl 0'), () => {
-									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
+									//promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.target', this.buildStateObject('target weight','value', 'number')));
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.weight', this.buildStateObject('weight','value', 'number')));
 
@@ -2097,7 +2119,7 @@ class Sureflap extends utils.Adapter {
 										});
 									} else {
 										this.setObjectNotExists(obj_name + '.bowls.1', this.buildChannelObject('feeding bowl 1'), () => {
-											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
+											//promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.food_type', this.buildStateObject('type of food in bowl','value', 'number', true, {1: 'WET', 2: 'DRY'})));
 											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.target', this.buildStateObject('target weight','value', 'number')));
 											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.weight', this.buildStateObject('weight','value', 'number')));
 
@@ -2533,6 +2555,20 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * returns the device with the given id
+	 * @param {string} id
+	 * @return {object} device
+	 */
+	getDeviceById(id) {
+		for (let i=0; i < this.sureFlapState.devices.length; i++) {
+			if (this.sureFlapState.devices[i].id === id) {
+				return this.sureFlapState.devices[i];
+			}
+		}
+		return undefined;
+	}
+
+	/**
 	 * returns the pet id of the pet
 	 * @param {string} name
 	 * @return {string} pet id
@@ -2659,10 +2695,6 @@ class Sureflap extends utils.Adapter {
 			if (this.sureFlapState.devices[d].name) {
 				this.sureFlapState.devices[d].name_org = this.sureFlapState.devices[d].name;
 				this.sureFlapState.devices[d].name = this.sureFlapState.devices[d].name_org.replace(reg, rep);
-			}
-			if (this.sureFlapState.devices[d].parent && this.sureFlapState.devices[d].parent.name) {
-				this.sureFlapState.devices[d].parent.name_org = this.sureFlapState.devices[d].parent.name;
-				this.sureFlapState.devices[d].parent.name = this.sureFlapState.devices[d].parent.name_org.replace(reg, rep);
 			}
 		}
 		for (let d = 0; d < this.sureFlapState.households.length; d++) {
