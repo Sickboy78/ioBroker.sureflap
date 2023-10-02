@@ -138,6 +138,9 @@ The pictures of the SureFlap® devices are provided free to use from [Sure Petca
 
 ## Changelog
 
+### 1.2.1 (2023-10-02)
+* (Sickboy78) fixed get_history_since failing
+
 ### 1.2.0 (2023-08-19)
 * (Sickboy78) repetitive errors are now logged as debug to avoid spamming the error log
 * (Sickboy78) increased timeout for surepet API from 60 to 120 seconds

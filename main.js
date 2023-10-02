@@ -246,7 +246,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.2.0`);
+		this.log.debug(`starting SureFlap Adapter v1.2.1`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -485,7 +485,7 @@ class Sureflap extends utils.Adapter {
 						options = this.buildOptions('/api/timeline/household/' + id + '?since_id=' + result.data[0].id + '&page_size=1000', 'GET', this.sureFlapState['token']);
 						this.httpRequest('get_history_since', options, '').then(sinceResult => {
 							if (sinceResult == undefined) {
-								return reject(new Error(`getting additional history failed. retrying login in ${RETRY_FREQUENCY_LOGIN} seconds`));
+								return resolve(result.data);
 							} else {
 								if(sinceResult.data == undefined || sinceResult.data.length == 0) {
 									return resolve(result.data);
@@ -494,8 +494,8 @@ class Sureflap extends utils.Adapter {
 									return resolve(data.length > 25 ? data.slice(0,25) : data);
 								}
 							}
-						}).catch(err => {
-							return reject(err);
+						}).catch(() => {
+							return resolve(result.data);
 						});
 					}
 				}
