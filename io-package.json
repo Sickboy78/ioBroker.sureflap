@@ -1,8 +1,21 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.2.1",
+		"version": "1.2.2",
 		"news": {
+			"1.2.2": {
+				"en": "more features",
+				"de": "weitere Funktionen",
+				"ru": "Слава Украины",
+				"pt": "mais funcionalidades",
+				"nl": "meer functies",
+				"fr": "plus de fonctionnalités",
+				"it": "altre caratteristiche",
+				"es": "rohkem funktsioone",
+				"pl": "Dziękuję, drodzy sąsiedzi",
+				"uk": "більше можливостей",
+				"zh-cn": "更多功能"
+			},
 			"1.2.1": {
 				"en": "adjustments for Surepet API changes",
 				"de": "Anpassungen für Surepet API Änderungen",

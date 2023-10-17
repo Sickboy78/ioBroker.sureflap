@@ -246,7 +246,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.2.1`);
+		this.log.debug(`starting SureFlap Adapter v1.2.2`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -588,9 +588,11 @@ class Sureflap extends utils.Adapter {
 							}
 							this.setBatteryStatusToAdapter(prefix,hierarchy,d);
 							this.setSerialNumberToAdapter(prefix,hierarchy,d);
+							this.setSignalStrengthToAdapter(prefix,hierarchy,d);
 						} else {
 							this.setHubStatusToAdapter(prefix,d);
 						}
+						this.setVersionsToAdapter(prefix,d);
 						this.setOnlineStatusToAdapter(prefix,d);
 					}
 				}
@@ -1308,6 +1310,51 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * sets the signal strength to the adapter
+	 * @param {string} prefix
+	 * @param {string} hierarchy
+	 * @param {number} deviceIndex
+	 */
+	setSignalStrengthToAdapter(prefix, hierarchy, deviceIndex) {
+		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.signal.device_rssi !== this.sureFlapStatePrev.devices[deviceIndex].status.signal.device_rssi)) {
+			if(this.sureFlapState.devices[deviceIndex].status.signal.device_rssi != undefined) {
+				const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.signal' + '.device_rssi';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.signal.device_rssi, true);
+			}
+		}
+		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.signal.hub_rssi !== this.sureFlapStatePrev.devices[deviceIndex].status.signal.hub_rssi)) {
+			if(this.sureFlapState.devices[deviceIndex].status.signal.hub_rssi != undefined) {
+				const obj_name =  prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.signal' + '.hub_rssi';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.signal.hub_rssi, true);
+			}
+		}
+	}
+
+	/**
+	 * sets the hardware and software version to the adapter
+	 * @param {string} prefix
+	 * @param {number} deviceIndex
+	 */
+	setVersionsToAdapter(prefix, deviceIndex) {
+		let hierarchy = prefix;
+		if (this.hasParentDevice(this.sureFlapState.devices[deviceIndex])) {
+			hierarchy =  prefix + '.' + this.getParentDeviceName(this.sureFlapState.devices[deviceIndex]);
+		}
+		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.version.device.hardware !== this.sureFlapStatePrev.devices[deviceIndex].status.version.device.hardware)) {
+			if(this.sureFlapState.devices[deviceIndex].status.version.device.hardware != undefined) {
+				const obj_name =  hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.version' + '.hardware';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.version.device.hardware, true);
+			}
+		}
+		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.version.device.firmware !== this.sureFlapStatePrev.devices[deviceIndex].status.version.device.firmware)) {
+			if(this.sureFlapState.devices[deviceIndex].status.version.device.firmware != undefined) {
+				const obj_name =  hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.version' + '.firmware';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.version.device.firmware, true);
+			}
+		}
+	}
+
+	/**
 	 * sets hub status to the adapter
 	 * @param {string} prefix
 	 * @param {number} deviceIndex
@@ -2013,6 +2060,7 @@ class Sureflap extends utils.Adapter {
 										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online', 'indicator.reachable')));
 										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.serial_number', this.buildStateObject('serial number of device', 'text', 'string')));
 										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control', this.buildChannelObject('control switches')));
+										promiseArray.push(this.createVersionsToAdapter(d, obj_name));
 										Promise.all(promiseArray).then(() => {
 											this.setObjectNotExists(obj_name + '.control.led_mode', this.buildStateObject('led mode', 'indicator', 'number', false, {0: 'OFF', 1:'HIGH', 4:'DIMMED' }), () => {
 												return resolve();
@@ -2081,7 +2129,7 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * creates online, battery, battery_percentage and serial_number data structures in the adapter
+	 * creates online, battery, battery_percentage, serial_number, rssi and versions data structures in the adapter
 	 * @param {number} device
 	 * @param {string} obj_name
 	 * @return {Promise}
@@ -2093,11 +2141,38 @@ class Sureflap extends utils.Adapter {
 			promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery', this.buildStateObject('battery', 'value.voltage', 'number')));
 			promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.battery_percentage', this.buildStateObject('battery percentage', 'value.battery', 'number')));
 			promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.serial_number', this.buildStateObject('serial number of device', 'text', 'string')));
-			Promise.all(promiseArray).then(() => {
-				return resolve();
-			}).catch(error => {
-				this.log.warn(`could not create adapter common status hierarchy for device ${this.sureFlapState.devices[device].name} (${error})`);
-				return reject();
+			this.setObjectNotExists(obj_name + '.signal', this.buildChannelObject('signal strength'), () => {
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.signal' + '.device_rssi', this.buildStateObject('device rssi', 'value.signal.rssi', 'number')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.signal' + '.hub_rssi', this.buildStateObject('hub rssi', 'value.signal.rssi', 'number')));
+				promiseArray.push(this.createVersionsToAdapter(device, obj_name));
+				Promise.all(promiseArray).then(() => {
+					return resolve();
+				}).catch(error => {
+					this.log.warn(`could not create adapter common status hierarchy for device ${this.sureFlapState.devices[device].name} (${error})`);
+					return reject();
+				});
+			});
+		}));
+	}
+
+	/**
+	 * creates hardware and software versions data structures in the adapter
+	 * @param {number} device
+	 * @param {string} obj_name
+	 * @return {Promise}
+	 */
+	createVersionsToAdapter(device, obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			const promiseArray = [];
+			this.setObjectNotExists(obj_name + '.version', this.buildChannelObject('version'), () => {
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.version' + '.hardware', this.buildStateObject('hardware version', 'info.hardware', 'number')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.version' + '.firmware', this.buildStateObject('firmware version', 'info.firmware', 'number')));
+				Promise.all(promiseArray).then(() => {
+					return resolve();
+				}).catch(error => {
+					this.log.warn(`could not create adapter versions hierarchy for device ${this.sureFlapState.devices[device].name} (${error})`);
+					return reject();
+				});
 			});
 		}));
 	}
