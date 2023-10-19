@@ -1,9 +1,9 @@
 version: 'test-{build}'
 environment:
   matrix:
-    - nodejs_version: '12'
-    - nodejs_version: '14'
     - nodejs_version: '16'
+    - nodejs_version: '18'
+    - nodejs_version: '20'
 platform:
   - x86
   - x64
