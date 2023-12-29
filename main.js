@@ -1102,10 +1102,12 @@ class Sureflap extends utils.Adapter {
 			for(let b = 0; b < this.sureFlapState.devices[deviceIndex].control.bowls.settings.length; b++) {
 				this.getObject(obj_name + '.bowls.' + b, (err, obj) => {
 					if (!err && obj) {
-						if('food_type' in this.sureFlapState.devices[deviceIndex].control.bowls.settings[b]) {
+						if('food_type' in this.sureFlapState.devices[deviceIndex].control.bowls.settings[b] && this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].food_type != undefined) {
 							this.setState(obj_name + '.bowls.' + b + '.food_type', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].food_type, true);
 						}
-						this.setState(obj_name + '.bowls.' + b + '.target', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target, true);
+						if('target' in this.sureFlapState.devices[deviceIndex].control.bowls.settings[b] && this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target != undefined) {
+							this.setState(obj_name + '.bowls.' + b + '.target', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target, true);
+						}
 						this.feederConfigBowlObjectMissing[deviceIndex] = false;
 					} else {
 						if(!this.feederConfigBowlObjectMissing[deviceIndex]) {
