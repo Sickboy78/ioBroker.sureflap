@@ -27,6 +27,15 @@
                     "sm": 12,
                     "md": 6,
                     "lg": 4
+                },
+                "api_host": {
+                    "type": "text",
+                    "label": "api_host",
+                    "visible": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4
                 }
             }
         },

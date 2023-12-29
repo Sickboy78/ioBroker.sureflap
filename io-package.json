@@ -1,8 +1,21 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.2.2",
+		"version": "1.2.3",
 		"news": {
+			"1.2.3": {
+				"en": "new configurable API host",
+				"de": "neuer konfigurierbarer API Hostname",
+				"ru": "Слава Украины",
+				"pt": "novo anfitrião API configurável",
+				"nl": "nieuwe configureerbare API-host",
+				"fr": "nouvel hôte API configurable",
+				"it": "nuovo host API configurabile",
+				"es": "uus konfigureeritav API host",
+				"pl": "nowy konfigurowalny host API",
+				"uk": "новий конфігурований хост API",
+				"zh-cn": "新的可配置 API 主机"
+			},
 			"1.2.2": {
 				"en": "more features",
 				"de": "weitere Funktionen",
@@ -309,6 +322,7 @@
 	"native": {
         "username": "",
         "password": "",
+		"api_host": "app-api.production.surehub.io",
 		"sureflap_battery_full": 6.1,
 		"sureflap_battery_empty": 5.1,
 		"surefeed_battery_full": 6.2,

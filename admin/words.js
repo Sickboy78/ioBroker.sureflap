@@ -67,6 +67,19 @@ systemDictionary = {
 		"uk": "Пароль",
 		"zh-cn": "密码"
 	},
+	"api_host": {
+		"en": "API host",
+		"de": "API Hostname",
+		"ru": "Xост API",
+		"pt": "Anfitrião da API",
+		"nl": "API Host",
+		"fr": "Hôte de l'API",
+		"it": "Host API",
+		"es": "API Host",
+		"pl": "Host API",
+		"uk": "Хост API",
+		"zh-cn": "应用程序接口主机"
+	},
 	"battery voltages": {
 		"en": "battery voltages",
 		"de": "Batteriespannungen",

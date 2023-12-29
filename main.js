@@ -246,7 +246,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.2.2`);
+		this.log.debug(`starting SureFlap Adapter v1.2.3`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -412,16 +412,18 @@ class Sureflap extends utils.Adapter {
 	getAdditionalDataFromApi() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
+			let skipUpdateHistory = false;
 
 			this.updateHistory = false;
 			this.updateReport = false;
 
 			// get history every UPDATE_FREQUENCY_HISTORY
 			if(this.lastHistoryUpdate + UPDATE_FREQUENCY_HISTORY * 1000 < Date.now()) {
+				skipUpdateHistory = true;
 				promiseArray.push(this.getEventHistoryFromApi());
 			}
 			// get aggregated report every UPDATE_FREQUENCY_REPORT but not same time as history (dont spam surepet server) except for first loop
-			if((!this.updateHistory || this.firstLoop) && (this.hasFeeder || this.hasDispenser) && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
+			if((!skipUpdateHistory || this.firstLoop) && (this.hasFeeder || this.hasDispenser) && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
 				promiseArray.push(this.getAggregatedReportFromApi());
 			}
 			if(promiseArray.length == 0) {
@@ -442,7 +444,6 @@ class Sureflap extends utils.Adapter {
 	 */
 	getEventHistoryFromApi() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			this.lastHistoryUpdate = Date.now();
 			const promiseArray = [];
 			for(let h = 0; h < this.sureFlapState.households.length; h++) {
 				promiseArray.push(this.getEventHistoryForHouseholdFromApi(this.sureFlapState.households[h].id));
@@ -458,9 +459,11 @@ class Sureflap extends utils.Adapter {
 						this.sureFlapHistory[h] = values[h];
 					}
 				}
+				this.lastHistoryUpdate = Date.now();
 				this.updateHistory = true;
 				return resolve();
 			}).catch(err => {
+				this.updateHistory = false;
 				return reject(err);
 			});
 		}));
@@ -482,7 +485,7 @@ class Sureflap extends utils.Adapter {
 					if(result.data.length == 0 || result.data[0].id == undefined) {
 						return resolve(result.data);
 					} else {
-						options = this.buildOptions('/api/timeline/household/' + id + '?since_id=' + result.data[0].id + '&page_size=1000', 'GET', this.sureFlapState['token']);
+						options = this.buildOptions('/api/timeline/household/' + id + '?since_id=' + result.data[0].id + '&page_size=25', 'GET', this.sureFlapState['token']);
 						this.httpRequest('get_history_since', options, '').then(sinceResult => {
 							if (sinceResult == undefined) {
 								return resolve(result.data);
@@ -511,7 +514,6 @@ class Sureflap extends utils.Adapter {
 	 */
 	getAggregatedReportFromApi() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			this.lastReportUpdate = Date.now();
 			const promiseArray = [];
 			for(let p = 0; p < this.sureFlapState.pets.length; p++) {
 				promiseArray.push(this.getReportForHouseholdAndPetFromApi(this.sureFlapState.pets[p].household_id, this.sureFlapState.pets[p].id));
@@ -527,9 +529,11 @@ class Sureflap extends utils.Adapter {
 						this.sureFlapReport[p] = values[p];
 					}
 				}
+				this.lastReportUpdate = Date.now();
 				this.updateReport = true;
 				return resolve();
 			}).catch(err => {
+				this.updateReport = false;
 				return reject(err);
 			});
 		}));
@@ -1587,7 +1591,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetHubLedModeToAdapter(hierarchy, hub) {
 		const hubIndex = this.getDeviceIndex(hub);
-		if('devices' in this.sureFlapStatePrev == true && 'status' in this.sureFlapStatePrev.devices[hubIndex] == true && 'led_mode' in this.sureFlapStatePrev.devices[hubIndex].status == true) {
+		if('devices' in this.sureFlapStatePrev == true && Array.isArray(this.sureFlapStatePrev.devices) && 'status' in this.sureFlapStatePrev.devices[hubIndex] == true && 'led_mode' in this.sureFlapStatePrev.devices[hubIndex].status == true) {
 			const value = this.sureFlapStatePrev.devices[hubIndex].status.led_mode;
 			this.log.debug(`resetting hub led mode for ${hub} to: ${value}`);
 			this.setState(hierarchy + '.' + hub + 'control.led_mode', value, true);
@@ -1685,12 +1689,12 @@ class Sureflap extends utils.Adapter {
 	 *********************************************/
 
 	/**
-	 * deletes an object from the adapter
+	 * deletes an object from the adapter if it exists
 	 * @param {string} obj_name
 	 * @param {boolean} recursive
 	 * @return {Promise}
 	 */
-	deleteObjectFormAdapter(obj_name, recursive) {
+	deleteObjectFormAdapterIfExists(obj_name, recursive) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			this.log.silly(`deleting object '${obj_name}'`);
 			this.getObject(obj_name, (err, obj) => {
@@ -1706,7 +1710,36 @@ class Sureflap extends utils.Adapter {
 						}
 					});
 				} else {
-					this.log.debug(`object '${obj_name}' not found`);
+					this.log.silly(`object '${obj_name}' not found`);
+					return resolve();
+				}
+			});
+		}));
+	}
+
+	/**
+	 * deletes an obsolete object if it exists
+	 * @param obj_name the device name
+	 * @param {boolean} recursive
+	 * @return {Promise}
+	 */
+	deleteObsoleteObjectIfExists(obj_name, recursive) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			this.log.silly(`deleting obsolete object '${obj_name}'`);
+			this.getObject(obj_name, (err, obj) => {
+				if (!err && obj) {
+					this.log.debug(`obsolete object ${obj_name} found. trying to delete ...`);
+					this.delObject(obj._id, {'recursive': recursive}, (err) => {
+						if(err) {
+							this.log.error(`can not delete obsolete object ${obj_name} because: ${err}`);
+							return reject();
+						} else {
+							this.log.debug(`obsolete object '${obj_name}' deleted`);
+							return resolve();
+						}
+					});
+				} else {
+					this.log.silly(`obsolete object '${obj_name}' not found`);
 					return resolve();
 				}
 			});
@@ -1725,7 +1758,7 @@ class Sureflap extends utils.Adapter {
 
 			this.log.debug(`deleting event history from adapter`);
 			for(let i = 0; i < this.sureFlapHistory[index].length; i++) {
-				promiseArray.push(this.deleteObjectFormAdapter(prefix + '.history.' + i, true));
+				promiseArray.push(this.deleteObjectFormAdapterIfExists(prefix + '.history.' + i, true));
 			}
 			Promise.all(promiseArray).then(() => {
 				return resolve();
@@ -1740,7 +1773,7 @@ class Sureflap extends utils.Adapter {
 	 * @return {Promise}
 	 */
 	removeDeletedAndRenamedPetsFromAdapter() {
-		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+		return /** @type {Promise<void>} */(new Promise((resolve) => {
 			this.log.debug(`searching and removing of deleted and renamed pets`);
 
 			const getObjectsPromiseArray = [];
@@ -1787,7 +1820,7 @@ class Sureflap extends utils.Adapter {
 						Object.keys(obj).forEach((key) => {
 							if(!petsChannelNames.includes(obj[key].common.name)) {
 								this.log.debug(`deleted or renamed pet ${obj[key]._id} (${obj[key].common.name}) found. trying to delete`);
-								deletePromiseArray.push(this.deleteObjectFormAdapter(obj[key]._id, true));
+								deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(obj[key]._id, true));
 							}
 						});
 					}
@@ -1796,102 +1829,58 @@ class Sureflap extends utils.Adapter {
 					this.log.debug(`searching and removing of deleted and renamed pets complete`);
 					return resolve();
 				}).catch(() => {
-					this.log.debug(`searching and removing of deleted and renamed pets failed`);
-					return reject();
+					this.log.warn(`searching and removing of deleted and renamed pets failed`);
+					return resolve();
 				});
 			}).catch(() => {
 				this.log.debug(`searching and removing of deleted and renamed pets failed`);
-				return reject();
+				return resolve();
 			});
 		}));
 	}
 
 	/**
-	 * removes obsolte data structures from the adapter
+	 * removes obsolete data structures from the adapter
 	 * When there are changes to the data structures
 	 * obsolete entries go here.
 	 * @return {Promise}
 	 */
 	removeDeprecatedDataFromAdapter() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
+			const deletePromiseArray = [];
+
 			this.log.debug(`searching and removing of obsolete objects`);
 			for(let h = 0; h < this.sureFlapState.households.length; h++) {
 				const prefix = this.sureFlapState.households[h].name;
 				for(let d = 0; d < this.sureFlapState.devices.length; d++) {
 					if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
+						// hardware and firmware version was changed from number to string
+						if (this.hasParentDevice(this.sureFlapState.devices[d])) {
+							const obj_name =  prefix + '.' + this.getParentDeviceName(this.sureFlapState.devices[d]) + '.' + this.sureFlapState.devices[d].name;
+							deletePromiseArray.push(this.removeVersionNumberFromDevices(obj_name));
+						} else {
+							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
+							deletePromiseArray.push(this.removeVersionNumberFromDevices(obj_name));
+						}
+
 						// missing parent object of API change on 2023_10_02 created all devices without hierarchy (as hubs)
 						if (this.hasParentDevice(this.sureFlapState.devices[d])) {
 							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
 							this.log.silly(`checking for object ${obj_name}.`);
 
 							// remove non hub devices (hub specific attributes) from top hierarchy
-							this.getObject(obj_name + '.control.led_mode', (err, obj) => {
-								if (!err && obj) {
-									this.log.debug(`obsolete object ${obj_name}.control.led_mode found. trying to delete`);
-									this.delObject(obj._id, (err) => {
-										if(err) {
-											this.log.warn(`can not delete obsolete object ${obj_name}.control.led_mode because: ${err}`);
-										}
-									});
-								}
-							});
-							this.getObject(obj_name + '.control', (err, obj) => {
-								if (!err && obj) {
-									this.log.debug(`obsolete object ${obj_name}.control found. trying to delete`);
-									this.delObject(obj._id, (err) => {
-										if(err) {
-											this.log.warn(`can not delete obsolete object ${obj_name}.control because: ${err}`);
-										}
-									});
-								}
-							});
-							this.getObject(obj_name + '.online', (err, obj) => {
-								if (!err && obj) {
-									this.log.debug(`obsolete object ${obj_name}.online found. trying to delete`);
-									this.delObject(obj._id, (err) => {
-										if(err) {
-											this.log.warn(`can not delete obsolete object ${obj_name}.online because: ${err}`);
-										}
-									});
-								}
-							});
-							this.getObject(obj_name + '.serial_number', (err, obj) => {
-								if (!err && obj) {
-									this.log.debug(`obsolete object ${obj_name}.serial_number found. trying to delete`);
-									this.delObject(obj._id, (err) => {
-										if(err) {
-											this.log.warn(`can not delete obsolete object ${obj_name}.serial_number because: ${err}`);
-										}
-									});
-								}
-							});
-							this.getObject(obj_name, (err, obj) => {
-								if (!err && obj) {
-									this.log.debug(`obsolete object ${obj_name} found. trying to delete`);
-									this.delObject(obj._id, (err) => {
-										if(err) {
-											this.log.warn(`can not delete obsolete object ${obj_name} because: ${err}`);
-										}
-									});
-								}
-							});
+							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.control.led_mode', false));
+							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.control', true));
+							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.online', false));
+							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.serial_number', false));
+							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name, true));
 						}
 
 						// hub
 						if (!this.hasParentDevice(this.sureFlapState.devices[d])) {
 							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
-
 							// made led_mode changeable and moved it to control.led_mode
-							this.getObject(obj_name + '.led_mode', (err, obj) => {
-								if (!err && obj) {
-									this.log.debug(`obsolete object ${obj_name}.led_mode found. trying to delete`);
-									this.delObject(obj._id, (err) => {
-										if(err) {
-											this.log.warn(`can not delete obsolete object ${obj_name}.led_mode because: ${err}`);
-										}
-									});
-								}
-							});
+							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.led_mode', false));
 						}
 						else
 						{
@@ -1903,79 +1892,16 @@ class Sureflap extends utils.Adapter {
 								// food_type was removed on 2023_10_02
 								// food_type was added again on 2023_10_03
 								/*
-								this.getObject(obj_name + '.bowls.0.food_type', (err, obj) => {
-									if (!err && obj) {
-										this.log.debug(`obsolete object ${obj_name}.bowls.0.food_type found. trying to delete`);
-										this.delObject(obj._id, (err) => {
-											if(err) {
-												this.log.warn(`can not delete obsolete object ${obj_name}.bowls.0.food_type because: ${err}`);
-											}
-										});
-									}
-								});
-								this.getObject(obj_name + '.bowls.1.food_type', (err, obj) => {
-									if (!err && obj) {
-										this.log.debug(`obsolete object ${obj_name}.bowls.1.food_type found. trying to delete`);
-										this.delObject(obj._id, (err) => {
-											if(err) {
-												this.log.warn(`can not delete obsolete object ${obj_name}.bowls.1.food_type because: ${err}`);
-											}
-										});
-									}
-								});
+								deletePromiseArray.push(this.removeObjectIfExists(obj_name + '.bowls.0.food_type'));
+								deletePromiseArray.push(this.removeObjectIfExists(obj_name + '.bowls.1.food_type'));
 								*/
 
 								// feeder had unnessessary attributes of flap
-								this.getObject(obj_name + '.curfew', (err, obj) => {
-									if (!err && obj) {
-										this.log.debug(`obsolete object ${obj_name}.curfew found. trying to delete`);
-										this.delObject(obj._id, (err) => {
-											if(err) {
-												this.log.warn(`can not delete obsolete object ${obj_name}.curfew because: ${err}`);
-											}
-										});
-									}
-								});
-								this.getObject(obj_name + '.last_curfew', (err, obj) => {
-									if (!err && obj) {
-										this.log.debug(`obsolete object ${obj_name}.last_curfew found. trying to delete`);
-										this.delObject(obj._id, (err) => {
-											if(err) {
-												this.log.warn(`can not delete obsolete object ${obj_name}.last_curfew because: ${err}`);
-											}
-										});
-									}
-								});
-								this.getObject(obj_name + '.curfew_active', (err, obj) => {
-									if (!err && obj) {
-										this.log.debug(`obsolete object ${obj_name}.curfew_active found. trying to delete`);
-										this.delObject(obj._id, (err) => {
-											if(err) {
-												this.log.warn(`can not delete obsolete object ${obj_name}.curfew_active because: ${err}`);
-											}
-										});
-									}
-								});
-								this.getObject(obj_name + '.control.lockmode', (err, obj) => {
-									if (!err && obj) {
-										this.log.debug(`obsolete object ${obj_name}.control.lockmode found. trying to delete`);
-										this.delObject(obj._id, (err) => {
-											if(err) {
-												this.log.warn(`can not delete obsolete object ${obj_name}.control.lockmode because: ${err}`);
-											}
-										});
-									}
-								});
-								this.getObject(obj_name + '.control.curfew', (err, obj) => {
-									if (!err && obj) {
-										this.log.debug(`obsolete object ${obj_name}.control.curfew found. trying to delete`);
-										this.delObject(obj._id, (err) => {
-											if(err) {
-												this.log.warn(`can not delete obsolete object ${obj_name}.control.curfew because: ${err}`);
-											}
-										});
-									}
-								});
+								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.curfew', false));
+								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.last_curfew', false));
+								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.curfew_active', false));
+								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.control.lockmode', false));
+								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.control.curfew', false));
 							}
 							// pet flap
 							if(this.sureFlapState.devices[d].product_id == DEVICE_TYPE_PET_FLAP) {
@@ -1986,20 +1912,7 @@ class Sureflap extends utils.Adapter {
 								if('tags' in this.sureFlapState.devices[d]) {
 									for(let t = 0; t < this.sureFlapState.devices[d].tags.length; t++) {
 										const name = this.getPetNameForTagId(this.sureFlapState.devices[d].tags[t].id);
-										this.getObject(obj_name + '.assigned_pets.' + name, (err, obj) => {
-											if (!err && obj) {
-												if(obj.type == 'channel') {
-													this.log.debug(`obsolete channel object ${obj_name}.assigned_pets.${name} found. trying to delete recursively`);
-
-													this.deleteObjectFormAdapter(obj_name + '.assigned_pets.' + name, true)
-														.then(() => {
-															this.log.info(`deleted assigned pets for pet flap ${obj_name} because of obsolete control for pet type. please restart adapter to show assigned pets again.`);
-														}).catch(() => {
-															this.log.warn(`can not delete obsolete object ${obj_name}.assigned_pets.${name}`);
-														});
-												}
-											}
-										});
+										deletePromiseArray.push(this.removeAssignedPetsFromPetFlap(obj_name + '.assigned_pets.' + name));
 									}
 								}
 							}
@@ -2007,8 +1920,62 @@ class Sureflap extends utils.Adapter {
 					}
 				}
 			}
-			this.log.debug(`searching and removing of obsolete objects complete`);
-			return resolve();
+			Promise.all(deletePromiseArray).then(() => {
+				return resolve();
+			}).catch(() => {
+				this.log.warn(`searching and removing of obsolete objects failed. some obsolete objects may not have been removed.`);
+				return resolve();
+			});
+		}));
+	}
+
+	/**
+	 * removes firmware and hardware version from devices if they are of type number
+	 * @param obj_name the device name
+	 * @return {Promise}
+	 */
+	removeVersionNumberFromDevices(obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			this.getObject(obj_name + '.version.firmware', (err, obj) => {
+				if (!err && obj && obj.common.type === 'number') {
+					this.log.silly(`obsolete number objects in ${obj_name}.version found. trying to delete recursively`);
+
+					this.deleteObsoleteObjectIfExists(obj_name + '.version', true)
+						.then(() => {
+							return resolve();
+						})
+						.catch(() => {
+							return reject();
+						});
+				} else {
+					return resolve();
+				}
+			});
+		}));
+	}
+
+	/**
+	 * removes assigned pets from pet flap
+	 * @param obj_name the device name
+	 * @return {Promise}
+	 */
+	removeAssignedPetsFromPetFlap(obj_name) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			this.getObject(obj_name, (err, obj) => {
+				if (!err && obj && obj.type == 'channel') {
+					this.log.silly(`obsolete channel object ${obj_name} found. trying to delete recursively`);
+
+					this.deleteObsoleteObjectIfExists(obj_name, true)
+						.then(() => {
+							this.log.info(`deleted assigned pets for pet flap ${obj_name} because of obsolete control for pet type. please restart adapter to show assigned pets again.`);
+							return resolve();
+						}).catch(() => {
+							return reject();
+						});
+				} else {
+					return resolve();
+				}
+			});
 		}));
 	}
 
@@ -2023,13 +1990,20 @@ class Sureflap extends utils.Adapter {
 	createAdapterObjectHierarchy() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			if(this.firstLoop === true) {
-				this.createHouseholdsAndHubsToAdapter()
-					.then(() => this.removeDeprecatedDataFromAdapter())
+				this.log.debug(`creating device hierarchy...`);
+				this.removeDeprecatedDataFromAdapter()
 					.then(() => this.removeDeletedAndRenamedPetsFromAdapter())
+					.then(() => this.createHouseholdsAndHubsToAdapter())
 					.then(() => this.createDevicesToAdapter())
 					.then(() => this.createPetsToAdapter())
-					.then(() => { return resolve(); })
-					.catch(() => { return reject(); });
+					.then(() => {
+						this.log.debug(`device hierarchy created.`);
+						return resolve();
+					})
+					.catch(() => {
+						this.log.error(`creating device hierarchy failed.`);
+						return reject();
+					});
 			} else {
 				return resolve();
 			}
@@ -2098,10 +2072,11 @@ class Sureflap extends utils.Adapter {
 							switch(this.sureFlapState.devices[d].product_id) {
 								case DEVICE_TYPE_PET_FLAP:
 									// pet flap
-								// eslint-disable-next-line no-fallthrough
+									promiseArray.push(this.createFlapDevicesToAdapter(d, obj_name, false));
+									break;
 								case DEVICE_TYPE_CAT_FLAP:
 									// cat flap
-									promiseArray.push(this.createFlapDevicesToAdapter(d, obj_name, this.sureFlapState.devices[d].product_id == DEVICE_TYPE_CAT_FLAP));
+									promiseArray.push(this.createFlapDevicesToAdapter(d, obj_name, true));
 									break;
 								case DEVICE_TYPE_FEEDER:
 									// feeding bowl
@@ -2146,6 +2121,7 @@ class Sureflap extends utils.Adapter {
 				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.signal' + '.hub_rssi', this.buildStateObject('hub rssi', 'value.signal.rssi', 'number')));
 				promiseArray.push(this.createVersionsToAdapter(device, obj_name));
 				Promise.all(promiseArray).then(() => {
+					this.log.silly(`adapter common status hierarchy for device ${this.sureFlapState.devices[device].name} created`);
 					return resolve();
 				}).catch(error => {
 					this.log.warn(`could not create adapter common status hierarchy for device ${this.sureFlapState.devices[device].name} (${error})`);
@@ -2165,9 +2141,10 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
 			this.setObjectNotExists(obj_name + '.version', this.buildChannelObject('version'), () => {
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.version' + '.hardware', this.buildStateObject('hardware version', 'info.hardware', 'number')));
-				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.version' + '.firmware', this.buildStateObject('firmware version', 'info.firmware', 'number')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.version' + '.hardware', this.buildStateObject('hardware version', 'info.hardware', 'string')));
+				promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.version' + '.firmware', this.buildStateObject('firmware version', 'info.firmware', 'string')));
 				Promise.all(promiseArray).then(() => {
+					this.log.silly(`adapter versions hierarchy for device ${this.sureFlapState.devices[device].name} created`);
 					return resolve();
 				}).catch(error => {
 					this.log.warn(`could not create adapter versions hierarchy for device ${this.sureFlapState.devices[device].name} (${error})`);
@@ -2248,7 +2225,7 @@ class Sureflap extends utils.Adapter {
 
 									if(this.sureFlapState.devices[device].control.bowls.type == FEEDER_SINGLE_BOWL) {
 										// remove bowl 1 (e.g. after change from dual to single bowl)
-										promiseArray.push(this.deleteObjectFormAdapter(obj_name + '.bowls.1', true));
+										promiseArray.push(this.deleteObjectFormAdapterIfExists(obj_name + '.bowls.1', true));
 										Promise.all(promiseArray).then(() => {
 											return resolve();
 										}).catch(error => {
@@ -3000,6 +2977,16 @@ class Sureflap extends utils.Adapter {
 		// The adapters config (in the instance object everything under the attribute "native") is accessible via
 		// this.config:
 		this.log.info('checking adapter configuration...');
+		if(!this.config.username || this.config.username === null || typeof this.config.username !== 'string' || this.config.username.length === 0) {
+			this.log.warn(`Username is invalid. Adapter probably won't work.`);
+		}
+		if(!this.config.password || this.config.password === null || typeof this.config.password !== 'string' || this.config.password.length === 0) {
+			this.log.warn(`Password is invalid. Adapter probably won't work.`);
+		}
+		if(!this.config.api_host || this.config.api_host === null || typeof this.config.api_host !== 'string' || this.config.api_host.length === 0) {
+			this.log.warn(`API host is invalid, using default value.`);
+			this.config.api_host = 'app-api.production.surehub.io';
+		}
 		if (!this.config.sureflap_battery_full || !this.config.sureflap_battery_empty || this.config.sureflap_battery_full <= this.config.sureflap_battery_empty) {
 			this.config.sureflap_battery_full = 6.1;
 			this.config.sureflap_battery_empty = 5.1;
@@ -3014,6 +3001,7 @@ class Sureflap extends utils.Adapter {
 			this.config.felaqua_battery_full = 6.2;
 			this.config.felaqua_battery_empty = 5.2;
 		}
+		this.log.info('API host: ' + this.config.api_host);
 		this.log.info('sureflap battery voltage full: ' + this.config.sureflap_battery_full);
 		this.log.info('sureflap battery voltage empty: ' + this.config.sureflap_battery_empty);
 		this.log.info('surefeed battery voltage full: ' + this.config.surefeed_battery_full);
@@ -3032,13 +3020,13 @@ class Sureflap extends utils.Adapter {
 	 */
 	buildOptions(path, method, token) {
 		const options = {
-			hostname: 'app.api.surehub.io',
+			hostname: this.config.api_host,
 			port: 443,
 			path: path,
 			method: method,
 			timeout: REQUEST_TIMEOUT,
 			headers: {
-				'Host' : 'app.api.surehub.io',
+				'Host' : this.config.api_host,
 				'Accept' : 'application/json, text/plain, */*',
 				'Referer' : 'https://surepetcare.io/',
 				'Content-Type' : 'application/json;charset=utf-8',

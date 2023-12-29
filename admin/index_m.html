@@ -50,7 +50,7 @@
 				}
 			});
 
-			if(settings.username && settings.password) {
+			if(settings.api_host && settings.username && settings.password) {
 				testLogin(settings);
 			}
 			onChange(false);
@@ -79,6 +79,9 @@
 					} else if(id === 'username') {
 						settings.username = $this.val();
 						obj[id] = $this.val();
+					} else if(id === 'api_host') {
+						settings.api_host = $this.val();
+						obj[id] = $this.val();
 					} else {
 						obj[id] = $this.val();
 					}
@@ -102,8 +105,8 @@
 		 * does a login and retrieves surepet data on success
 		 */
 		function doLogin(settings) {
-			doLoginViaApi(settings.username,settings.password)
-				.then(token => getSurePetDataFromApi(token))
+			doLoginViaApi(settings.api_host, settings.username, settings.password)
+				.then(token => getSurePetDataFromApi(settings.api_host, token))
 				.then(data => showSurepetData(data))
 				.catch(error => {
 					$('div.input-field').addClass('red-border');
@@ -115,10 +118,10 @@
 		 * does a login via the surepet API
 		 * @return {Promise} Promise of an auth token
 		 */
-		function doLoginViaApi(username, password) {
+		function doLoginViaApi(host, username, password) {
 			return new Promise((resolve, reject) => {
 				const postData = JSON.stringify( { 'email_address':username,'password':password, 'device_id':'1050547954'} );
-				const options = buildOptions('/api/auth/login', 'POST', '', postData);
+				const options = buildOptions(host, '/api/auth/login', 'POST', '', postData);
 				httpRequest(options).then(result => {
 					if (result == undefined || result.data == undefined || !('token' in result.data)) {
 						return reject(new Error(`Request returned no login token.`));
@@ -133,12 +136,13 @@
 
 		/**
 		 * gets surepet data from surepet API
+		 * @param {string} host
 		 * @param {string} token
 		 * @return {Promise} Promise of surepet data
 		 */
-		function getSurePetDataFromApi(token) {
+		function getSurePetDataFromApi(host, token) {
 			return new Promise((resolve, reject) => {
-				const options = buildOptions('/api/me/start', 'GET', token);
+				const options = buildOptions(host,'/api/me/start', 'GET', token);
 				httpRequest(options).then(result => {
 					if (result == undefined || result.data == undefined) {
 						return reject(new Error(`Getting surepet data failed.`));
@@ -153,20 +157,21 @@
 
 		/**
 		 * builds a options JSon object for a http request
+		 * @param {string} host
 		 * @param {string} path
 		 * @param {string} method
 		 * @param {string} token
 		 * @param {object} postData
 		 * @return {object}
 		 */
-		function buildOptions(path, method, token, postData) {
+		function buildOptions(host, path, method, token, postData) {
 			const options = {
-				url: 'https://app.api.surehub.io' + path,
+				url: 'https://' + host + path,
 				method: method,
 				data: postData,
 				contentType: 'application/json;charset=utf-8',
 				headers: {
-					'Host' : 'app.api.surehub.io',
+					'Host' : host,
 					'Accept' : 'application/json, text/plain, */*',
 					'Referer' : 'https://surepetcare.io/',
 					'Origin' :  'https://surepetcare.io',
@@ -300,56 +305,61 @@
 		</div>
 
 		<div class="row">
-			<div class="col s6 input-field">
+			<div class="col s12 m6 l4 input-field">
 				<input type="text" class="value" id="username" />
 				<label for="username" class="translate">username</label>
 			</div>
 
-			<div class="col s6 input-field">
+			<div class="col s12 m6 l4 input-field">
 				<input type="password" class="value" id="password" />
 				<label for="password" class="translate">password</label>
+			</div>
+
+			<div class="col s12 m12 l4 input-field">
+				<input type="text" class="value" id="api_host" />
+				<label for="api_host" class="translate">api_host</label>
 			</div>
 		</div>
 
 		<!-- battery voltages -->
 
 		<div class="row">
-			<div class="col s4">
+			<div class="col s12 m4">
 				<p class="title">Sureflap</p>
 			</div>
-			<div class="col s4">
+			<div class="col s12 m4">
 				<p class="title">Surefeed</p>
 			</div>
-			<div class="col s4">
+			<div class="col s12 m4">
 				<p class="title">Felaqua</p>
 			</div>
 		</div>
 
 		<div class="row">
-			<div class="col s4 input-field">
+			<div class="col s12 m4 input-field">
 				<input type="number" class="value" id="sureflap_battery_full" step="0.1" min="1" max="10"/>
 				<label for="sureflap_battery_full" class="translate">battery voltage full</label>
 			</div>
-			<div class="col s4 input-field">
+			<div class="col s12 m4 input-field">
 				<input type="number" class="value" id="surefeed_battery_full" step="0.1" min="1" max="10" />
 				<label for="surefeed_battery_full" class="translate">battery voltage full</label>
 			</div>
-			<div class="col s4 input-field">
+			<div class="col s12 m4 input-field">
 				<input type="number" class="value" id="felaqua_battery_full" step="0.1" min="1" max="10" />
 				<label for="felaqua_battery_full" class="translate">battery voltage full</label>
 			</div>
 		</div>
 
 		<div class="row">
-			<div class="col s4 input-field">
+			<div class="col s12 m4 input-field">
 				<input type="number" class="value" id="sureflap_battery_empty" step="0.1" min="1" max="10" />
 				<label for="sureflap_battery_empty" class="translate">battery voltage empty</label>
 			</div>
-			<div class="col s4 input-field">
+			<div class="col s12 m4 input-field">
 				<input type="number" class="value" id="surefeed_battery_empty" step="0.1" min="1" max="10" />
 				<label for="surefeed_battery_empty" class="translate">battery voltage empty</label>
 			</div>
-			<div class="col s4 input-field">
+			<div class="col s12 m4 input-field">
 				<input type="number" class="value" id="felaqua_battery_empty" step="0.1" min="1" max="10" />
 				<label for="felaqua_battery_empty" class="translate">battery voltage empty</label>
 			</div>
