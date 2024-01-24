@@ -95,6 +95,8 @@ class Sureflap extends utils.Adapter {
 		this.feederFoodBowlObjectMissing = [];
 		this.waterDispenserWaterObjectMissing = [];
 		this.petDrinkingDataMissing = [];
+		this.petFlapStatusDataMissing = [];
+		this.petOutsideDataMissing = [];
 		this.lastError = null;
 		this.lastLoginError = null;
 
@@ -246,7 +248,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v1.2.3`);
+		this.log.debug(`starting SureFlap Adapter v2.0.1`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -616,6 +618,7 @@ class Sureflap extends utils.Adapter {
 			for (let p = 0; p < numPets; p++) {
 				const pet_name = this.sureFlapState.pets[p].name;
 				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[p].household_id);
+				const household_index = this.getHouseholdIndexForId(this.sureFlapState.pets[p].household_id);
 				const prefix = household_name + '.pets';
 				if(this.hasFlap) {
 					if('position' in this.sureFlapState.pets[p]) {
@@ -626,11 +629,18 @@ class Sureflap extends utils.Adapter {
 					} else {
 						this.setPetStatusToAdapter(prefix, pet_name, p);
 						if(!this.petPositionObjectMissing[p]) {
-							this.log.warn(`no position object found for pet '${this.sureFlapState.pets[p].name}'`);
+							this.log.debug(`no position object found for pet '${this.sureFlapState.pets[p].name}'`);
 							this.petPositionObjectMissing[p] = true;
 						}
 					}
 					// add time spent outside and number of entries
+					if(this.updateReport) {
+						this.setPetOutsideToAdapter(prefix + '.' + pet_name + '.movement', p);
+					}
+					// add last used flap and direction
+					if(this.updateHistory) {
+						this.setPetLastMovementToAdapter(prefix, p, pet_name, household_index);
+					}
 				} else {
 					this.setPetStatusToAdapter(prefix, pet_name, p);
 				}
@@ -1168,7 +1178,7 @@ class Sureflap extends utils.Adapter {
 					});
 				}
 			} else {
-				this.log.warn(`no remaining food data for feeder '${this.sureFlapState.devices[deviceIndex].name}' found`);
+				this.log.debug(`no remaining food data for feeder '${this.sureFlapState.devices[deviceIndex].name}' found`);
 			}
 		}
 	}
@@ -1229,7 +1239,7 @@ class Sureflap extends utils.Adapter {
 					}
 				});
 			} else {
-				this.log.warn(`no remaining water data for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' found`);
+				this.log.debug(`no remaining water data for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' found`);
 			}
 		}
 	}
@@ -1430,7 +1440,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} p
 	 */
 	setPetFeedingToAdapter(prefix, p) {
-		if(!this.sureFlapReport[p].feeding != undefined && this.sureFlapReport[p].feeding.datapoints != undefined && this.sureFlapReport[p].feeding.datapoints.length >0) {
+		if(!this.sureFlapReport[p].feeding != undefined && this.sureFlapReport[p].feeding.datapoints != undefined && Array.isArray(this.sureFlapReport[p].feeding.datapoints) && this.sureFlapReport[p].feeding.datapoints.length > 0) {
 			if(!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].feeding || JSON.stringify(this.sureFlapReport[p].feeding) !== JSON.stringify(this.sureFlapReportPrev[p].feeding)) {
 				const consumption_data = this.calculateFoodConsumption(p);
 				this.log.debug(`updating food consumed for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(consumption_data)}'`);
@@ -1455,7 +1465,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} p
 	 */
 	setPetDrinkingToAdapter(prefix, p) {
-		if(!this.sureFlapReport[p].drinking != undefined && this.sureFlapReport[p].drinking.datapoints != undefined && this.sureFlapReport[p].drinking.datapoints.length >0) {
+		if(!this.sureFlapReport[p].drinking != undefined && this.sureFlapReport[p].drinking.datapoints != undefined && Array.isArray(this.sureFlapReport[p].drinking.datapoints) && this.sureFlapReport[p].drinking.datapoints.length > 0) {
 			if(!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].drinking || JSON.stringify(this.sureFlapReport[p].drinking) !== JSON.stringify(this.sureFlapReportPrev[p].drinking)) {
 				const consumption_data = this.calculateWaterConsumption(p);
 				this.log.debug(`updating water consumed for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(consumption_data)}'`);
@@ -1469,6 +1479,54 @@ class Sureflap extends utils.Adapter {
 			if(!this.petDrinkingDataMissing[p]) {
 				this.log.warn(`aggregated report for pet '${this.sureFlapState.pets[p].name}' does not contain drinking data`);
 				this.petDrinkingDataMissing[p] = true;
+			}
+		}
+	}
+
+	/**
+	 * sets pet outside to the adapter
+	 * @param {string} prefix
+	 * @param {number} p
+	 */
+	setPetOutsideToAdapter(prefix, p) {
+		if(!this.sureFlapReport[p].movement != undefined && this.sureFlapReport[p].movement.datapoints != undefined && Array.isArray(this.sureFlapReport[p].movement.datapoints) && this.sureFlapReport[p].movement.datapoints.length > 0) {
+			if(!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].movement || JSON.stringify(this.sureFlapReport[p].movement) !== JSON.stringify(this.sureFlapReportPrev[p].movement)) {
+				const outside_data = this.calculateTimeOutside(p);
+				this.log.debug(`updating time outside for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(outside_data)}'`);
+				this.setState(prefix + '.times_outside', outside_data.count, true);
+				this.setState(prefix + '.time_spent_outside', outside_data.time_spent_outside, true);
+			}
+			this.petOutsideDataMissing[p] = false;
+		} else {
+			if(!this.petOutsideDataMissing[p]) {
+				this.log.warn(`aggregated report for pet '${this.sureFlapState.pets[p].name}' does not contain movement data`);
+				this.petOutsideDataMissing[p] = true;
+			}
+		}
+	}
+
+	/**
+	 * sets pet last movement to the adapter
+	 * @param {string} prefix
+	 * @param {number} pet_index
+	 * @param {string} pet_name
+	 * @param {number} h
+	 */
+	setPetLastMovementToAdapter(prefix, pet_index, pet_name, h) {
+		if(this.sureFlapHistoryPrev[h] == undefined || JSON.stringify(this.sureFlapHistory[h]) !== JSON.stringify(this.sureFlapHistoryPrev[h])) {
+			const movement = this.calculateLastMovement(pet_name, h);
+			if(movement != undefined && 'last_direction' in movement && 'last_flap' in movement && 'last_time' in movement) {
+				const hierarchy = '.' + pet_name + '.movement';
+				this.log.debug(`updating last movement for pet '${pet_name}' with '${JSON.stringify(movement)}'`);
+				this.setState(prefix + hierarchy + '.last_time', movement.last_time, true);
+				this.setState(prefix + hierarchy + '.last_direction', movement.last_direction, true);
+				this.setState(prefix + hierarchy + '.last_flap', movement.last_flap, true);
+				this.petFlapStatusDataMissing[pet_index] = false;
+			} else {
+				if(!this.petFlapStatusDataMissing[pet_index]) {
+					this.log.warn(`history does not contain flap movement for pet '${pet_name}'`);
+					this.petFlapStatusDataMissing[pet_index] = true;
+				}
 			}
 		}
 	}
@@ -2366,6 +2424,13 @@ class Sureflap extends utils.Adapter {
 					if(this.hasFlap) {
 						promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.inside', this.buildStateObject('is ' + name + ' inside', 'indicator', 'boolean', false)));
 						promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.since', this.buildStateObject('last location change', 'date', 'string')));
+						this.setObjectNotExists(obj_name + '.movement', this.buildFolderObject('movement'), () => {
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.last_time', this.buildStateObject('date and time of last movement', 'date', 'string')));
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.last_direction', this.buildStateObject('direction of last movement', 'value', 'number')));
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.last_flap', this.buildStateObject('name of last used flap', 'value', 'string')));
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.times_outside', this.buildStateObject('number of times outside today', 'value', 'number')));
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.time_spent_outside', this.buildStateObject('time spent in seconds outside today', 'value', 'number')));
+						});
 					}
 					if(this.hasFeeder) {
 						this.setObjectNotExists(obj_name + '.food', this.buildFolderObject('food'), () => {
@@ -2485,6 +2550,81 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * calculates last movement for pet
+	 * @param {string} pet_name
+	 * @param {number} household
+	 * @returns {object} last used flap data object
+	 */
+	calculateLastMovement(pet_name, household) {
+		const data = {};
+		if(Array.isArray(this.sureFlapHistory[household])) {
+			for(let i = 0; i < this.sureFlapHistory[household].length; i++) {
+				const datapoint = this.sureFlapHistory[household][i];
+				if('type' in datapoint && datapoint.type === 0) {
+					if('pets' in datapoint && Array.isArray(datapoint.pets) && datapoint.pets.length > 0) {
+						for(let p = 0; p < datapoint.pets.length; p++) {
+							if('name' in datapoint.pets[p] && pet_name === datapoint.pets[p].name) {
+								if('movements' in datapoint && Array.isArray(datapoint.movements) && datapoint.movements.length > 0) {
+									for(let m = 0; m < datapoint.movements.length; m++) {
+										if('direction' in datapoint.movements[m] && datapoint.movements[m].direction !== 0) {
+											if('created_at' in datapoint && 'devices' in datapoint && Array.isArray(datapoint.devices) && datapoint.devices.length > 0) {
+												for(let d = 0; d < datapoint.devices.length; d++) {
+													if('product_id' in datapoint.devices[d] && (datapoint.devices[d].product_id === DEVICE_TYPE_CAT_FLAP || datapoint.devices[d].product_id === DEVICE_TYPE_PET_FLAP)) {
+														if('name' in datapoint.devices[d]) {
+															if(!('last_time' in data) || new Date(datapoint.created_at) > new Date(data.last_time)) {
+																data.last_direction = datapoint.movements[m].direction;
+																data.last_flap = datapoint.devices[d].name;
+																data.last_time = datapoint.created_at;
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return data;
+	}
+
+	/**
+	 * calculates time outside data for pet
+	 * @param {number} pet
+	 * @returns {object} time outside data object
+	 */
+	calculateTimeOutside(pet) {
+		const data = {};
+		data.count = 0;
+		data.time_spent_outside = 0;
+		for (let i = 0; i < this.sureFlapReport[pet].movement.datapoints.length; i++) {
+			const datapoint = this.sureFlapReport[pet].movement.datapoints[i];
+			if ('from' in datapoint && 'to' in datapoint && !('active' in datapoint)) {
+				if (this.isToday(new Date(datapoint.to))) {
+					data.count++;
+					if('duration' in datapoint && this.isToday(new Date(datapoint.from))) {
+						data.time_spent_outside += datapoint.duration;
+					} else {
+						if(this.isToday(new Date(datapoint.from))) {
+							data.time_spent_outside += Math.floor((new Date(datapoint.to).getTime() - new Date(datapoint.from).getTime()) / 1000);
+						} else {
+							const todayMidnight = new Date();
+							todayMidnight.setHours(0,0,0,0);
+							data.time_spent_outside += Math.floor((new Date(datapoint.to).getTime() - todayMidnight.getTime()) / 1000);
+						}
+					}
+					this.log.silly(`datapoint '${i}' is time spent outside today`);
+				}
+			}
+		}
+		return data;
+	}
+
+	/**
 	 * calculates food consumption data for pet
 	 * @param {number} pet
 	 * @returns {object} food consumption data object
@@ -2500,10 +2640,16 @@ class Sureflap extends utils.Adapter {
 		for (let i = 0; i < this.sureFlapReport[pet].feeding.datapoints.length; i++) {
 			const datapoint = this.sureFlapReport[pet].feeding.datapoints[i];
 			if (datapoint.context === 1) {
-				data.last_time = datapoint.to;
+				if(new Date(datapoint.to) > new Date(data.last_time)) {
+					data.last_time = datapoint.to;
+				}
 				if (this.isToday(new Date(datapoint.to))) {
 					data.count++;
-					data.time_spent += new Date(datapoint.to).getTime() - new Date(datapoint.from).getTime();
+					if('duration' in datapoint) {
+						data.time_spent += datapoint.duration;
+					} else {
+						data.time_spent += Math.floor((new Date(datapoint.to).getTime() - new Date(datapoint.from).getTime()) / 1000);
+					}
 					this.log.silly(`datapoint '${i}' is food eaten today`);
 					for (let b = 0; b < datapoint.weights.length; b++) {
 						data.weight[datapoint.weights[b].food_type_id] -= datapoint.weights[b].change;
@@ -2511,7 +2657,6 @@ class Sureflap extends utils.Adapter {
 				}
 			}
 		}
-		data.time_spent = Math.floor(data.time_spent / 1000);
 		return data;
 	}
 
@@ -2529,16 +2674,21 @@ class Sureflap extends utils.Adapter {
 		for (let i = 0; i < this.sureFlapReport[pet].drinking.datapoints.length; i++) {
 			const datapoint = this.sureFlapReport[pet].drinking.datapoints[i];
 			if (datapoint.context === 1) {
-				data.last_time = datapoint.to;
+				if(new Date(datapoint.to) > new Date(data.last_time)) {
+					data.last_time = datapoint.to;
+				}
 				if (this.isToday(new Date(datapoint.to))) {
 					data.count++;
-					data.time_spent += new Date(datapoint.to).getTime() - new Date(datapoint.from).getTime();
+					if('duration' in datapoint) {
+						data.time_spent += datapoint.duration;
+					} else {
+						data.time_spent += Math.floor((new Date(datapoint.to).getTime() - new Date(datapoint.from).getTime()) / 1000);
+					}
 					this.log.silly(`datapoint '${i}' is water drunk today`);
 					data.weight -= datapoint.weights[0].change;
 				}
 			}
 		}
-		data.time_spent = Math.floor(data.time_spent / 1000);
 		return data;
 	}
 
@@ -2779,6 +2929,20 @@ class Sureflap extends utils.Adapter {
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * returns the household index of given household id
+	 * @param {string} id a household id
+	 * @return {number} household index
+	 */
+	getHouseholdIndexForId(id) {
+		for (let i=0; i < this.sureFlapState.households.length; i++) {
+			if (this.sureFlapState.households[i].id === id) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/**

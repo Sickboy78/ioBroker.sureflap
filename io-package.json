@@ -1,8 +1,21 @@
 {
 	"common": {
 		"name": "sureflap",
-		"version": "1.2.3",
+		"version": "2.0.1",
 		"news": {
+			"2.0.1": {
+				"en": "added last movement for pets",
+				"de": "letzte Bewegung für Haustiere hinzugefügt",
+				"ru": "Слава Украины",
+				"pt": "adicionado o último movimento para animais de estimação",
+				"nl": "laatste beweging voor huisdieren toegevoegd",
+				"fr": "ajout d'un dernier mouvement pour les animaux domestiques",
+				"it": "aggiunto l'ultimo movimento per gli animali domestici",
+				"es": "lisatud viimane liikumine lemmikloomade jaoks",
+				"pl": "Dodano ostatni ruch dla zwierząt domowych",
+				"uk": "додано останній рух для домашніх тварин",
+				"zh-cn": "为宠物添加最后一个动作"
+			},
 			"1.2.3": {
 				"en": "new configurable API host",
 				"de": "neuer konfigurierbarer API Hostname",
