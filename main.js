@@ -248,7 +248,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v2.0.1`);
+		this.log.debug(`starting SureFlap Adapter v2.0.2`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -1515,12 +1515,13 @@ class Sureflap extends utils.Adapter {
 	setPetLastMovementToAdapter(prefix, pet_index, pet_name, h) {
 		if(this.sureFlapHistoryPrev[h] == undefined || JSON.stringify(this.sureFlapHistory[h]) !== JSON.stringify(this.sureFlapHistoryPrev[h])) {
 			const movement = this.calculateLastMovement(pet_name, h);
-			if(movement != undefined && 'last_direction' in movement && 'last_flap' in movement && 'last_time' in movement) {
+			if(movement != undefined && 'last_direction' in movement && 'last_flap' in movement && 'last_flap_id' in movement && 'last_time' in movement) {
 				const hierarchy = '.' + pet_name + '.movement';
 				this.log.debug(`updating last movement for pet '${pet_name}' with '${JSON.stringify(movement)}'`);
 				this.setState(prefix + hierarchy + '.last_time', movement.last_time, true);
 				this.setState(prefix + hierarchy + '.last_direction', movement.last_direction, true);
 				this.setState(prefix + hierarchy + '.last_flap', movement.last_flap, true);
+				this.setState(prefix + hierarchy + '.last_flap_id', movement.last_flap_id, true);
 				this.petFlapStatusDataMissing[pet_index] = false;
 			} else {
 				if(!this.petFlapStatusDataMissing[pet_index]) {
@@ -2428,6 +2429,7 @@ class Sureflap extends utils.Adapter {
 							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.last_time', this.buildStateObject('date and time of last movement', 'date', 'string')));
 							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.last_direction', this.buildStateObject('direction of last movement', 'value', 'number')));
 							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.last_flap', this.buildStateObject('name of last used flap', 'value', 'string')));
+							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.last_flap_id', this.buildStateObject('id of last used flap', 'value', 'number')));
 							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.times_outside', this.buildStateObject('number of times outside today', 'value', 'number')));
 							promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.movement' + '.time_spent_outside', this.buildStateObject('time spent in seconds outside today', 'value', 'number')));
 						});
@@ -2570,10 +2572,11 @@ class Sureflap extends utils.Adapter {
 											if('created_at' in datapoint && 'devices' in datapoint && Array.isArray(datapoint.devices) && datapoint.devices.length > 0) {
 												for(let d = 0; d < datapoint.devices.length; d++) {
 													if('product_id' in datapoint.devices[d] && (datapoint.devices[d].product_id === DEVICE_TYPE_CAT_FLAP || datapoint.devices[d].product_id === DEVICE_TYPE_PET_FLAP)) {
-														if('name' in datapoint.devices[d]) {
+														if('name' in datapoint.devices[d] && 'id' in datapoint.devices[d]) {
 															if(!('last_time' in data) || new Date(datapoint.created_at) > new Date(data.last_time)) {
 																data.last_direction = datapoint.movements[m].direction;
 																data.last_flap = datapoint.devices[d].name;
+																data.last_flap_id = datapoint.devices[d].id;
 																data.last_time = datapoint.created_at;
 															}
 														}
