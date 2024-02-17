@@ -3,6 +3,19 @@
 		"name": "sureflap",
 		"version": "2.0.2",
 		"news": {
+			"2.0.2": {
+				"en": "added flap id to last movement and bugfix for duplicate names",
+				"de": "Klappen ID der letzten Bewegung hinzugefügt und Fehlerbehebung für doppelte Namen",
+				"ru": "Слава Украины",
+				"pt": "adição da identificação da aba ao último movimento e correção de erros para nomes duplicados",
+				"nl": "flap id toegevoegd aan laatste beweging en bugfix voor dubbele namen",
+				"fr": "ajout d'un identifiant de volet au dernier mouvement et correction de bogues pour les noms en double",
+				"it": "Aggiunta dell'id del lembo all'ultimo movimento e correzione del bug per i nomi duplicati",
+				"es": "lisatud klapptunnus viimasele liigutusele ja vigade parandamine topeltnimede puhul",
+				"pl": "Dodano identyfikator klapy do ostatniego ruchu i poprawiono błąd zduplikowanych nazw",
+				"uk": "додано ідентифікатор клаптя до останнього руху та виправлено помилку для повторюваних назв",
+				"zh-cn": "为最后一个动作添加了翻页 ID，并修复了名称重复的错误"
+			},
 			"2.0.1": {
 				"en": "added last movement for pets",
 				"de": "letzte Bewegung für Haustiere hinzugefügt",

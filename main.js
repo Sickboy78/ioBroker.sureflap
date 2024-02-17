@@ -26,6 +26,7 @@ const UPDATE_FREQUENCY_DATA = 10;
 const UPDATE_FREQUENCY_HISTORY = 60;
 const UPDATE_FREQUENCY_REPORT = 60;
 // Constants - device types
+const DEVICE_TYPE_HUB = 1;
 const DEVICE_TYPE_PET_FLAP = 3;
 const DEVICE_TYPE_FEEDER = 4;
 const DEVICE_TYPE_CAT_FLAP = 6;
@@ -769,7 +770,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	changeCurfew(hierarchy, device, value) {
 		let current_state = false;
-		const device_type = this.getDeviceType(device);
+		const device_type = this.getDeviceType(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 		const curfew_settings = hierarchy + '.curfew';
 		this.getCurfewFromAdapter(curfew_settings).then(curfew => {
 			current_state = this.isCurfewEnabled(curfew);
@@ -872,7 +873,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	setCloseDelay(device, close_delay) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			const device_id = this.getDeviceId(device);
+			const device_id = this.getDeviceId(device, [DEVICE_TYPE_FEEDER]);
 			const postData = JSON.stringify( {'lid': { 'close_delay':close_delay } } );
 			const options = this.buildOptions('/api/device/' + device_id + '/control', 'PUT', this.sureFlapState['token']);
 
@@ -893,7 +894,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	setPetType(device, tag, type) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			const device_id = this.getDeviceId(device);
+			const device_id = this.getDeviceId(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 			const postData = JSON.stringify( { 'profile':type } );
 			const options = this.buildOptions('/api/device/' + device_id + '/tag/' + tag, 'PUT', this.sureFlapState['token']);
 
@@ -913,7 +914,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	setLockmode(device, lockmode) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			const device_id = this.getDeviceId(device);
+			const device_id = this.getDeviceId(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 			const postData = JSON.stringify( { 'locking':lockmode } );
 			const options = this.buildOptions('/api/device/' + device_id + '/control', 'PUT', this.sureFlapState['token']);
 
@@ -933,7 +934,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	setCurfew(device, curfew) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			const device_id = this.getDeviceId(device);
+			const device_id = this.getDeviceId(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 			const postData = JSON.stringify( { curfew } );
 			const options = this.buildOptions('/api/device/' + device_id + '/control', 'PUT', this.sureFlapState['token']);
 
@@ -975,7 +976,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	setHubLedMode(hierarchy, hub, value) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			const hub_id = this.getDeviceId(hub);
+			const hub_id = this.getDeviceId(hub, [DEVICE_TYPE_HUB]);
 			const postData = JSON.stringify( { 'led_mode':value } );
 			const options = this.buildOptions('/api/device/' + hub_id + '/control', 'PUT', this.sureFlapState['token']);
 			this.httpRequest('set_led_mode', options, postData).then(() => {
@@ -1584,7 +1585,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {string} device
 	 */
 	resetControlCloseDelayToAdapter(hierarchy, device) {
-		const deviceIndex = this.getDeviceIndex(device);
+		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_FEEDER]);
 		const value = this.sureFlapState.devices[deviceIndex].control.lid.close_delay;
 		this.log.debug(`resetting control close delay for ${device} to: ${value}`);
 		this.setState(hierarchy + '.control' + '.close_delay', value, true);
@@ -1596,7 +1597,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {string} device
 	 */
 	resetControlLockmodeToAdapter(hierarchy, device) {
-		const deviceIndex = this.getDeviceIndex(device);
+		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 		const value = this.sureFlapState.devices[deviceIndex].status.locking.mode;
 		this.log.debug(`resetting control lockmode for ${device} to: ${value}`);
 		this.setState(hierarchy + '.control' + '.lockmode', value, true);
@@ -1609,7 +1610,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} tag
 	 */
 	resetControlPetTypeToAdapter(hierarchy, device, tag) {
-		const deviceIndex = this.getDeviceIndex(device);
+		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 		const tagIndex = this.getTagIndexForDeviceIndex(deviceIndex, tag);
 		const name = this.getPetNameForTagId(tag);
 		const value = this.sureFlapState.devices[deviceIndex].tags[tagIndex].profile;
@@ -1623,7 +1624,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {string} device
 	 */
 	resetControlCurfewToAdapter(hierarchy, device) {
-		const deviceIndex = this.getDeviceIndex(device);
+		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 		const value = this.sureFlapState.devices[deviceIndex].control.curfew && this.isCurfewEnabled(this.sureFlapState.devices[deviceIndex].control.curfew);
 		this.log.debug(`resetting control curfew for ${device} to: ${value}`);
 		this.setState(hierarchy + '.control' + '.curfew', value, true);
@@ -1651,7 +1652,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {string} hub
 	 */
 	resetHubLedModeToAdapter(hierarchy, hub) {
-		const hubIndex = this.getDeviceIndex(hub);
+		const hubIndex = this.getDeviceIndex(hub, [DEVICE_TYPE_HUB]);
 		if('devices' in this.sureFlapStatePrev == true && Array.isArray(this.sureFlapStatePrev.devices) && 'status' in this.sureFlapStatePrev.devices[hubIndex] == true && 'led_mode' in this.sureFlapStatePrev.devices[hubIndex].status == true) {
 			const value = this.sureFlapStatePrev.devices[hubIndex].status.led_mode;
 			this.log.debug(`resetting hub led mode for ${hub} to: ${value}`);
@@ -1808,6 +1809,41 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * deletes an obsolete object if it exists and has the device_id in its name
+	 * @param obj_name the device name
+	 * @param device_id the device id
+	 * @param {boolean} recursive
+	 * @return {Promise}
+	 */
+	deleteObsoleteObjectWithDeviceIdIfExists(obj_name, device_id, recursive) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			this.log.silly(`deleting obsolete object '${obj_name}'`);
+			this.getObject(obj_name, (err, obj) => {
+				if (!err && obj) {
+					if(obj.common != undefined && obj.common.name != undefined && obj.common.name.toString().includes(device_id)) {
+						this.log.debug(`obsolete object ${obj_name} found. trying to delete ...`);
+						this.delObject(obj._id, {'recursive': recursive}, (err) => {
+							if(err) {
+								this.log.error(`can not delete obsolete object ${obj_name} because: ${err}`);
+								return reject();
+							} else {
+								this.log.debug(`obsolete object '${obj_name}' deleted`);
+								return resolve();
+							}
+						});
+					} else {
+						this.log.silly(`obsolete object '${obj_name}' found, but name '${obj.common.name.toString()}' does not contain correct device id '${device_id}'.`);
+						return resolve();
+					}
+				} else {
+					this.log.silly(`obsolete object '${obj_name}' not found`);
+					return resolve();
+				}
+			});
+		}));
+	}
+
+	/**
 	 * deletes the history for a household from the adapter
 	 * @param {number} index
 	 * @return {Promise}
@@ -1918,28 +1954,30 @@ class Sureflap extends utils.Adapter {
 						// hardware and firmware version was changed from number to string
 						if (this.hasParentDevice(this.sureFlapState.devices[d])) {
 							const obj_name =  prefix + '.' + this.getParentDeviceName(this.sureFlapState.devices[d]) + '.' + this.sureFlapState.devices[d].name;
+							this.log.silly(`checking for version states with type number for device ${obj_name}.`);
+
 							deletePromiseArray.push(this.removeVersionNumberFromDevices(obj_name));
 						} else {
 							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
+							this.log.silly(`checking for version states with type number for device ${obj_name}.`);
+
 							deletePromiseArray.push(this.removeVersionNumberFromDevices(obj_name));
 						}
 
 						// missing parent object of API change on 2023_10_02 created all devices without hierarchy (as hubs)
 						if (this.hasParentDevice(this.sureFlapState.devices[d])) {
 							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
-							this.log.silly(`checking for object ${obj_name}.`);
+							this.log.silly(`checking for non hub devices under household with name ${obj_name}.`);
 
-							// remove non hub devices (hub specific attributes) from top hierarchy
-							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.control.led_mode', false));
-							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.control', true));
-							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.online', false));
-							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.serial_number', false));
-							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name, true));
+							// remove non hub devices from top hierarchy
+							deletePromiseArray.push(this.deleteObsoleteObjectWithDeviceIdIfExists(obj_name, this.sureFlapState.devices[d].id, true));
 						}
 
 						// hub
 						if (!this.hasParentDevice(this.sureFlapState.devices[d])) {
 							const obj_name =  prefix + '.' + this.sureFlapState.devices[d].name;
+							this.log.silly(`checking for led_mode for hub ${obj_name}.`);
+
 							// made led_mode changeable and moved it to control.led_mode
 							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.led_mode', false));
 						}
@@ -1949,6 +1987,7 @@ class Sureflap extends utils.Adapter {
 							if(this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
 								// feeding bowl
 								const obj_name =  prefix + '.' + this.getParentDeviceName(this.sureFlapState.devices[d]) + '.' + this.sureFlapState.devices[d].name;
+								this.log.silly(`checking for curfew states for feeder ${obj_name}.`);
 
 								// food_type was removed on 2023_10_02
 								// food_type was added again on 2023_10_03
@@ -1968,6 +2007,7 @@ class Sureflap extends utils.Adapter {
 							if(this.sureFlapState.devices[d].product_id == DEVICE_TYPE_PET_FLAP) {
 								// pet flap
 								const obj_name =  prefix + '.' + this.getParentDeviceName(this.sureFlapState.devices[d]) + '.' + this.sureFlapState.devices[d].name;
+								this.log.silly(`checking for pet types for pet flap ${obj_name}.`);
 
 								// pet flap had pet type control which is a exclusive feature of cat flap
 								if('tags' in this.sureFlapState.devices[d]) {
@@ -1982,6 +2022,7 @@ class Sureflap extends utils.Adapter {
 				}
 			}
 			Promise.all(deletePromiseArray).then(() => {
+				this.log.debug(`searching and removing of obsolete objects complete`);
 				return resolve();
 			}).catch(() => {
 				this.log.warn(`searching and removing of obsolete objects failed. some obsolete objects may not have been removed.`);
@@ -2792,15 +2833,15 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * returns the device index
-	 * @param {number} device
+	 * returns the tag index for the tag of the device
+	 * @param {number} device_index
 	 * @param {number} tag
 	 * @return {number} tag index
 	 */
-	getTagIndexForDeviceIndex(device, tag) {
-		if('tags' in this.sureFlapState.devices[device]) {
-			for (let i=0; i < this.sureFlapState.devices[device].tags.length; i++) {
-				if (this.sureFlapState.devices[device].tags[i].id === tag) {
+	getTagIndexForDeviceIndex(device_index, tag) {
+		if('tags' in this.sureFlapState.devices[device_index]) {
+			for (let i=0; i < this.sureFlapState.devices[device_index].tags.length; i++) {
+				if (this.sureFlapState.devices[device_index].tags[i].id === tag) {
 					return i;
 				}
 			}
@@ -2810,12 +2851,13 @@ class Sureflap extends utils.Adapter {
 
 	/**
 	 * returns the device id of the device
-	 * @param {string} name
+	 * @param {string} name name of the device
+	 * @param {Array} device_types allowed device types
 	 * @return {string} device id
 	 */
-	getDeviceId(name) {
+	getDeviceId(name, device_types) {
 		for (let i=0; i < this.sureFlapState.devices.length; i++) {
-			if (this.sureFlapState.devices[i].name === name) {
+			if (this.sureFlapState.devices[i].name === name && device_types.includes(this.sureFlapState.devices[i].product_id)) {
 				return this.sureFlapState.devices[i].id;
 			}
 		}
@@ -2825,11 +2867,12 @@ class Sureflap extends utils.Adapter {
 	/**
 	 * returns the device index
 	 * @param {string} name
+	 * @param {Array} device_types allowed device types
 	 * @return {number} device index
 	 */
-	getDeviceIndex(name) {
+	getDeviceIndex(name, device_types) {
 		for (let i=0; i < this.sureFlapState.devices.length; i++) {
-			if (this.sureFlapState.devices[i].name === name) {
+			if (this.sureFlapState.devices[i].name === name && device_types.includes(this.sureFlapState.devices[i].product_id)) {
 				return i;
 			}
 		}
@@ -2839,11 +2882,12 @@ class Sureflap extends utils.Adapter {
 	/**
 	 * returns the device type of the device
 	 * @param {string} name
+	 * @param {Array} device_types allowed device types
 	 * @return {number} device type
 	 */
-	getDeviceType(name) {
+	getDeviceType(name, device_types) {
 		for (let i=0; i < this.sureFlapState.devices.length; i++) {
-			if (this.sureFlapState.devices[i].name === name) {
+			if (this.sureFlapState.devices[i].name === name && device_types.includes(this.sureFlapState.devices[i].product_id)) {
 				return this.sureFlapState.devices[i].product_id;
 			}
 		}
