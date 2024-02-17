@@ -8,7 +8,6 @@
 [![NPM version](http://img.shields.io/npm/v/iobroker.sureflap.svg)](https://www.npmjs.com/package/iobroker.sureflap)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.sureflap.svg)](https://www.npmjs.com/package/iobroker.sureflap)
 ![Number of Installations (latest)](http://iobroker.live/badges/sureflap-installed.svg)
-[![Known Vulnerabilities](https://snyk.io/test/github/Sickboy78/ioBroker.sureflap/badge.svg)](https://snyk.io/test/github/Sickboy78/ioBroker.sureflap)
 ![Test and Release](https://github.com/Sickboy78/ioBroker.sureflap/workflows/Test%20and%20Release/badge.svg)
 
 [![NPM](https://nodei.co/npm/iobroker.sureflap.png?downloads=true)](https://nodei.co/npm/iobroker.sureflap/)
