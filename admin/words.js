@@ -118,5 +118,18 @@ systemDictionary = {
 		"pl": "Brak napięcia akumulatora",
 		"uk": "Напруга акумулятора розряджена",
 		"zh-cn": "电池电压为空"
+	},
+	"enableHistory": {
+		"en": "download historical data",
+		"de": "historische daten herunterladen",
+		"ru": "скачать исторические данные",
+		"pt": "download de dados históricos",
+		"nl": "historische gegevens downloaden",
+		"fr": "télécharger des données historiques",
+		"it": "scarica i dati storici",
+		"es": "descargar datos históricos",
+		"pl": "pobieranie danych historycznych",
+		"uk": "завантаження історичних даних",
+		"zh-cn": "下载历史数据"
 	}
 };
