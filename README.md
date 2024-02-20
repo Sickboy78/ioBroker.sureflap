@@ -168,6 +168,10 @@ The pictures of the SureFlap® devices are provided free to use from [Sure Petca
 
 ## Changelog
 
+### 2.1.0 (2024-02-20)
+* (Scrounger) option to enable history data
+* (Sickboy78) added number of history entries to configuration
+
 ### 2.0.2 (2024-02-17)
 * (Sickboy78) added flap id to last movement
 * (Sickboy78) fixed a bug where hub was recognized as obsolete device because of same name as a device

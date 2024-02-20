@@ -249,7 +249,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v2.0.2`);
+		this.log.debug(`starting SureFlap Adapter v2.1.0`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -306,17 +306,12 @@ class Sureflap extends utils.Adapter {
 	 */
 	updateLoop() {
 		clearTimeout(this.timerId);
-		let that = this;
 		this.getDataFromApi()
 			.then(() => this.getAdditionalDataFromApi())
 			.then(() => this.createAdapterObjectHierarchy())
 			.then(() => this.getDeviceStatusFromData())
 			.then(() => this.getPetStatusFromData())
-			.then(function () {
-				if (that.config.enableHistory) {
-					that.getEventHistoryFromData()
-				}
-			})
+			.then(() =>	this.getEventHistoryFromData())
 			.then(() => this.setUpdateTimer())
 			.catch(error => {
 				if (error.message === this.lastError) {
@@ -667,7 +662,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	getEventHistoryFromData() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
-			if (this.updateHistory) {
+			if (this.updateHistory && this.config.history_enable) {
 				for (let h = 0; h < this.sureFlapState.households.length; h++) {
 					const prefix = this.sureFlapState.households[h].name;
 
@@ -676,8 +671,9 @@ class Sureflap extends utils.Adapter {
 						/* structure of history changes, so we need to delete and recreate history event structure on change */
 						this.deleteEventHistoryForHousehold(h).then(() => {
 							if (this.sureFlapHistory.length > h) {
-								this.log.debug(`updating event history with ${this.sureFlapHistory[h].length} events`);
-								for (let i = 0; i < this.sureFlapHistory[h].length; i++) {
+								const history_entries = Math.min(this.sureFlapHistory[h].length, this.config.history_entries);
+								this.log.debug(`updating event history with ${history_entries} events`);
+								for (let i = 0; i < history_entries; i++) {
 									this.setHistoryEventToAdapter(prefix, h, i);
 								}
 								return resolve();
@@ -1986,7 +1982,8 @@ class Sureflap extends utils.Adapter {
 							// made led_mode changeable and moved it to control.led_mode
 							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(obj_name + '.led_mode', false));
 						}
-						else {
+						else
+						{
 							// feeding bowl
 							if (this.sureFlapState.devices[d].product_id == DEVICE_TYPE_FEEDER) {
 								// feeding bowl
@@ -3201,6 +3198,7 @@ class Sureflap extends utils.Adapter {
 			this.config.api_host = 'app-api.production.surehub.io';
 		}
 		if (!this.config.sureflap_battery_full || !this.config.sureflap_battery_empty || this.config.sureflap_battery_full <= this.config.sureflap_battery_empty) {
+			this.log.warn(`Battery voltage values for sureflap are invalid, using default values.`);
 			this.config.sureflap_battery_full = 6.1;
 			this.config.sureflap_battery_empty = 5.1;
 		}
@@ -3214,6 +3212,14 @@ class Sureflap extends utils.Adapter {
 			this.config.felaqua_battery_full = 6.2;
 			this.config.felaqua_battery_empty = 5.2;
 		}
+		if (this.config.history_enable == undefined || typeof this.config.history_enable !== 'boolean') {
+			this.log.warn(`History toggle is invalid, using default value.`);
+			this.config.history_enable = false;
+		}
+		if (this.config.history_entries == undefined || typeof this.config.history_entries !== 'number' || this.config.history_entries > 25 || this.config.history_entries < 1 ) {
+			this.log.warn(`Number of history entries is invalid, using default value.`);
+			this.config.history_entries = 10;
+		}
 		this.log.info('API host: ' + this.config.api_host);
 		this.log.info('sureflap battery voltage full: ' + this.config.sureflap_battery_full);
 		this.log.info('sureflap battery voltage empty: ' + this.config.sureflap_battery_empty);
@@ -3221,6 +3227,8 @@ class Sureflap extends utils.Adapter {
 		this.log.info('surefeed battery voltage empty: ' + this.config.surefeed_battery_empty);
 		this.log.info('felaqua battery voltage full: ' + this.config.felaqua_battery_full);
 		this.log.info('felaqua battery voltage empty: ' + this.config.felaqua_battery_empty);
+		this.log.info('history enabled: ' + this.config.history_enable);
+		this.log.info('number of history entries: ' + this.config.history_entries);
 		this.log.info('adapter configuration ok');
 	}
 

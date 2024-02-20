@@ -1,6 +1,6 @@
 {
   "name": "iobroker.sureflap",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Adpater for smart pet devices from Sure Petcare",
   "author": {
     "name": "Sickboy78",

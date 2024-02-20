@@ -119,17 +119,30 @@ systemDictionary = {
 		"uk": "Напруга акумулятора розряджена",
 		"zh-cn": "电池电压为空"
 	},
-	"enableHistory": {
-		"en": "download historical data",
-		"de": "historische daten herunterladen",
-		"ru": "скачать исторические данные",
-		"pt": "download de dados históricos",
-		"nl": "historische gegevens downloaden",
-		"fr": "télécharger des données historiques",
-		"it": "scarica i dati storici",
-		"es": "descargar datos históricos",
-		"pl": "pobieranie danych historycznych",
-		"uk": "завантаження історичних даних",
-		"zh-cn": "下载历史数据"
+	"enable history": {
+		"en": "show history",
+		"de": "Chronik anzeigen",
+		"ru": "история шоу",
+		"pt": "histórico de espectáculos",
+		"nl": "Toon kroniek",
+		"fr": "afficher l'historique",
+		"it": "Cronaca dello spettacolo",
+		"es": "mostrar historia",
+		"pl": "Pokaż kronikę",
+		"uk": "Хроніка шоу",
+		"zh-cn": "展会纪事"
+	},
+	"history entries": {
+		"en": "number of entries",
+		"de": "Anzahl der Einträge",
+		"ru": "количество записей",
+		"pt": "número de entradas",
+		"nl": "aantal items",
+		"fr": "nombre d'entrées",
+		"it": "numero di voci",
+		"es": "número de entradas",
+		"pl": "liczba wpisów",
+		"uk": "кількість конкурсних робіт",
+		"zh-cn": "条目数"
 	}
 };
