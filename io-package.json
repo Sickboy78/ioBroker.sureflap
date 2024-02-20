@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "sureflap",
-        "version": "2.0.2",
+        "version": "2.1.0",
         "news": {
             "2.0.2": {
                 "en": "added flap id to last movement and bugfix for duplicate names",
