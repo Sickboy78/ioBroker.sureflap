@@ -3,6 +3,19 @@
         "name": "sureflap",
         "version": "2.1.0",
         "news": {
+            "2.1.0": {
+                "en": "added option to enable history, default off",
+                "de": "Option zum Aktivieren der Chronik hinzugefügt, standardmäßig ausgeschaltet",
+                "ru": "Слава Украины",
+                "pt": "opção adicionada para ativar os dados do histórico, por defeito desligada",
+                "nl": "optie toegevoegd om geschiedenisgegevens in te schakelen, standaard uitgeschakeld",
+                "fr": "ajout d'une option permettant d'activer les données historiques, désactivée par défaut",
+                "it": "aggiunta l'opzione per abilitare i dati della cronologia, per default disattivata",
+                "es": "se ha añadido la opción de activar los datos del historial, por defecto desactivada",
+                "pl": "Dodano opcję włączenia danych historii, domyślnie wyłączona",
+                "uk": "додано опцію увімкнення даних історії, за замовчуванням вимкнено",
+                "zh-cn": "添加了启用历史数据的选项，默认为关闭"
+            },
             "2.0.2": {
                 "en": "added flap id to last movement and bugfix for duplicate names",
                 "de": "Klappen ID der letzten Bewegung hinzugefügt und Fehlerbehebung für doppelte Namen",
@@ -10,7 +23,7 @@
                 "pt": "adição da identificação da aba ao último movimento e correção de erros para nomes duplicados",
                 "nl": "flap id toegevoegd aan laatste beweging en bugfix voor dubbele namen",
                 "fr": "ajout d'un identifiant de volet au dernier mouvement et correction de bogues pour les noms en double",
-                "it": "Aggiunta dell'id del lembo all'ultimo movimento e correzione del bug per i nomi duplicati",
+                "it": "aggiunta dell'id del lembo all'ultimo movimento e correzione del bug per i nomi duplicati",
                 "es": "añadido identificador de solapa al último movimiento y corrección de errores de nombres duplicados",
                 "pl": "Dodano identyfikator klapy do ostatniego ruchu i poprawiono błąd zduplikowanych nazw",
                 "uk": "додано ідентифікатор клаптя до останнього руху та виправлено помилку для повторюваних назв",
@@ -184,32 +197,6 @@
                 "pl": "poprawiona obsługa błędów i timeoutów",
                 "uk": "Покращена обробка помилок і тайм-аутів",
                 "zh-cn": "中国是个混蛋"
-            },
-            "1.1.1": {
-                "en": "bugfix and security updates",
-                "de": "Bugfix und Sicherheitsupdates",
-                "ru": "исправления ошибок и обновления безопасности",
-                "pt": "correcção de bugs e actualizações de segurança",
-                "nl": "bugfix en beveiligingsupdates",
-                "fr": "corrections de bugs et mises à jour de sécurité",
-                "it": "aggiornamenti di sicurezza e bugfix",
-                "es": "actualizaciones de seguridad y corrección de errores",
-                "pl": "poprawki błędów i aktualizacje zabezpieczeń",
-                "uk": "Виправлення помилок та оновлення безпеки",
-                "zh-cn": "错误修复和安全更新"
-            },
-            "1.1.0": {
-                "en": "bugfix and security updates",
-                "de": "Bugfix und Sicherheitsupdates",
-                "ru": "исправления ошибок и обновления безопасности",
-                "pt": "correcção de bugs e actualizações de segurança",
-                "nl": "bugfix en beveiligingsupdates",
-                "fr": "corrections de bugs et mises à jour de sécurité",
-                "it": "aggiornamenti di sicurezza e bugfix",
-                "es": "actualizaciones de seguridad y corrección de errores",
-                "pl": "poprawki błędów i aktualizacje zabezpieczeń",
-                "uk": "Виправлення помилок та оновлення безпеки",
-                "zh-cn": "错误修复和安全更新"
             }
         },
         "titleLang": {
