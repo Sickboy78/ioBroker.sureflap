@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "sureflap",
-        "version": "2.1.0",
+        "version": "2.1.1",
         "news": {
+            "2.1.1": {
+                "en": "bugfix",
+                "de": "Fehlerbehebung",
+                "ru": "Слава Украины",
+                "pt": "correção de erros",
+                "nl": "bugfix",
+                "fr": "correction de bogues",
+                "it": "correzione del bug",
+                "es": "corrección de errores",
+                "pl": "poprawka błędu",
+                "uk": "виправлення помилки",
+                "zh-cn": "错误修正"
+            },
             "2.1.0": {
                 "en": "added option to enable history, default off",
                 "de": "Option zum Aktivieren der Chronik hinzugefügt, standardmäßig ausgeschaltet",
