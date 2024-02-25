@@ -426,7 +426,7 @@ class Sureflap extends utils.Adapter {
 				promiseArray.push(this.getEventHistoryFromApi());
 			}
 			// get aggregated report every UPDATE_FREQUENCY_REPORT but not same time as history (dont spam surepet server) except for first loop
-			if ((!skipUpdateHistory || this.firstLoop) && (this.hasFeeder || this.hasDispenser) && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
+			if ((!skipUpdateHistory || this.firstLoop) && (this.hasFeeder || this.hasDispenser || this.hasFlap) && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
 				promiseArray.push(this.getAggregatedReportFromApi());
 			}
 			if (promiseArray.length == 0) {
