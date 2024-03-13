@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@iobroker/adapter-dev": "^1.2.0",
-    "@iobroker/testing": "^3.0.2",
+    "@iobroker/testing": "^4.1.1",
     "@types/chai": "^4.2.22",
     "@types/chai-as-promised": "^7.1.4",
     "@types/gulp": "^4.0.9",
