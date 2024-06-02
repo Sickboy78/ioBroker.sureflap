@@ -1442,7 +1442,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} p
 	 */
 	setPetFeedingToAdapter(prefix, p) {
-		if (!this.sureFlapReport[p].feeding != undefined && this.sureFlapReport[p].feeding.datapoints != undefined && Array.isArray(this.sureFlapReport[p].feeding.datapoints) && this.sureFlapReport[p].feeding.datapoints.length > 0) {
+		if (this.sureFlapReport[p].feeding != undefined && this.sureFlapReport[p].feeding.datapoints != undefined && Array.isArray(this.sureFlapReport[p].feeding.datapoints) && this.sureFlapReport[p].feeding.datapoints.length > 0) {
 			if (!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].feeding || JSON.stringify(this.sureFlapReport[p].feeding) !== JSON.stringify(this.sureFlapReportPrev[p].feeding)) {
 				const consumption_data = this.calculateFoodConsumption(p);
 				this.log.debug(`updating food consumed for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(consumption_data)}'`);
@@ -1467,7 +1467,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} p
 	 */
 	setPetDrinkingToAdapter(prefix, p) {
-		if (!this.sureFlapReport[p].drinking != undefined && this.sureFlapReport[p].drinking.datapoints != undefined && Array.isArray(this.sureFlapReport[p].drinking.datapoints) && this.sureFlapReport[p].drinking.datapoints.length > 0) {
+		if (this.sureFlapReport[p].drinking != undefined && this.sureFlapReport[p].drinking.datapoints != undefined && Array.isArray(this.sureFlapReport[p].drinking.datapoints) && this.sureFlapReport[p].drinking.datapoints.length > 0) {
 			if (!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].drinking || JSON.stringify(this.sureFlapReport[p].drinking) !== JSON.stringify(this.sureFlapReportPrev[p].drinking)) {
 				const consumption_data = this.calculateWaterConsumption(p);
 				this.log.debug(`updating water consumed for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(consumption_data)}'`);
@@ -1491,7 +1491,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} p
 	 */
 	setPetOutsideToAdapter(prefix, p) {
-		if (!this.sureFlapReport[p].movement != undefined && this.sureFlapReport[p].movement.datapoints != undefined && Array.isArray(this.sureFlapReport[p].movement.datapoints) && this.sureFlapReport[p].movement.datapoints.length > 0) {
+		if (this.sureFlapReport[p].movement != undefined && this.sureFlapReport[p].movement.datapoints != undefined && Array.isArray(this.sureFlapReport[p].movement.datapoints) && this.sureFlapReport[p].movement.datapoints.length > 0) {
 			if (!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].movement || JSON.stringify(this.sureFlapReport[p].movement) !== JSON.stringify(this.sureFlapReportPrev[p].movement)) {
 				const outside_data = this.calculateTimeOutside(p);
 				this.log.debug(`updating time outside for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(outside_data)}'`);

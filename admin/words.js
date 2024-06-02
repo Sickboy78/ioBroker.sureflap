@@ -1,3 +1,4 @@
+/* eslint-disable */
 /*global systemDictionary:true */
 "use strict";
 
@@ -146,3 +147,4 @@ systemDictionary = {
 		"zh-cn": "条目数"
 	}
 };
+ /* eslint-enable */
