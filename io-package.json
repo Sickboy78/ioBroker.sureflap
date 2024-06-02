@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "sureflap",
-        "version": "2.1.1",
+        "version": "2.1.2",
         "news": {
+            "2.1.2": {
+                "en": "dependency updates",
+                "de": "Aktualisierungen der Abhängigkeiten",
+                "ru": "Слава Украины",
+                "pt": "actualizações de dependências",
+                "nl": "afhankelijkheidsupdates",
+                "fr": "mises à jour de la dépendance",
+                "it": "aggiornamenti sulla dipendenza",
+                "es": "actualizaciones de dependencia",
+                "pl": "aktualizacje zależności",
+                "uk": "оновлення залежностей",
+                "zh-cn": "依赖性更新"
+            },
             "2.1.1": {
                 "en": "bugfix",
                 "de": "Fehlerbehebung",
@@ -197,19 +210,6 @@
                 "pl": "poprawki kodu",
                 "uk": "Покращення коду",
                 "zh-cn": "乌克兰的荣耀"
-            },
-            "1.1.2": {
-                "en": "improved error and timeout handling",
-                "de": "verbesserte Fehler- und Timeout-Behandlung",
-                "ru": "Русский военный корабль, идите в жопу",
-                "pt": "melhor tratamento de erros e timeout",
-                "nl": "verbeterde afhandeling van fouten en time-outs",
-                "fr": "amélioration de la gestion des erreurs et des délais d'attente",
-                "it": "migliore gestione degli errori e del timeout",
-                "es": "mejora de la gestión de errores y del tiempo de espera",
-                "pl": "poprawiona obsługa błędów i timeoutów",
-                "uk": "Покращена обробка помилок і тайм-аутів",
-                "zh-cn": "中国是个混蛋"
             }
         },
         "titleLang": {
