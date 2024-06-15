@@ -98,6 +98,7 @@ class Sureflap extends utils.Adapter {
 		this.petDrinkingDataMissing = [];
 		this.petFlapStatusDataMissing = [];
 		this.petOutsideDataMissing = [];
+		this.flapLockModeMissing = [];
 		this.lastError = null;
 		this.lastLoginError = null;
 
@@ -249,7 +250,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v2.1.2`);
+		this.log.debug(`starting SureFlap Adapter v2.1.3`);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -1039,12 +1040,19 @@ class Sureflap extends utils.Adapter {
 	 */
 	setSureflapConnectToAdapter(prefix, hierarchy, deviceIndex, isCatFlap) {
 		// lock mode
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.locking.mode !== this.sureFlapStatePrev.devices[deviceIndex].status.locking.mode)) {
-			const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.lockmode';
-			try {
-				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.locking.mode, true);
-			} catch (error) {
-				this.log.error(`could not set lock mode to adapter (${error})`);
+		if(this.sureFlapState.devices[deviceIndex].status !== undefined && this.sureFlapState.devices[deviceIndex].status.locking !== undefined && this.sureFlapState.devices[deviceIndex].status.locking.mode !== undefined) {
+			if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.locking.mode !== this.sureFlapStatePrev.devices[deviceIndex].status.locking.mode)) {
+				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.lockmode';
+				try {
+					this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.locking.mode, true);
+				} catch (error) {
+					this.log.error(`could not set lock mode to adapter (${error})`);
+				}
+			}
+		} else {
+			if (!this.flapLockModeMissing[deviceIndex]) {
+				this.log.warn(`device data for flap '${this.sureFlapState.devices[deviceIndex].name}' does not contain locking mode data`);
+				this.flapLockModeMissing[deviceIndex] = true;
 			}
 		}
 
