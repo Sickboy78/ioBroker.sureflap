@@ -254,7 +254,6 @@
         ],
         "license": "MIT",
         "platform": "Javascript/Node.js",
-        "main": "main.js",
         "icon": "sureflap.png",
         "enabled": true,
         "extIcon": "https://raw.githubusercontent.com/Sickboy78/ioBroker.sureflap/master/admin/sureflap.png",
@@ -262,10 +261,10 @@
         "loglevel": "info",
         "mode": "daemon",
         "type": "iot-systems",
+        "tier": 2,
         "compact": true,
         "connectionType": "cloud",
         "dataSource": "poll",
-        "materialize": true,
         "adminUI": {
             "config": "materialize"
         },
