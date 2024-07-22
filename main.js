@@ -19,6 +19,8 @@ const utils = require('@iobroker/adapter-core');
 const https = require('https');
 const util = require('util');
 
+const ADAPTER_VERSION = '2.1.3';
+
 const REQUEST_TIMEOUT = 120000;
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
@@ -35,6 +37,16 @@ const DEVICE_TYPE_WATER_DISPENSER = 8;
 const FEEDER_SINGLE_BOWL = 1;
 const FEEDER_FOOD_WET = 1;
 const FEEDER_FOOD_DRY = 2;
+// Constants - repeatable errors
+const PET_POSITION_DATA_MISSING = 201;
+const PET_FEEDING_DATA_MISSING = 202;
+const PET_DRINKING_DATA_MISSING = 203;
+const PET_FLAP_STATUS_DATA_MISSING = 204;
+const PET_OUTSIDE_DATA_MISSING = 205;
+const FLAP_LOCK_MODE_DATA_MISSING = 301;
+const FEEDER_CONFIG_BOWL_DATA_MISSING = 401;
+const FEEDER_FOOD_BOWL_DATA_MISSING = 402;
+const DISPENSER_WATER_DATA_MISSING = 801;
 
 class Sureflap extends utils.Adapter {
 
@@ -90,15 +102,16 @@ class Sureflap extends utils.Adapter {
 		this.updateReport = true;
 
 		/* remember repeatbale warnings to not spam iobroker log */
-		this.petPositionObjectMissing = [];
-		this.petFeedingDataMissing = [];
-		this.feederConfigBowlObjectMissing = [];
-		this.feederFoodBowlObjectMissing = [];
-		this.waterDispenserWaterObjectMissing = [];
-		this.petDrinkingDataMissing = [];
-		this.petFlapStatusDataMissing = [];
-		this.petOutsideDataMissing = [];
-		this.flapLockModeMissing = [];
+		this.warnings = new Array();
+		this.warnings[PET_POSITION_DATA_MISSING] = [];
+		this.warnings[PET_FEEDING_DATA_MISSING] = [];
+		this.warnings[PET_DRINKING_DATA_MISSING] = [];
+		this.warnings[PET_FLAP_STATUS_DATA_MISSING] = [];
+		this.warnings[PET_OUTSIDE_DATA_MISSING] = [];
+		this.warnings[FLAP_LOCK_MODE_DATA_MISSING] = [];
+		this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING] = [];
+		this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING] = [];
+		this.warnings[DISPENSER_WATER_DATA_MISSING] = [];
 		this.lastError = null;
 		this.lastLoginError = null;
 
@@ -250,7 +263,7 @@ class Sureflap extends utils.Adapter {
 	 * starts loading data from the surepet API
 	 */
 	startLoadingData() {
-		this.log.debug(`starting SureFlap Adapter v2.1.3`);
+		this.log.debug(`starting SureFlap Adapter v` + ADAPTER_VERSION);
 		clearTimeout(this.timerId);
 		this.doAuthenticate()
 			.then(() => this.startUpdateLoop())
@@ -313,6 +326,7 @@ class Sureflap extends utils.Adapter {
 			.then(() => this.getDeviceStatusFromData())
 			.then(() => this.getPetStatusFromData())
 			.then(() =>	this.getEventHistoryFromData())
+			.then(() => this.updateAdapterVersion())
 			.then(() => this.setUpdateTimer())
 			.catch(error => {
 				if (error.message === this.lastError) {
@@ -328,7 +342,27 @@ class Sureflap extends utils.Adapter {
 					this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
 				}
 			})
-			.finally(() => { this.firstLoop = false; });
+			.finally(() => {
+				this.firstLoop = false;
+			 });
+	}
+
+	/**
+	 * updates the adapter version state
+	 * @return {Promise}
+	 */
+	updateAdapterVersion() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			if (!this.adapterUnloaded) {
+				// update adapter version after fist loop, so we can react to old version
+				if(this.firstLoop) {
+					this.setVersionToAdapter(ADAPTER_VERSION);
+				}
+				return resolve();
+			} else {
+				return reject(new Error(`cannot set adapter version. Adapter already unloaded.`));
+			}
+		}));
 	}
 
 	/**
@@ -416,18 +450,18 @@ class Sureflap extends utils.Adapter {
 	getAdditionalDataFromApi() {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
-			let skipUpdateHistory = false;
+			let skipAggregatedReport = false;
 
 			this.updateHistory = false;
 			this.updateReport = false;
 
 			// get history every UPDATE_FREQUENCY_HISTORY
 			if (this.lastHistoryUpdate + UPDATE_FREQUENCY_HISTORY * 1000 < Date.now()) {
-				skipUpdateHistory = true;
+				skipAggregatedReport = true;
 				promiseArray.push(this.getEventHistoryFromApi());
 			}
 			// get aggregated report every UPDATE_FREQUENCY_REPORT but not same time as history (dont spam surepet server) except for first loop
-			if ((!skipUpdateHistory || this.firstLoop) && (this.hasFeeder || this.hasDispenser || this.hasFlap) && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
+			if ((!skipAggregatedReport || this.firstLoop) && (this.hasFeeder || this.hasDispenser || this.hasFlap) && this.lastReportUpdate + UPDATE_FREQUENCY_REPORT * 1000 < Date.now()) {
 				promiseArray.push(this.getAggregatedReportFromApi());
 			}
 			if (promiseArray.length == 0) {
@@ -627,12 +661,12 @@ class Sureflap extends utils.Adapter {
 						const where = this.sureFlapState.pets[p].position.where;
 						const since = this.sureFlapState.pets[p].position.since;
 						this.setPetStatusWithPositionToAdapter(prefix, pet_name, where, since, p);
-						this.petPositionObjectMissing[p] = false;
+						this.warnings[PET_POSITION_DATA_MISSING][p] = false;
 					} else {
 						this.setPetStatusToAdapter(prefix, pet_name, p);
-						if (!this.petPositionObjectMissing[p]) {
+						if (!this.warnings[PET_POSITION_DATA_MISSING][p]) {
 							this.log.debug(`no position object found for pet '${this.sureFlapState.pets[p].name}'`);
-							this.petPositionObjectMissing[p] = true;
+							this.warnings[PET_POSITION_DATA_MISSING][p] = true;
 						}
 					}
 					// add time spent outside and number of entries
@@ -663,26 +697,43 @@ class Sureflap extends utils.Adapter {
 	 */
 	getEventHistoryFromData() {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
-			if (this.updateHistory && this.config.history_enable) {
-				for (let h = 0; h < this.sureFlapState.households.length; h++) {
-					const prefix = this.sureFlapState.households[h].name;
+			if (this.updateHistory) {
+				if(this.config.history_enable) {
+					for (let h = 0; h < this.sureFlapState.households.length; h++) {
+						const prefix = this.sureFlapState.households[h].name;
 
-					if (this.sureFlapHistoryPrev[h] == undefined || JSON.stringify(this.sureFlapHistory[h]) !== JSON.stringify(this.sureFlapHistoryPrev[h])) {
-						this.log.debug(`updating event history for household '${prefix}'`);
-						/* structure of history changes, so we need to delete and recreate history event structure on change */
-						this.deleteEventHistoryForHousehold(h).then(() => {
-							if (this.sureFlapHistory.length > h) {
-								const history_entries = Math.min(this.sureFlapHistory[h].length, this.config.history_entries);
-								this.log.debug(`updating event history with ${history_entries} events`);
-								for (let i = 0; i < history_entries; i++) {
-									this.setHistoryEventToAdapter(prefix, h, i);
+						if (this.sureFlapHistoryPrev[h] == undefined || JSON.stringify(this.sureFlapHistory[h]) !== JSON.stringify(this.sureFlapHistoryPrev[h])) {
+							this.log.debug(`updating event history for household '${prefix}'`);
+							/* structure of history changes, so we need to delete and recreate history event structure on change */
+							this.deleteEventHistoryForHousehold(h, false).then(() => {
+								if (this.sureFlapHistory.length > h) {
+									const history_entries = Math.min(this.sureFlapHistory[h].length, this.config.history_entries);
+									this.log.debug(`updating event history with ${history_entries} events`);
+									for (let i = 0; i < history_entries; i++) {
+										this.setHistoryEventToAdapter(prefix, h, i);
+									}
 								}
-								return resolve();
+							}).catch(err => {
+								this.log.error(`updating event history failed (${err})`);
+							});
+						}
+					}
+				}
+				if(this.config.history_json_enable) {
+					for (let h = 0; h < this.sureFlapState.households.length; h++) {
+						const prefix = this.sureFlapState.households[h].name;
+
+						if (this.sureFlapHistoryPrev[h] == undefined || JSON.stringify(this.sureFlapHistory[h]) !== JSON.stringify(this.sureFlapHistoryPrev[h])) {
+							this.log.debug(`updating json event history for household '${prefix}'`);
+							/* structure of history changes, so we need to delete and recreate history event structure on change */
+							if (this.sureFlapHistory.length > h) {
+								const history_entries = Math.min(this.sureFlapHistory[h].length, this.config.history_json_entries);
+								this.log.debug(`updating json event history with ${history_entries} events`);
+								for (let i = 0; i < history_entries; i++) {
+									this.setState(prefix + '.history.json.' + i, JSON.stringify(this.sureFlapHistory[h][i]), true);
+								}
 							}
-						}).catch(err => {
-							this.log.error(`updating event history failed (${err})`);
-							return resolve();
-						});
+						}
 					}
 				}
 			}
@@ -994,14 +1045,20 @@ class Sureflap extends utils.Adapter {
 	 ****************************************/
 
 	/**
+	 * sets the current adapter version to the adapter
+	 * @param {string} version
+	 */
+	setVersionToAdapter(version) {
+		/* objects created via io-package.json, no need to create them here */
+		this.setState('info.version', version, true);
+	}
+
+	/**
 	 * sets connection status to the adapter
 	 * @param {boolean} connected
 	 */
 	setConnectionStatusToAdapter(connected) {
-		/* objects created via io-package.json, no need to create them here
-		this.setObjectNotExists('info', this.buildChannelObject('Information'));
-		this.setObjectNotExists('info.connection', this.buildStateObject('If connected to surepetcare api', 'indicator.connected'));
-		*/
+		/* objects created via io-package.json, no need to create them here	*/
 		this.setState('info.connection', connected, true);
 	}
 
@@ -1012,10 +1069,7 @@ class Sureflap extends utils.Adapter {
 		// all devices online status
 		if (!this.sureFlapStatePrev.all_devices_online || (this.sureFlapState.all_devices_online !== this.sureFlapStatePrev.all_devices_online)) {
 			const obj_name = 'info.all_devices_online';
-			/* objects created via io-package.json, no need to create them here
-			this.setObjectNotExists('info', this.buildChannelObject('Information'));
-			this.setObjectNotExists(obj_name, this.buildStateObject('If all devices are online','indicator.reachable'));
-			*/
+			/* objects created via io-package.json, no need to create them here */
 			this.setState(obj_name, this.sureFlapState.all_devices_online, true);
 		}
 	}
@@ -1024,9 +1078,7 @@ class Sureflap extends utils.Adapter {
 	 * sets the last time data was recieved from surepet api
 	 */
 	setLastUpdateToAdapter() {
-		/* object created via io-package.json, no need to create them here
-		this.setObjectNotExists('info.last_update', this.buildStateObject('Last time data recieved from surepetcare api', 'date','string'));
-		*/
+		/* object created via io-package.json, no need to create them here */
 		this.setState('info.last_update', this.getCurrentDateFormattedAsISO(), true);
 	}
 
@@ -1050,9 +1102,9 @@ class Sureflap extends utils.Adapter {
 				}
 			}
 		} else {
-			if (!this.flapLockModeMissing[deviceIndex]) {
+			if (!this.warnings[FLAP_LOCK_MODE_DATA_MISSING][deviceIndex]) {
 				this.log.warn(`device data for flap '${this.sureFlapState.devices[deviceIndex].name}' does not contain locking mode data`);
-				this.flapLockModeMissing[deviceIndex] = true;
+				this.warnings[FLAP_LOCK_MODE_DATA_MISSING][deviceIndex] = true;
 			}
 		}
 
@@ -1128,11 +1180,11 @@ class Sureflap extends utils.Adapter {
 						if ('target' in this.sureFlapState.devices[deviceIndex].control.bowls.settings[b] && this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target != undefined) {
 							this.setState(obj_name + '.bowls.' + b + '.target', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target, true);
 						}
-						this.feederConfigBowlObjectMissing[deviceIndex] = false;
+						this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING][deviceIndex] = false;
 					} else {
-						if (!this.feederConfigBowlObjectMissing[deviceIndex]) {
+						if (!this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING][deviceIndex]) {
 							this.log.warn(`got feeder config data for object '${obj_name + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-							this.feederConfigBowlObjectMissing[deviceIndex] = true;
+							this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING][deviceIndex] = true;
 						}
 					}
 				});
@@ -1167,22 +1219,22 @@ class Sureflap extends utils.Adapter {
 										this.log.debug(`updating remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
 										this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
 									}
-									this.feederFoodBowlObjectMissing[deviceIndex] = false;
+									this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = false;
 								} else if (!err && obj == null) {
 									this.log.debug(`setting remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
 									this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
-									this.feederFoodBowlObjectMissing[deviceIndex] = false;
+									this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = false;
 								} else {
-									if (!this.feederFoodBowlObjectMissing[deviceIndex]) {
+									if (!this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex]) {
 										this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}.weight' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-										this.feederFoodBowlObjectMissing[deviceIndex] = true;
+										this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = true;
 									}
 								}
 							});
 						} else {
-							if (!this.feederFoodBowlObjectMissing[deviceIndex]) {
+							if (!this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex]) {
 								this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-								this.feederFoodBowlObjectMissing[deviceIndex] = true;
+								this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = true;
 							}
 						}
 					});
@@ -1229,22 +1281,22 @@ class Sureflap extends utils.Adapter {
 									this.log.debug(`updating remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
 									this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
 								}
-								this.waterDispenserWaterObjectMissing[deviceIndex] = false;
+								this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
 							} else if (!err && obj == null) {
 								this.log.debug(`setting remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
 								this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
-								this.waterDispenserWaterObjectMissing[deviceIndex] = false;
+								this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
 							} else {
-								if (!this.waterDispenserWaterObjectMissing[deviceIndex]) {
+								if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
 									this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
-									this.waterDispenserWaterObjectMissing[deviceIndex] = true;
+									this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = true;
 								}
 							}
 						});
 					} else {
-						if (!this.waterDispenserWaterObjectMissing[deviceIndex]) {
+						if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
 							this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
-							this.waterDispenserWaterObjectMissing[deviceIndex] = true;
+							this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = true;
 						}
 					}
 				});
@@ -1460,11 +1512,11 @@ class Sureflap extends utils.Adapter {
 				this.setState(prefix + '.wet.weight', consumption_data.weight[FEEDER_FOOD_WET], true);
 				this.setState(prefix + '.dry.weight', consumption_data.weight[FEEDER_FOOD_DRY], true);
 			}
-			this.petFeedingDataMissing[p] = false;
+			this.warnings[PET_FEEDING_DATA_MISSING][p] = false;
 		} else {
-			if (!this.petFeedingDataMissing[p]) {
+			if (!this.warnings[PET_FEEDING_DATA_MISSING][p]) {
 				this.log.warn(`aggregated report for pet '${this.sureFlapState.pets[p].name}' does not contain feeding data`);
-				this.petFeedingDataMissing[p] = true;
+				this.warnings[PET_FEEDING_DATA_MISSING][p] = true;
 			}
 		}
 	}
@@ -1484,11 +1536,11 @@ class Sureflap extends utils.Adapter {
 				this.setState(prefix + '.time_spent', consumption_data.time_spent, true);
 				this.setState(prefix + '.weight', consumption_data.weight, true);
 			}
-			this.petDrinkingDataMissing[p] = false;
+			this.warnings[PET_DRINKING_DATA_MISSING][p] = false;
 		} else {
-			if (!this.petDrinkingDataMissing[p]) {
+			if (!this.warnings[PET_DRINKING_DATA_MISSING][p]) {
 				this.log.warn(`aggregated report for pet '${this.sureFlapState.pets[p].name}' does not contain drinking data`);
-				this.petDrinkingDataMissing[p] = true;
+				this.warnings[PET_DRINKING_DATA_MISSING][p] = true;
 			}
 		}
 	}
@@ -1506,11 +1558,11 @@ class Sureflap extends utils.Adapter {
 				this.setState(prefix + '.times_outside', outside_data.count, true);
 				this.setState(prefix + '.time_spent_outside', outside_data.time_spent_outside, true);
 			}
-			this.petOutsideDataMissing[p] = false;
+			this.warnings[PET_OUTSIDE_DATA_MISSING][p] = false;
 		} else {
-			if (!this.petOutsideDataMissing[p]) {
+			if (!this.warnings[PET_OUTSIDE_DATA_MISSING][p]) {
 				this.log.warn(`aggregated report for pet '${this.sureFlapState.pets[p].name}' does not contain movement data`);
-				this.petOutsideDataMissing[p] = true;
+				this.warnings[PET_OUTSIDE_DATA_MISSING][p] = true;
 			}
 		}
 	}
@@ -1532,11 +1584,11 @@ class Sureflap extends utils.Adapter {
 				this.setState(prefix + hierarchy + '.last_direction', movement.last_direction, true);
 				this.setState(prefix + hierarchy + '.last_flap', movement.last_flap, true);
 				this.setState(prefix + hierarchy + '.last_flap_id', movement.last_flap_id, true);
-				this.petFlapStatusDataMissing[pet_index] = false;
+				this.warnings[PET_FLAP_STATUS_DATA_MISSING][pet_index] = false;
 			} else {
-				if (!this.petFlapStatusDataMissing[pet_index]) {
+				if (!this.warnings[PET_FLAP_STATUS_DATA_MISSING][pet_index]) {
 					this.log.warn(`history does not contain flap movement for pet '${pet_name}'`);
-					this.petFlapStatusDataMissing[pet_index] = true;
+					this.warnings[PET_FLAP_STATUS_DATA_MISSING][pet_index] = true;
 				}
 			}
 		}
@@ -1770,7 +1822,7 @@ class Sureflap extends utils.Adapter {
 			this.log.silly(`deleting object '${obj_name}'`);
 			this.getObject(obj_name, (err, obj) => {
 				if (!err && obj) {
-					this.log.silly(`found object '${obj_name}'. trying to delete`);
+					this.log.silly(`found object '${obj_name}'. trying to delete ...`);
 					this.delObject(obj._id, { 'recursive': recursive }, (err) => {
 						if (err) {
 							this.log.error(`could not delete object '${obj_name}' (${err})`);
@@ -1855,15 +1907,17 @@ class Sureflap extends utils.Adapter {
 	/**
 	 * deletes the history for a household from the adapter
 	 * @param {number} index
+	 * @param {boolean} all
 	 * @return {Promise}
 	 */
-	deleteEventHistoryForHousehold(index) {
+	deleteEventHistoryForHousehold(index, all) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
 			const prefix = this.sureFlapState.households[index].name;
+			const numberToDelete = (all ? 25 : this.sureFlapHistory[index].length);
 
 			this.log.debug(`deleting event history from adapter`);
-			for (let i = 0; i < this.sureFlapHistory[index].length; i++) {
+			for (let i = 0; i < numberToDelete; i++) {
 				promiseArray.push(this.deleteObjectFormAdapterIfExists(prefix + '.history.' + i, true));
 			}
 			Promise.all(promiseArray).then(() => {
@@ -2029,6 +2083,21 @@ class Sureflap extends utils.Adapter {
 						}
 					}
 				}
+				// deprecated history
+				if(!this.config.history_enable) {
+					for (let h = 0; h < this.sureFlapState.households.length; h++) {
+						const prefix = this.sureFlapState.households[h].name;
+						this.log.silly(`checking for deprecated event history for household '${prefix}'`);
+
+						deletePromiseArray.push(this.deleteEventHistoryForHousehold(h, true));
+					}
+				}
+
+				// delete json history events if number of history events decreased
+				this.log.silly(`checking for surplus history events.`);
+				for(let j = this.config.history_json_entries ; j < 25 ; j++) {
+					deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(this.name + '.' + this.instance + '.' + prefix + '.history.json.' + j, false));
+				}
 			}
 			Promise.all(deletePromiseArray).then(() => {
 				this.log.debug(`searching and removing of obsolete objects complete`);
@@ -2136,28 +2205,38 @@ class Sureflap extends utils.Adapter {
 				this.setObjectNotExists(this.sureFlapState.households[h].name, this.buildFolderObject('Household \'' + this.sureFlapState.households[h].name_org + '\' (' + this.sureFlapState.households[h].id + ')'), () => {
 					// create history folder
 					this.setObjectNotExists(this.sureFlapState.households[h].name + '.history', this.buildFolderObject('Event History'), () => {
-						// create hub (devices in household without parent)
-						for (let d = 0; d < this.sureFlapState.devices.length; d++) {
-							if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
-								if (!this.hasParentDevice(this.sureFlapState.devices[d])) {
-									const obj_name = prefix + '.' + this.sureFlapState.devices[d].name;
-									this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
-										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online', 'indicator.reachable')));
-										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.serial_number', this.buildStateObject('serial number of device', 'text', 'string')));
-										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control', this.buildChannelObject('control switches')));
-										promiseArray.push(this.createVersionsToAdapter(d, obj_name));
-										Promise.all(promiseArray).then(() => {
-											this.setObjectNotExists(obj_name + '.control.led_mode', this.buildStateObject('led mode', 'indicator', 'number', false, { 0: 'OFF', 1: 'HIGH', 4: 'DIMMED' }), () => {
-												return resolve();
-											});
-										}).catch(error => {
-											this.log.warn(`could not create household and hub hierarchy (${error})`);
-											return reject();
-										});
-									});
+						this.setObjectNotExists(this.sureFlapState.households[h].name + '.history.json', this.buildFolderObject('JSON'), () => {
+							if(this.config.history_json_enable) {
+								// create json history states
+								const obj_name = this.sureFlapState.households[h].name + '.history.json.';
+								for (let j = 0; j < this.config.history_json_entries; j++) {
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + j, this.buildStateObject('history event ' + j, 'json','string')));
 								}
 							}
-						}
+
+							// create hub (devices in household without parent)
+							for (let d = 0; d < this.sureFlapState.devices.length; d++) {
+								if (this.sureFlapState.devices[d].household_id == this.sureFlapState.households[h].id) {
+									if (!this.hasParentDevice(this.sureFlapState.devices[d])) {
+										const obj_name = prefix + '.' + this.sureFlapState.devices[d].name;
+										this.setObjectNotExists(obj_name, this.buildDeviceObject('Hub \'' + this.sureFlapState.devices[d].name_org + '\' (' + this.sureFlapState.devices[d].id + ')'), () => {
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.online', this.buildStateObject('if device is online', 'indicator.reachable')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.serial_number', this.buildStateObject('serial number of device', 'text', 'string')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.control', this.buildChannelObject('control switches')));
+											promiseArray.push(this.createVersionsToAdapter(d, obj_name));
+											Promise.all(promiseArray).then(() => {
+												this.setObjectNotExists(obj_name + '.control.led_mode', this.buildStateObject('led mode', 'indicator', 'number', false, { 0: 'OFF', 1: 'HIGH', 4: 'DIMMED' }), () => {
+													return resolve();
+												});
+											}).catch(error => {
+												this.log.warn(`could not create household and hub hierarchy (${error})`);
+												return reject();
+											});
+										});
+									}
+								}
+							}
+						});
 					});
 				});
 			}

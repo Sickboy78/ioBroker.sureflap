@@ -132,8 +132,8 @@ adapter<br>
 │ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ control<br>
 │ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ type<br>
 │ ├ history<br>
-│ │ └ 0..24<br>
-│ │ &nbsp;&nbsp;&nbsp; └ ...<br>
+│ │ └ json<br>
+│ │ &nbsp;&nbsp;&nbsp; └ 0..24<br>
 │ └ pets<br>
 │ &nbsp;&nbsp;&nbsp; └ pet_name<br>
 │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├ inside<br>
@@ -160,7 +160,8 @@ adapter<br>
 └ info<br>
 &nbsp;&nbsp;&nbsp; ├ all_devices_online<br>
 &nbsp;&nbsp;&nbsp; ├ connection<br>
-&nbsp;&nbsp;&nbsp; └ last_update<br>
+&nbsp;&nbsp;&nbsp; ├ last_update<br>
+&nbsp;&nbsp;&nbsp; └ version<br>
 
 ## Notes
 
@@ -170,8 +171,10 @@ The pictures of the SureFlap® devices are provided free to use from [Sure Petca
 
 ## Changelog
 
-### 2.1.3 (work in progress)
+### 2.1.3 (2024-07-08)
 * (Sickboy78) fix lock mode is undefined
+* (Sickboy78) added new json history
+* (Sickboy78) dependency updates
 
 ### 2.1.2 (2024-06-02)
 * (Sickboy78) dependency updates

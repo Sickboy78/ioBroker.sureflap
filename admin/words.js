@@ -120,18 +120,31 @@ systemDictionary = {
 		"uk": "Напруга акумулятора розряджена",
 		"zh-cn": "电池电压为空"
 	},
-	"enable history": {
-		"en": "show history",
-		"de": "Chronik anzeigen",
-		"ru": "история шоу",
-		"pt": "histórico de espectáculos",
-		"nl": "Toon kroniek",
-		"fr": "afficher l'historique",
-		"it": "Cronaca dello spettacolo",
-		"es": "mostrar historia",
-		"pl": "Pokaż kronikę",
-		"uk": "Хроніка шоу",
-		"zh-cn": "展会纪事"
+	"enable json history": {
+		"en": "show history as JSON",
+		"de": "Chronik als JSON anzeigen",
+		"ru": "история шоу в формате JSON",
+		"pt": "mostrar o histórico como JSON",
+		"nl": "Toon kroniek als JSON",
+		"fr": "afficher l'historique en JSON",
+		"it": "mostra la cronologia come JSON",
+		"es": "mostrar historia como JSON",
+		"pl": "Pokaż kronikę jako JSON",
+		"uk": "Хроніка шоу як JSON",
+		"zh-cn": "以 JSON 格式显示历史记录"
+	},
+	"enable old history": {
+		"en": "show history as data points (deprecated)",
+		"de": "Chronik als Datenpunkte anzeigen (veraltet)",
+		"ru": "история шоу в виде точек данных (устаревшее)",
+		"pt": "mostrar o histórico como pontos de dados (obsoleto)",
+		"nl": "Toon kroniek als gegevenspunten (verouderd)",
+		"fr": "afficher l'historique sous forme de points de données (obsolète)",
+		"it": "mostra la cronologia come punti di dati (deprecato)",
+		"es": "mostrar historia como puntos de datos (obsoleto)",
+		"pl": "Pokaż kronikę jako punkty danych (przestarzałe)",
+		"uk": "Хроніка шоу у вигляді точок даних (застарілих)",
+		"zh-cn": "以数据点形式显示历史记录（已废弃)"
 	},
 	"history entries": {
 		"en": "number of entries",

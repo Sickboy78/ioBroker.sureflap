@@ -290,7 +290,9 @@
         "felaqua_battery_full": 6.2,
         "felaqua_battery_empty": 5.2,
         "history_enable": false,
-		"history_entries": 10
+		"history_entries": 10,
+        "history_json_enable": true,
+		"history_json_entries": 10
     },
     "encryptedNative": [
         "password"
@@ -340,6 +342,19 @@
             "common": {
                 "role": "date",
                 "name": "Last time data recieved from surepetcare api",
+                "type": "string",
+                "read": true,
+                "write": false,
+                "def": ""
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.version",
+            "type": "state",
+            "common": {
+                "role": "info.version",
+                "name": "Adapter version",
                 "type": "string",
                 "read": true,
                 "write": false,
