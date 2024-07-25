@@ -1,366 +1,413 @@
 {
-    "common": {
-        "name": "sureflap",
-        "version": "2.1.3",
-        "news": {
-            "2.1.3": {
-                "en": "dependency updates",
-                "de": "Aktualisierungen der Abhängigkeiten",
-                "ru": "Слава Украины",
-                "pt": "actualizações de dependências",
-                "nl": "afhankelijkheidsupdates",
-                "fr": "mises à jour de la dépendance",
-                "it": "aggiornamenti sulla dipendenza",
-                "es": "actualizaciones de dependencia",
-                "pl": "aktualizacje zależności",
-                "uk": "оновлення залежностей",
-                "zh-cn": "依赖性更新"
-            },
-            "2.1.2": {
-                "en": "dependency updates",
-                "de": "Aktualisierungen der Abhängigkeiten",
-                "ru": "Слава Украины",
-                "pt": "actualizações de dependências",
-                "nl": "afhankelijkheidsupdates",
-                "fr": "mises à jour de la dépendance",
-                "it": "aggiornamenti sulla dipendenza",
-                "es": "actualizaciones de dependencia",
-                "pl": "aktualizacje zależności",
-                "uk": "оновлення залежностей",
-                "zh-cn": "依赖性更新"
-            },
-            "2.1.1": {
-                "en": "bugfix",
-                "de": "Fehlerbehebung",
-                "ru": "Слава Украины",
-                "pt": "correção de erros",
-                "nl": "bugfix",
-                "fr": "correction de bogues",
-                "it": "correzione del bug",
-                "es": "corrección de errores",
-                "pl": "poprawka błędu",
-                "uk": "виправлення помилки",
-                "zh-cn": "错误修正"
-            },
-            "2.1.0": {
-                "en": "added option to enable history, default off",
-                "de": "Option zum Aktivieren der Chronik hinzugefügt, standardmäßig ausgeschaltet",
-                "ru": "Слава Украины",
-                "pt": "opção adicionada para ativar os dados do histórico, por defeito desligada",
-                "nl": "optie toegevoegd om geschiedenisgegevens in te schakelen, standaard uitgeschakeld",
-                "fr": "ajout d'une option permettant d'activer les données historiques, désactivée par défaut",
-                "it": "aggiunta l'opzione per abilitare i dati della cronologia, per default disattivata",
-                "es": "se ha añadido la opción de activar los datos del historial, por defecto desactivada",
-                "pl": "Dodano opcję włączenia danych historii, domyślnie wyłączona",
-                "uk": "додано опцію увімкнення даних історії, за замовчуванням вимкнено",
-                "zh-cn": "添加了启用历史数据的选项，默认为关闭"
-            },
-            "2.0.2": {
-                "en": "added flap id to last movement and bugfix for duplicate names",
-                "de": "Klappen ID der letzten Bewegung hinzugefügt und Fehlerbehebung für doppelte Namen",
-                "ru": "Слава Украины",
-                "pt": "adição da identificação da aba ao último movimento e correção de erros para nomes duplicados",
-                "nl": "flap id toegevoegd aan laatste beweging en bugfix voor dubbele namen",
-                "fr": "ajout d'un identifiant de volet au dernier mouvement et correction de bogues pour les noms en double",
-                "it": "aggiunta dell'id del lembo all'ultimo movimento e correzione del bug per i nomi duplicati",
-                "es": "añadido identificador de solapa al último movimiento y corrección de errores de nombres duplicados",
-                "pl": "Dodano identyfikator klapy do ostatniego ruchu i poprawiono błąd zduplikowanych nazw",
-                "uk": "додано ідентифікатор клаптя до останнього руху та виправлено помилку для повторюваних назв",
-                "zh-cn": "为最后一个动作添加了翻页 ID，并修复了名称重复的错误"
-            },
-            "2.0.1": {
-                "en": "added last movement for pets",
-                "de": "letzte Bewegung für Haustiere hinzugefügt",
-                "ru": "Слава Украины",
-                "pt": "adicionado o último movimento para animais de estimação",
-                "nl": "laatste beweging voor huisdieren toegevoegd",
-                "fr": "ajout d'un dernier mouvement pour les animaux domestiques",
-                "it": "aggiunto l'ultimo movimento per gli animali domestici",
-                "es": "añadido último movimiento para mascotas",
-                "pl": "Dodano ostatni ruch dla zwierząt domowych",
-                "uk": "додано останній рух для домашніх тварин",
-                "zh-cn": "为宠物添加最后一个动作"
-            },
-            "1.2.3": {
-                "en": "new configurable API host",
-                "de": "neuer konfigurierbarer API Hostname",
-                "ru": "Слава Украины",
-                "pt": "novo anfitrião API configurável",
-                "nl": "nieuwe configureerbare API-host",
-                "fr": "nouvel hôte API configurable",
-                "it": "nuovo host API configurabile",
-                "es": "nuevo host API configurable",
-                "pl": "nowy konfigurowalny host API",
-                "uk": "новий конфігурований хост API",
-                "zh-cn": "新的可配置 API 主机"
-            },
-            "1.2.2": {
-                "en": "more features",
-                "de": "weitere Funktionen",
-                "ru": "Слава Украины",
-                "pt": "mais funcionalidades",
-                "nl": "meer functies",
-                "fr": "plus de fonctionnalités",
-                "it": "altre caratteristiche",
-                "es": "más funciones",
-                "pl": "Dziękuję, drodzy sąsiedzi",
-                "uk": "більше можливостей",
-                "zh-cn": "更多功能"
-            },
-            "1.2.1": {
-                "en": "adjustments for Surepet API changes",
-                "de": "Anpassungen für Surepet API Änderungen",
-                "ru": "Слава Украины",
-                "pt": "adaptações para alterações da API Surepet",
-                "nl": "Aanpassingen voor Surepet API veranderingen",
-                "fr": "Adaptations pour les modifications de l'API Surepet",
-                "it": "Adattamenti per le modifiche API di Surepet",
-                "es": "ajustes por cambios en la API Surepet",
-                "pl": "Dostosowania do zmian w API Surepet",
-                "uk": "Адаптація до змін в API Surepet",
-                "zh-cn": "为Surepet API的变化而进行的调整"
-            },
-            "1.2.0": {
-                "en": "improved error logging",
-                "de": "verbesserte Fehlerprotokollierung",
-                "ru": "Слава Украины",
-                "pt": "registo de erros melhorado",
-                "nl": "verbeterde foutregistratie",
-                "fr": "amélioration de la journalisation des erreurs",
-                "it": "miglioramento della registrazione degli errori",
-                "es": "registro de errores mejorado",
-                "pl": "ulepszone rejestrowanie błędów",
-                "uk": "покращене протоколювання помилок",
-                "zh-cn": "改进了错误日志记录"
-            },
-            "1.1.9": {
-                "en": "bugfix and updates",
-                "de": "Fehlerbehebung und Aktualisierungen",
-                "ru": "Слава Украины",
-                "pt": "correção de erros e actualizações",
-                "nl": "bugfix en updates",
-                "fr": "correction de bogues et mises à jour",
-                "it": "correzione di bug e aggiornamenti",
-                "es": "corrección de errores y actualizaciones",
-                "pl": "poprawki i aktualizacje",
-                "uk": "виправлення помилок та оновлення",
-                "zh-cn": "错误修正和更新"
-            },
-            "1.1.8": {
-                "en": "adjustments for Surepet API changes",
-                "de": "Anpassungen für Surepet API Änderungen",
-                "ru": "Слава Украины",
-                "pt": "adaptações para alterações da API Surepet",
-                "nl": "Aanpassingen voor Surepet API veranderingen",
-                "fr": "Adaptations pour les modifications de l'API Surepet",
-                "it": "Adattamenti per le modifiche API di Surepet",
-                "es": "ajustes por cambios en la API Surepet",
-                "pl": "Dostosowania do zmian w API Surepet",
-                "uk": "Адаптація до змін в API Surepet",
-                "zh-cn": "为Surepet API的变化而进行的调整"
-            },
-            "1.1.7": {
-                "en": "fixed false login error",
-                "de": "falscher Login-Fehler behoben",
-                "ru": "Слава Украины",
-                "pt": "corrigido erro de login falso",
-                "nl": "foutieve login fout hersteld",
-                "fr": "correction d'une erreur de fausse connexion",
-                "it": "corretto il falso errore di login",
-                "es": "Corregido error de login falso",
-                "pl": "naprawiony błąd fałszywego logowania",
-                "uk": "Виправлено помилку неправильного входу",
-                "zh-cn": "修复了错误的登录错误"
-            },
-            "1.1.6": {
-                "en": "configurable battery voltages",
-                "de": "konfigurierbare Batteriespannungen",
-                "ru": "Слава Украины",
-                "pt": "tensões configuráveis das baterias",
-                "nl": "configureerbare batterijspanningen",
-                "fr": "tensions de batterie configurables",
-                "it": "tensioni della batteria configurabili",
-                "es": "tensiones de batería configurables",
-                "pl": "konfigurowalne napięcia baterii",
-                "uk": "Настроювана напруга акумулятора",
-                "zh-cn": "可配置的电池电压"
-            },
-            "1.1.5": {
-                "en": "display of serial numbers",
-                "de": "Anzeige der Seriennummern",
-                "ru": "Слава Украины",
-                "pt": "Exibição dos números de série",
-                "nl": "Weergave van serienummers",
-                "fr": "Affichage des numéros de série",
-                "it": "Visualizzazione dei numeri di serie",
-                "es": "Visualización de los números de serie",
-                "pl": "Wyświetlanie numerów seryjnych",
-                "uk": "Відображення серійних номерів",
-                "zh-cn": "显示序列号"
-            },
-            "1.1.4": {
-                "en": "Felaqua support",
-                "de": "Unterstützung für Felaqua",
-                "ru": "Слава Украины",
-                "pt": "Apoio de Felaqua",
-                "nl": "Felaqua steun",
-                "fr": "Soutien de Felaqua",
-                "it": "Supporto Felaqua",
-                "es": "Felaqua soporte",
-                "pl": "Wsparcie Felaqua",
-                "uk": "Підтримка Felaqua",
-                "zh-cn": "支持Felaqua"
-            }
+  "common": {
+    "name": "sureflap",
+    "version": "2.2.0",
+    "news": {
+      "2.2.0": {
+        "en": "new JSON states for history and curfew",
+        "de": "neue JSON Zustände für Chronik und Ausgangssperre",
+        "ru": "Слава Украины",
+        "pt": "novos estados JSON para a crónica e o recolher obrigatório",
+        "nl": "nieuwe JSON-staten voor kroniek en avondklok",
+        "fr": "nouveaux états JSON pour l'historique et le couvre-feu",
+        "it": "nuovi stati JSON per cronaca e coprifuoco",
+        "es": "nuevos estados JSON para crónica y toque de queda",
+        "pl": "nowe stany JSON dla kroniki i godziny policyjnej",
+        "uk": "нові JSON-стани для хроніки та комендантської години",
+        "zh-cn": "为编年史和宵禁新增 JSON 状态"
+      },
+      "2.1.2": {
+        "en": "dependency updates",
+        "de": "Aktualisierungen der Abhängigkeiten",
+        "ru": "Слава Украины",
+        "pt": "actualizações de dependências",
+        "nl": "afhankelijkheidsupdates",
+        "fr": "mises à jour de la dépendance",
+        "it": "aggiornamenti sulla dipendenza",
+        "es": "actualizaciones de dependencia",
+        "pl": "aktualizacje zależności",
+        "uk": "оновлення залежностей",
+        "zh-cn": "依赖性更新"
+      },
+      "2.1.1": {
+        "en": "bugfix",
+        "de": "Fehlerbehebung",
+        "ru": "Слава Украины",
+        "pt": "correção de erros",
+        "nl": "bugfix",
+        "fr": "correction de bogues",
+        "it": "correzione del bug",
+        "es": "corrección de errores",
+        "pl": "poprawka błędu",
+        "uk": "виправлення помилки",
+        "zh-cn": "错误修正"
+      },
+      "2.1.0": {
+        "en": "added option to enable history, default off",
+        "de": "Option zum Aktivieren der Chronik hinzugefügt, standardmäßig ausgeschaltet",
+        "ru": "Слава Украины",
+        "pt": "opção adicionada para ativar os dados do histórico, por defeito desligada",
+        "nl": "optie toegevoegd om geschiedenisgegevens in te schakelen, standaard uitgeschakeld",
+        "fr": "ajout d'une option permettant d'activer les données historiques, désactivée par défaut",
+        "it": "aggiunta l'opzione per abilitare i dati della cronologia, per default disattivata",
+        "es": "se ha añadido la opción de activar los datos del historial, por defecto desactivada",
+        "pl": "Dodano opcję włączenia danych historii, domyślnie wyłączona",
+        "uk": "додано опцію увімкнення даних історії, за замовчуванням вимкнено",
+        "zh-cn": "添加了启用历史数据的选项，默认为关闭"
+      },
+      "2.0.2": {
+        "en": "added flap id to last movement and bugfix for duplicate names",
+        "de": "Klappen ID der letzten Bewegung hinzugefügt und Fehlerbehebung für doppelte Namen",
+        "ru": "Слава Украины",
+        "pt": "adição da identificação da aba ao último movimento e correção de erros para nomes duplicados",
+        "nl": "flap id toegevoegd aan laatste beweging en bugfix voor dubbele namen",
+        "fr": "ajout d'un identifiant de volet au dernier mouvement et correction de bogues pour les noms en double",
+        "it": "aggiunta dell'id del lembo all'ultimo movimento e correzione del bug per i nomi duplicati",
+        "es": "añadido identificador de solapa al último movimiento y corrección de errores de nombres duplicados",
+        "pl": "Dodano identyfikator klapy do ostatniego ruchu i poprawiono błąd zduplikowanych nazw",
+        "uk": "додано ідентифікатор клаптя до останнього руху та виправлено помилку для повторюваних назв",
+        "zh-cn": "为最后一个动作添加了翻页 ID，并修复了名称重复的错误"
+      },
+      "2.0.1": {
+        "en": "added last movement for pets",
+        "de": "letzte Bewegung für Haustiere hinzugefügt",
+        "ru": "Слава Украины",
+        "pt": "adicionado o último movimento para animais de estimação",
+        "nl": "laatste beweging voor huisdieren toegevoegd",
+        "fr": "ajout d'un dernier mouvement pour les animaux domestiques",
+        "it": "aggiunto l'ultimo movimento per gli animali domestici",
+        "es": "añadido último movimiento para mascotas",
+        "pl": "Dodano ostatni ruch dla zwierząt domowych",
+        "uk": "додано останній рух для домашніх тварин",
+        "zh-cn": "为宠物添加最后一个动作"
+      },
+      "1.2.3": {
+        "en": "new configurable API host",
+        "de": "neuer konfigurierbarer API Hostname",
+        "ru": "Слава Украины",
+        "pt": "novo anfitrião API configurável",
+        "nl": "nieuwe configureerbare API-host",
+        "fr": "nouvel hôte API configurable",
+        "it": "nuovo host API configurabile",
+        "es": "nuevo host API configurable",
+        "pl": "nowy konfigurowalny host API",
+        "uk": "новий конфігурований хост API",
+        "zh-cn": "新的可配置 API 主机"
+      },
+      "1.2.2": {
+        "en": "more features",
+        "de": "weitere Funktionen",
+        "ru": "Слава Украины",
+        "pt": "mais funcionalidades",
+        "nl": "meer functies",
+        "fr": "plus de fonctionnalités",
+        "it": "altre caratteristiche",
+        "es": "más funciones",
+        "pl": "Dziękuję, drodzy sąsiedzi",
+        "uk": "більше можливостей",
+        "zh-cn": "更多功能"
+      },
+      "1.2.1": {
+        "en": "adjustments for Surepet API changes",
+        "de": "Anpassungen für Surepet API Änderungen",
+        "ru": "Слава Украины",
+        "pt": "adaptações para alterações da API Surepet",
+        "nl": "Aanpassingen voor Surepet API veranderingen",
+        "fr": "Adaptations pour les modifications de l'API Surepet",
+        "it": "Adattamenti per le modifiche API di Surepet",
+        "es": "ajustes por cambios en la API Surepet",
+        "pl": "Dostosowania do zmian w API Surepet",
+        "uk": "Адаптація до змін в API Surepet",
+        "zh-cn": "为Surepet API的变化而进行的调整"
+      },
+      "1.2.0": {
+        "en": "improved error logging",
+        "de": "verbesserte Fehlerprotokollierung",
+        "ru": "Слава Украины",
+        "pt": "registo de erros melhorado",
+        "nl": "verbeterde foutregistratie",
+        "fr": "amélioration de la journalisation des erreurs",
+        "it": "miglioramento della registrazione degli errori",
+        "es": "registro de errores mejorado",
+        "pl": "ulepszone rejestrowanie błędów",
+        "uk": "покращене протоколювання помилок",
+        "zh-cn": "改进了错误日志记录"
+      },
+      "1.1.9": {
+        "en": "bugfix and updates",
+        "de": "Fehlerbehebung und Aktualisierungen",
+        "ru": "Слава Украины",
+        "pt": "correção de erros e actualizações",
+        "nl": "bugfix en updates",
+        "fr": "correction de bogues et mises à jour",
+        "it": "correzione di bug e aggiornamenti",
+        "es": "corrección de errores y actualizaciones",
+        "pl": "poprawki i aktualizacje",
+        "uk": "виправлення помилок та оновлення",
+        "zh-cn": "错误修正和更新"
+      },
+      "1.1.8": {
+        "en": "adjustments for Surepet API changes",
+        "de": "Anpassungen für Surepet API Änderungen",
+        "ru": "Слава Украины",
+        "pt": "adaptações para alterações da API Surepet",
+        "nl": "Aanpassingen voor Surepet API veranderingen",
+        "fr": "Adaptations pour les modifications de l'API Surepet",
+        "it": "Adattamenti per le modifiche API di Surepet",
+        "es": "ajustes por cambios en la API Surepet",
+        "pl": "Dostosowania do zmian w API Surepet",
+        "uk": "Адаптація до змін в API Surepet",
+        "zh-cn": "为Surepet API的变化而进行的调整"
+      },
+      "1.1.7": {
+        "en": "fixed false login error",
+        "de": "falscher Login-Fehler behoben",
+        "ru": "Слава Украины",
+        "pt": "corrigido erro de login falso",
+        "nl": "foutieve login fout hersteld",
+        "fr": "correction d'une erreur de fausse connexion",
+        "it": "corretto il falso errore di login",
+        "es": "Corregido error de login falso",
+        "pl": "naprawiony błąd fałszywego logowania",
+        "uk": "Виправлено помилку неправильного входу",
+        "zh-cn": "修复了错误的登录错误"
+      },
+      "1.1.6": {
+        "en": "configurable battery voltages",
+        "de": "konfigurierbare Batteriespannungen",
+        "ru": "Слава Украины",
+        "pt": "tensões configuráveis das baterias",
+        "nl": "configureerbare batterijspanningen",
+        "fr": "tensions de batterie configurables",
+        "it": "tensioni della batteria configurabili",
+        "es": "tensiones de batería configurables",
+        "pl": "konfigurowalne napięcia baterii",
+        "uk": "Настроювана напруга акумулятора",
+        "zh-cn": "可配置的电池电压"
+      },
+      "1.1.5": {
+        "en": "display of serial numbers",
+        "de": "Anzeige der Seriennummern",
+        "ru": "Слава Украины",
+        "pt": "Exibição dos números de série",
+        "nl": "Weergave van serienummers",
+        "fr": "Affichage des numéros de série",
+        "it": "Visualizzazione dei numeri di serie",
+        "es": "Visualización de los números de serie",
+        "pl": "Wyświetlanie numerów seryjnych",
+        "uk": "Відображення серійних номерів",
+        "zh-cn": "显示序列号"
+      },
+      "1.1.4": {
+        "en": "Felaqua support",
+        "de": "Unterstützung für Felaqua",
+        "ru": "Слава Украины",
+        "pt": "Apoio de Felaqua",
+        "nl": "Felaqua steun",
+        "fr": "Soutien de Felaqua",
+        "it": "Supporto Felaqua",
+        "es": "Felaqua soporte",
+        "pl": "Wsparcie Felaqua",
+        "uk": "Підтримка Felaqua",
+        "zh-cn": "支持Felaqua"
+      }
+    },
+    "titleLang": {
+      "en": "Sure Flap",
+      "de": "Sure Flap",
+      "ru": "Sure Flap",
+      "pt": "Sure Flap",
+      "nl": "Sure Flap",
+      "fr": "Sure Flap",
+      "it": "Sure Flap",
+      "es": "Sure Flap",
+      "pl": "Sure Flap",
+      "uk": "Sure Flap",
+      "zh-cn": "Sure Flap"
+    },
+    "desc": {
+      "en": "Adapter for smart pet devices from Sure Petcare",
+      "de": "Adpater für smarte Haustiergeräte von Sure Petcare",
+      "ru": "Адаптер для интеллектуальных устройств для домашних животных от Sure Petcare",
+      "pt": "Adaptador para dispositivos inteligentes para animais de estimação da Sure Petcare",
+      "nl": "Adapter voor slimme huisdierapparaten van Sure Petcare",
+      "fr": "Adaptateur pour dispositifs intelligents pour animaux de compagnie de Sure Petcare",
+      "it": "Adattatore per dispositivi intelligenti per animali domestici di Sure Petcare",
+      "es": "Adaptador para dispositivos inteligentes para mascotas de Sure Petcare",
+      "pl": "Adapter do inteligentnych urządzeń dla zwierząt domowych Sure Petcare",
+      "uk": "Адаптер для розумних пристроїв для домашніх улюбленців від Sure Petcare",
+      "zh-cn": "用于 Sure Petcare 公司智能宠物设备的适配器"
+    },
+    "authors": [
+      "Sickboy78 <asmoday_666@gmx.de>"
+    ],
+    "keywords": [
+      "sureflap",
+      "surepetcare",
+      "petcare",
+      "cat",
+      "pet",
+      "flap",
+      "surefeed",
+      "feeder",
+      "felaqua"
+    ],
+    "license": "MIT",
+    "platform": "Javascript/Node.js",
+    "icon": "sureflap.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/Sickboy78/ioBroker.sureflap/master/admin/sureflap.png",
+    "readme": "https://github.com/Sickboy78/ioBroker.sureflap/blob/master/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "iot-systems",
+    "tier": 2,
+    "compact": true,
+    "connectionType": "cloud",
+    "dataSource": "poll",
+    "adminUI": {
+      "config": "materialize"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=3.0.0"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=4.0.9"
+      }
+    ],
+    "messages": [
+      {
+        "condition": {
+          "operand": "and",
+          "rules": [
+            "oldVersion<2.2.0",
+            "newVersion>=2.2.0"
+          ]
         },
-        "titleLang": {
-            "en": "Sure Flap",
-            "de": "Sure Flap",
-            "ru": "Sure Flap",
-            "pt": "Sure Flap",
-            "nl": "Sure Flap",
-            "fr": "Sure Flap",
-            "it": "Sure Flap",
-            "es": "Sure Flap",
-            "pl": "Sure Flap",
-            "uk": "Sure Flap",
-            "zh-cn": "Sure Flap"
+        "title": {
+          "en": "Change of the curfew",
+          "de": "Änderung der Ausgangssperre",
+          "ru": "Изменение комендантского часа",
+          "pt": "Alteração do recolher obrigatório",
+          "nl": "Verandering van de avondklok",
+          "fr": "Modification du couvre-feu",
+          "it": "Modifica del coprifuoco",
+          "es": "Cambio del toque de queda",
+          "pl": "Zmiana godziny policyjnej",
+          "uk": "Зміна комендантської години",
+          "zh-cn": "改变宵禁"
         },
-        "desc": {
-            "en": "Adapter for smart pet devices from Sure Petcare",
-            "de": "Adpater für smarte Haustiergeräte von Sure Petcare",
-            "ru": "Адаптер для интеллектуальных устройств для домашних животных от Sure Petcare",
-            "pt": "Adaptador para dispositivos inteligentes para animais de estimação da Sure Petcare",
-            "nl": "Adapter voor slimme huisdierapparaten van Sure Petcare",
-            "fr": "Adaptateur pour dispositifs intelligents pour animaux de compagnie de Sure Petcare",
-            "it": "Adattatore per dispositivi intelligenti per animali domestici di Sure Petcare",
-            "es": "Adaptador para dispositivos inteligentes para mascotas de Sure Petcare",
-            "pl": "Adapter do inteligentnych urządzeń dla zwierząt domowych Sure Petcare",
-            "uk": "Адаптер для розумних пристроїв для домашніх улюбленців від Sure Petcare",
-            "zh-cn": "用于 Sure Petcare 公司智能宠物设备的适配器"
+        "text": {
+          "en": "Scripts using the previous states 'control.curfew', 'curfew' or 'last_curfew' must be adapted to use the new states 'control.curfew_enabled', 'control.current_curfew' and 'last_enabled_curfew'.",
+          "de": "Skripte, die die bisherigen Zustände 'control.curfew', 'curfew' oder 'last_curfew' verwenden, müssen angepasst werden und die neuen Zustände 'control.curfew_enabled', 'control.current_curfew' und 'last_enabled_curfew' zu verwenden.",
+          "ru": "Скрипты, использующие предыдущие состояния 'control.curfew', 'curfew' или 'last_curfew', должны быть адаптированы для использования новых состояний 'control.curfew_enabled', 'control.current_curfew' и 'last_enabled_curfew'.",
+          "pt": "Os scripts que utilizam os estados anteriores “control.curfew”, “curfew” ou “last_curfew” devem ser adaptados para utilizar os novos estados “control.curfew_enabled”, “control.current_curfew” e “last_enabled_curfew”.",
+          "nl": "Scripts die de vorige statussen 'control.curfew', 'curfew' of 'last_curfew' gebruiken, moeten worden aangepast om de nieuwe statussen 'control.curfew_enabled', 'control.current_curfew' en 'last_enabled_curfew' te gebruiken.",
+          "fr": "Les scripts qui utilisent les états précédents 'control.curfew', 'curfew' ou 'last_curfew' doivent être adaptés pour utiliser les nouveaux états 'control.curfew_enabled', 'control.current_curfew' et 'last_enabled_curfew'.",
+          "it": "Gli script che utilizzano i precedenti stati 'control.curfew', 'curfew' o 'last_curfew' devono essere adattati per utilizzare i nuovi stati 'control.curfew_enabled', 'control.current_curfew' e 'last_enabled_curfew'.",
+          "es": "Los scripts que utilizan los estados anteriores 'control.curfew', 'curfew' o 'last_curfew' deben adaptarse para utilizar los nuevos estados 'control.curfew_enabled', 'control.current_curfew' y 'last_enabled_curfew'.",
+          "pl": "Skrypty korzystające z poprzednich stanów 'control.curfew', 'curfew' lub 'last_curfew' muszą zostać dostosowane do korzystania z nowych stanów 'control.curfew_enabled', 'control.current_curfew' i 'last_enabled_curfew'.",
+          "uk": "Скрипти, які використовують попередні стани 'control.curfew', 'curfew' або 'last_curfew', повинні бути адаптовані для використання нових станів 'control.curfew_enabled', 'control.current_curfew' і 'last_enabled_curfew'.",
+          "zh-cn": "使用以前的 'control.curfew', 'curfew' 或 'last_curfew' 状态的脚本必须调整为使用新的 'control.curfew_enabled', 'control.current_curfew' 和 'last_enabled_curfew' 状态."
         },
-        "authors": [
-            "Sickboy78 <asmoday_666@gmx.de>"
-        ],
-        "keywords": [
-            "sureflap",
-            "surepetcare",
-            "petcare",
-            "cat",
-            "pet",
-            "flap",
-            "surefeed",
-            "feeder",
-            "felaqua"
-        ],
-        "license": "MIT",
-        "platform": "Javascript/Node.js",
-        "icon": "sureflap.png",
-        "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/Sickboy78/ioBroker.sureflap/master/admin/sureflap.png",
-        "readme": "https://github.com/Sickboy78/ioBroker.sureflap/blob/master/README.md",
-        "loglevel": "info",
-        "mode": "daemon",
-        "type": "iot-systems",
-        "tier": 2,
-        "compact": true,
-        "connectionType": "cloud",
-        "dataSource": "poll",
-        "adminUI": {
-            "config": "materialize"
-        },
-        "dependencies": [
-            {
-                "js-controller": ">=3.0.0"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=4.0.9"
-            }
+        "level": "warn",
+        "buttons": [
+          "agree",
+          "cancel"
         ]
-    },
-    "native": {
-        "username": "",
-        "password": "",
-        "api_host": "app-api.production.surehub.io",
-        "sureflap_battery_full": 6.1,
-        "sureflap_battery_empty": 5.1,
-        "surefeed_battery_full": 6.2,
-        "surefeed_battery_empty": 5.2,
-        "felaqua_battery_full": 6.2,
-        "felaqua_battery_empty": 5.2,
-        "history_enable": false,
-		"history_entries": 10,
-        "history_json_enable": true,
-		"history_json_entries": 10
-    },
-    "encryptedNative": [
-        "password"
+      }
     ],
-    "protectedNative": [
-        "password"
-    ],
-    "objects": [],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "If connected to surepetcare api",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.all_devices_online",
-            "type": "state",
-            "common": {
-                "role": "indicator.reachable",
-                "name": "If all devices are online",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.last_update",
-            "type": "state",
-            "common": {
-                "role": "date",
-                "name": "Last time data recieved from surepetcare api",
-                "type": "string",
-                "read": true,
-                "write": false,
-                "def": ""
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.version",
-            "type": "state",
-            "common": {
-                "role": "info.version",
-                "name": "Adapter version",
-                "type": "string",
-                "read": true,
-                "write": false,
-                "def": ""
-            },
-            "native": {}
-        }
-    ]
+    "licenseInformation": {
+      "license": "MIT",
+      "link": "https://github.com/Sickboy78/ioBroker.sureflap/blob/master/LICENSE",
+      "type": "free"
+    }
+  },
+  "native": {
+    "username": "",
+    "password": "",
+    "api_host": "app-api.production.surehub.io",
+    "sureflap_battery_full": 6.1,
+    "sureflap_battery_empty": 5.1,
+    "surefeed_battery_full": 6.2,
+    "surefeed_battery_empty": 5.2,
+    "felaqua_battery_full": 6.2,
+    "felaqua_battery_empty": 5.2,
+    "history_enable": false,
+    "history_entries": 10,
+    "history_json_enable": true,
+    "history_json_entries": 10
+  },
+  "encryptedNative": [
+    "password"
+  ],
+  "protectedNative": [
+    "password"
+  ],
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "If connected to surepetcare api",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.all_devices_online",
+      "type": "state",
+      "common": {
+        "role": "indicator.reachable",
+        "name": "If all devices are online",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.last_update",
+      "type": "state",
+      "common": {
+        "role": "date",
+        "name": "Last time data recieved from surepetcare api",
+        "type": "string",
+        "read": true,
+        "write": false,
+        "def": ""
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.version",
+      "type": "state",
+      "common": {
+        "role": "info.version",
+        "name": "Adapter version",
+        "type": "string",
+        "read": true,
+        "write": false,
+        "def": ""
+      },
+      "native": {}
+    }
+  ]
 }
