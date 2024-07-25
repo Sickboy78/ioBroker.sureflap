@@ -270,21 +270,19 @@ class Sureflap extends utils.Adapter {
 	startLoadingData() {
 		this.log.debug(`starting SureFlap Adapter v` + ADAPTER_VERSION);
 		clearTimeout(this.timerId);
-		this.doAuthenticate()
-			.then(() => this.startUpdateLoop())
-			.catch(error => {
-				if (error.message === this.lastLoginError) {
-					this.log.debug(error);
-				} else {
-					this.log.error(error);
-					this.lastLoginError = error.message;
-				}
-				this.log.info(`disconnected`);
-				if (!this.adapterUnloaded) {
-					// @ts-ignore
-					this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
-				}
-			});
+		this.doAuthenticate().then(() => this.startUpdateLoop()).catch(error => {
+			if (error.message === this.lastLoginError) {
+				this.log.debug(error);
+			} else {
+				this.log.error(error);
+				this.lastLoginError = error.message;
+			}
+			this.log.info(`disconnected`);
+			if (!this.adapterUnloaded) {
+				// @ts-ignore
+				this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
+			}
+		});
 	}
 
 	/**
@@ -327,31 +325,22 @@ class Sureflap extends utils.Adapter {
 	 */
 	updateLoop() {
 		clearTimeout(this.timerId);
-		this.getDataFromApi()
-			.then(() => this.getAdditionalDataFromApi())
-			.then(() => this.createAdapterObjectHierarchy())
-			.then(() => this.getDeviceStatusFromData())
-			.then(() => this.getPetStatusFromData())
-			.then(() => this.getEventHistoryFromData())
-			.then(() => this.updateAdapterVersion())
-			.then(() => this.setUpdateTimer())
-			.catch(error => {
-				if (error.message === this.lastError) {
-					this.log.debug(error);
-				} else {
-					this.log.error(error);
-					this.lastError = error.message;
-				}
-				this.log.info(`update loop stopped`);
-				this.log.info(`disconnected`);
-				if (!this.adapterUnloaded) {
-					// @ts-ignore
-					this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
-				}
-			})
-			.finally(() => {
-				this.firstLoop = false;
-			});
+		this.getDataFromApi().then(() => this.getAdditionalDataFromApi()).then(() => this.createAdapterObjectHierarchy()).then(() => this.getDeviceStatusFromData()).then(() => this.getPetStatusFromData()).then(() => this.getEventHistoryFromData()).then(() => this.updateAdapterVersion()).then(() => this.setUpdateTimer()).catch(error => {
+			if (error.message === this.lastError) {
+				this.log.debug(error);
+			} else {
+				this.log.error(error);
+				this.lastError = error.message;
+			}
+			this.log.info(`update loop stopped`);
+			this.log.info(`disconnected`);
+			if (!this.adapterUnloaded) {
+				// @ts-ignore
+				this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
+			}
+		}).finally(() => {
+			this.firstLoop = false;
+		});
 	}
 
 	/**
@@ -779,10 +768,9 @@ class Sureflap extends utils.Adapter {
 		}
 
 		this.log.debug(`changing close delay to ${value}...`);
-		this.setCloseDelay(device, value)
-			.then(() => {
-				this.log.info(`close delay changed to ${value}`);
-			}).catch(err => {
+		this.setCloseDelay(device, value).then(() => {
+			this.log.info(`close delay changed to ${value}`);
+		}).catch(err => {
 			this.log.error(`changing close delay failed: ${err}`);
 			this.resetControlCloseDelayToAdapter(hierarchy, device);
 		});
@@ -803,10 +791,9 @@ class Sureflap extends utils.Adapter {
 		}
 
 		this.log.debug(`changing lock mode to ${value}...`);
-		this.setLockmode(device, value)
-			.then(() => {
-				this.log.info(`lock mode changed to ${value}`);
-			}).catch(err => {
+		this.setLockmode(device, value).then(() => {
+			this.log.info(`lock mode changed to ${value}`);
+		}).catch(err => {
 			this.log.error(`changing lock mode failed: ${err}`);
 			this.resetControlLockmodeToAdapter(hierarchy, device);
 		});
@@ -828,10 +815,9 @@ class Sureflap extends utils.Adapter {
 		}
 
 		this.log.debug(`changing pet type to ${value}...`);
-		this.setPetType(device, tag, value)
-			.then(() => {
-				this.log.info(`pet type changed to ${value}`);
-			}).catch(err => {
+		this.setPetType(device, tag, value).then(() => {
+			this.log.info(`pet type changed to ${value}`);
+		}).catch(err => {
 			this.log.error(`changing pet type failed: ${err}`);
 			this.resetControlPetTypeToAdapter(hierarchy, device, tag);
 		});
@@ -2272,13 +2258,11 @@ class Sureflap extends utils.Adapter {
 				if (!err && obj && obj.common.type === 'number') {
 					this.log.silly(`obsolete number objects in ${obj_name}.version found. trying to delete recursively`);
 
-					this.deleteObsoleteObjectIfExists(obj_name + '.version', true)
-						.then(() => {
-							return resolve();
-						})
-						.catch(() => {
-							return reject();
-						});
+					this.deleteObsoleteObjectIfExists(obj_name + '.version', true).then(() => {
+						return resolve();
+					}).catch(() => {
+						return reject();
+					});
 				} else {
 					return resolve();
 				}
@@ -2298,11 +2282,10 @@ class Sureflap extends utils.Adapter {
 				if (!err && obj && obj.type === 'channel') {
 					this.log.silly(`obsolete channel object ${obj_name} found. trying to delete recursively`);
 
-					this.deleteObsoleteObjectIfExists(obj_name, true)
-						.then(() => {
-							this.log.info(`deleted assigned pets for pet flap ${obj_name} because of obsolete control for pet type. please restart adapter to show assigned pets again.`);
-							return resolve();
-						}).catch(() => {
+					this.deleteObsoleteObjectIfExists(obj_name, true).then(() => {
+						this.log.info(`deleted assigned pets for pet flap ${obj_name} because of obsolete control for pet type. please restart adapter to show assigned pets again.`);
+						return resolve();
+					}).catch(() => {
 						return reject();
 					});
 				} else {
@@ -2325,19 +2308,13 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			if (this.firstLoop === true) {
 				this.log.debug(`creating device hierarchy...`);
-				this.removeDeprecatedDataFromAdapter()
-					.then(() => this.removeDeletedAndRenamedPetsFromAdapter())
-					.then(() => this.createHouseholdsAndHubsToAdapter())
-					.then(() => this.createDevicesToAdapter())
-					.then(() => this.createPetsToAdapter())
-					.then(() => {
-						this.log.debug(`device hierarchy created.`);
-						return resolve();
-					})
-					.catch(() => {
-						this.log.error(`creating device hierarchy failed.`);
-						return reject();
-					});
+				this.removeDeprecatedDataFromAdapter().then(() => this.removeDeletedAndRenamedPetsFromAdapter()).then(() => this.createHouseholdsAndHubsToAdapter()).then(() => this.createDevicesToAdapter()).then(() => this.createPetsToAdapter()).then(() => {
+					this.log.debug(`device hierarchy created.`);
+					return resolve();
+				}).catch(() => {
+					this.log.error(`creating device hierarchy failed.`);
+					return reject();
+				});
 			} else {
 				return resolve();
 			}
@@ -2681,10 +2658,9 @@ class Sureflap extends utils.Adapter {
 					this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name + '.control' + '.type', this.buildStateObject('pet type', 'switch.mode.type', 'number', false, {
 						2: 'OUTDOOR PET',
 						3: 'INDOOR PET'
-					}))
-						.then(() => {
-							return resolve();
-						}).catch(error => {
+					})).then(() => {
+						return resolve();
+					}).catch(error => {
 						this.log.warn(`could not create adapter flap device assigned pets hierarchy (${error})`);
 						return reject();
 					});
