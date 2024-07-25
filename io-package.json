@@ -252,7 +252,6 @@
       "feeder",
       "felaqua"
     ],
-    "license": "MIT",
     "platform": "Javascript/Node.js",
     "icon": "sureflap.png",
     "enabled": true,
