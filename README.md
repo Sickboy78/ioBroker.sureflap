@@ -172,6 +172,12 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
+### 2.2.1 (2024-08-05)
+
+* (Sickboy78) added new data to food bowls
+* (Sickboy78) added new data to water dispenser
+* (Sickboy78) dependency updates
+
 ### 2.2.0 (2024-07-25)
 
 * (Sickboy78) added new json curfew
