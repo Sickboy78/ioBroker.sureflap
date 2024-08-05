@@ -19,7 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const https = require('https');
 const util = require('util');
 
-const ADAPTER_VERSION = '2.2.0';
+const ADAPTER_VERSION = '2.2.1';
 
 const REQUEST_TIMEOUT = 120000;
 // Constants - data update frequency
@@ -46,6 +46,7 @@ const PET_OUTSIDE_DATA_MISSING = 205;
 const FLAP_LOCK_MODE_DATA_MISSING = 301;
 const FEEDER_CONFIG_BOWL_DATA_MISSING = 401;
 const FEEDER_FOOD_BOWL_DATA_MISSING = 402;
+const FEEDER_STATUS_BOWL_DATA_MISSING = 403;
 const DISPENSER_WATER_DATA_MISSING = 801;
 
 class Sureflap extends utils.Adapter {
@@ -114,6 +115,7 @@ class Sureflap extends utils.Adapter {
 		this.warnings[FLAP_LOCK_MODE_DATA_MISSING] = [];
 		this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING] = [];
 		this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING] = [];
+		this.warnings[FEEDER_STATUS_BOWL_DATA_MISSING] = [];
 		this.warnings[DISPENSER_WATER_DATA_MISSING] = [];
 		this.lastError = null;
 		this.lastLoginError = null;
@@ -1242,57 +1244,91 @@ class Sureflap extends utils.Adapter {
 				});
 			}
 		}
-		// feeder remaining food data from sureFlapReport
-		if (this.updateReport && (this.sureFlapReportPrev === undefined || this.sureFlapReportPrev.length === 0 || JSON.stringify(this.sureFlapReport) !== JSON.stringify(this.sureFlapReportPrev))) {
-			const device_id = this.sureFlapState.devices[deviceIndex].id;
-			let last_datapoint = undefined;
-			// look in feeding data for every pet
-			for (let p = 0; p < this.sureFlapState.pets.length; p++) {
-				// look in feeding data points starting with latest (last)
-				for (let i = this.sureFlapReport[p].feeding.datapoints.length - 1; i >= 0; i--) {
-					// check if datapoint is for this feeder
-					if (this.sureFlapReport[p].feeding.datapoints[i].device_id === device_id) {
-						// check if datapoint is newer than saved datapoint
-						if (last_datapoint === undefined || last_datapoint.to === undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].feeding.datapoints[i].to)) {
-							last_datapoint = this.sureFlapReport[p].feeding.datapoints[i];
-							break;
-						}
-					}
-				}
-			}
-			// if datapoint with food data found for this device, write it to adapter
-			if (last_datapoint !== undefined) {
-				for (let b = 0; b < last_datapoint.weights.length; b++) {
-					this.getObject(obj_name + '.bowls.' + last_datapoint.weights[b].index, (err, obj) => {
+		// feeder remaining food data
+		if (('status' in this.sureFlapState.devices[deviceIndex]) && ('bowl_status' in this.sureFlapState.devices[deviceIndex].status)) {
+			// get feeder remaining food data from new bowl_status
+			if (!this.sureFlapStatePrev.devices || (JSON.stringify(this.sureFlapState.devices[deviceIndex].status.bowl_status) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].status.bowl_status))) {
+				this.log.silly(`Updating remaining food data from bowl_status.`);
+				for (let b = 0; b < this.sureFlapState.devices[deviceIndex].status.bowl_status.length; b++) {
+					this.getObject(obj_name + '.bowls.' + b, (err, obj) => {
 						if (!err && obj) {
-							this.getState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', (err, obj) => {
-								if (!err && obj) {
-									if (obj.val !== last_datapoint.weights[b].weight) {
-										this.log.debug(`updating remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
-										this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
-									}
-									this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = false;
-								} else if (!err && obj == null) {
-									this.log.debug(`setting remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
-									this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
-									this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = false;
-								} else {
-									if (!this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex]) {
-										this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}.weight' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-										this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = true;
-									}
-								}
-							});
+							if ('current_weight' in this.sureFlapState.devices[deviceIndex].status.bowl_status[b] && this.sureFlapState.devices[deviceIndex].status.bowl_status[b].current_weight !== undefined) {
+								this.setState(obj_name + '.bowls.' + b + '.weight', this.sureFlapState.devices[deviceIndex].status.bowl_status[b].current_weight, true);
+							}
+							if ('fill_percent' in this.sureFlapState.devices[deviceIndex].status.bowl_status[b] && this.sureFlapState.devices[deviceIndex].status.bowl_status[b].fill_percent !== undefined) {
+								this.setState(obj_name + '.bowls.' + b + '.fill_percent', this.sureFlapState.devices[deviceIndex].status.bowl_status[b].fill_percent, true);
+							}
+							if ('last_filled_at' in this.sureFlapState.devices[deviceIndex].status.bowl_status[b] && this.sureFlapState.devices[deviceIndex].status.bowl_status[b].last_filled_at !== undefined) {
+								this.setState(obj_name + '.bowls.' + b + '.last_filled_at', this.sureFlapState.devices[deviceIndex].status.bowl_status[b].last_filled_at, true);
+							}
+							if ('last_zeroed_at' in this.sureFlapState.devices[deviceIndex].status.bowl_status[b] && this.sureFlapState.devices[deviceIndex].status.bowl_status[b].last_zeroed_at !== undefined) {
+								this.setState(obj_name + '.bowls.' + b + '.last_zeroed_at', this.sureFlapState.devices[deviceIndex].status.bowl_status[b].last_zeroed_at, true);
+							}
+							this.warnings[FEEDER_STATUS_BOWL_DATA_MISSING][deviceIndex] = false;
 						} else {
-							if (!this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex]) {
-								this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-								this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = true;
+							if (!this.warnings[FEEDER_STATUS_BOWL_DATA_MISSING][deviceIndex]) {
+								this.log.warn(`got feeder status data for object '${obj_name + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+								this.warnings[FEEDER_STATUS_BOWL_DATA_MISSING][deviceIndex] = true;
 							}
 						}
 					});
+
 				}
-			} else {
-				this.log.debug(`no remaining food data for feeder '${this.sureFlapState.devices[deviceIndex].name}' found`);
+			}
+		} else {
+			// get feeder remaining food data from sureFlapReport
+			if (this.updateReport && (this.sureFlapReportPrev === undefined || this.sureFlapReportPrev.length === 0 || JSON.stringify(this.sureFlapReport) !== JSON.stringify(this.sureFlapReportPrev))) {
+				const device_id = this.sureFlapState.devices[deviceIndex].id;
+				let last_datapoint = undefined;
+				// look in feeding data for every pet
+				for (let p = 0; p < this.sureFlapState.pets.length; p++) {
+					// look in feeding data points starting with latest (last)
+					for (let i = this.sureFlapReport[p].feeding.datapoints.length - 1; i >= 0; i--) {
+						// check if datapoint is for this feeder
+						if (this.sureFlapReport[p].feeding.datapoints[i].device_id === device_id) {
+							// check if datapoint is newer than saved datapoint
+							if (last_datapoint === undefined || last_datapoint.to === undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].feeding.datapoints[i].to)) {
+								last_datapoint = this.sureFlapReport[p].feeding.datapoints[i];
+								break;
+							}
+						}
+					}
+				}
+				// if datapoint with food data found for this device, write it to adapter
+				if (last_datapoint !== undefined) {
+					this.log.silly(`Updating remaining food data from sureFlapReport.`);
+					for (let b = 0; b < last_datapoint.weights.length; b++) {
+						this.getObject(obj_name + '.bowls.' + last_datapoint.weights[b].index, (err, obj) => {
+							if (!err && obj) {
+								this.getState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', (err, obj) => {
+									if (!err && obj) {
+										if (obj.val !== last_datapoint.weights[b].weight) {
+											this.log.debug(`updating remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
+											this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
+										}
+										this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = false;
+									} else if (!err && obj == null) {
+										this.log.debug(`setting remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
+										this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
+										this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = false;
+									} else {
+										if (!this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex]) {
+											this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}.weight' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+											this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = true;
+										}
+									}
+								});
+							} else {
+								if (!this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex]) {
+									this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+									this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = true;
+								}
+							}
+						});
+					}
+				} else {
+					this.log.debug(`no remaining food data for feeder '${this.sureFlapState.devices[deviceIndex].name}' found`);
+				}
 			}
 		}
 	}
@@ -1306,46 +1342,23 @@ class Sureflap extends utils.Adapter {
 	 */
 	setWaterDispenserConnectToAdapter(prefix, hierarchy, deviceIndex) {
 		const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name;
-		// water dispenser remaining water data from sureFlapReport
-		if (this.updateReport && (this.sureFlapReportPrev === undefined || this.sureFlapReportPrev.length === 0 || JSON.stringify(this.sureFlapReport) !== JSON.stringify(this.sureFlapReportPrev))) {
-			const device_id = this.sureFlapState.devices[deviceIndex].id;
-			let last_datapoint = undefined;
-			// look in drinking data for every pet
-			for (let p = 0; p < this.sureFlapState.pets.length; p++) {
-				// look in drinking data points starting with latest (last)
-				for (let i = this.sureFlapReport[p].drinking.datapoints.length - 1; i >= 0; i--) {
-					// check if datapoint is for this water dispenser
-					if (this.sureFlapReport[p].drinking.datapoints[i].device_id === device_id) {
-						// check if datapoint is newer than saved datapoint
-						if (last_datapoint === undefined || last_datapoint.to === undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].drinking.datapoints[i].to)) {
-							last_datapoint = this.sureFlapReport[p].drinking.datapoints[i];
-							break;
-						}
-					}
-				}
-			}
-			// if datapoint with drinking data found for this device, write it to adapter
-			if (last_datapoint !== undefined && last_datapoint.weights.length > 0) {
+		// water dispenser remaining water data
+		if (('status' in this.sureFlapState.devices[deviceIndex]) && ('bowl_status' in this.sureFlapState.devices[deviceIndex].status)) {
+			// get feeder remaining food data from new bowl_status
+			if (!this.sureFlapStatePrev.devices || (JSON.stringify(this.sureFlapState.devices[deviceIndex].status.bowl_status) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].status.bowl_status))) {
+				this.log.silly(`Updating remaining water data from bowl_status.`);
 				this.getObject(obj_name + '.water', (err, obj) => {
 					if (!err && obj) {
-						this.getState(obj_name + '.water.weight', (err, obj) => {
-							if (!err && obj) {
-								if (obj.val !== last_datapoint.weights[0].weight) {
-									this.log.debug(`updating remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
-									this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
-								}
-								this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
-							} else if (!err && obj == null) {
-								this.log.debug(`setting remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
-								this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
-								this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
-							} else {
-								if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
-									this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
-									this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = true;
-								}
-							}
-						});
+						if ('current_weight' in this.sureFlapState.devices[deviceIndex].status.bowl_status[0] && this.sureFlapState.devices[deviceIndex].status.bowl_status[0].current_weight !== undefined) {
+							this.setState(obj_name + '.water' + '.weight', this.sureFlapState.devices[deviceIndex].status.bowl_status[0].current_weight, true);
+						}
+						if ('fill_percent' in this.sureFlapState.devices[deviceIndex].status.bowl_status[0] && this.sureFlapState.devices[deviceIndex].status.bowl_status[0].fill_percent !== undefined) {
+							this.setState(obj_name + '.water' + '.fill_percent', this.sureFlapState.devices[deviceIndex].status.bowl_status[0].fill_percent, true);
+						}
+						if ('last_filled_at' in this.sureFlapState.devices[deviceIndex].status.bowl_status[0] && this.sureFlapState.devices[deviceIndex].status.bowl_status[0].last_filled_at !== undefined) {
+							this.setState(obj_name + '.water' + '.last_filled_at', this.sureFlapState.devices[deviceIndex].status.bowl_status[0].last_filled_at, true);
+						}
+						this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
 					} else {
 						if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
 							this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
@@ -1353,8 +1366,59 @@ class Sureflap extends utils.Adapter {
 						}
 					}
 				});
-			} else {
-				this.log.debug(`no remaining water data for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' found`);
+			}
+		} else {
+			// water dispenser remaining water data from sureFlapReport
+			if (this.updateReport && (this.sureFlapReportPrev === undefined || this.sureFlapReportPrev.length === 0 || JSON.stringify(this.sureFlapReport) !== JSON.stringify(this.sureFlapReportPrev))) {
+				const device_id = this.sureFlapState.devices[deviceIndex].id;
+				let last_datapoint = undefined;
+				// look in drinking data for every pet
+				for (let p = 0; p < this.sureFlapState.pets.length; p++) {
+					// look in drinking data points starting with latest (last)
+					for (let i = this.sureFlapReport[p].drinking.datapoints.length - 1; i >= 0; i--) {
+						// check if datapoint is for this water dispenser
+						if (this.sureFlapReport[p].drinking.datapoints[i].device_id === device_id) {
+							// check if datapoint is newer than saved datapoint
+							if (last_datapoint === undefined || last_datapoint.to === undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].drinking.datapoints[i].to)) {
+								last_datapoint = this.sureFlapReport[p].drinking.datapoints[i];
+								break;
+							}
+						}
+					}
+				}
+				// if datapoint with drinking data found for this device, write it to adapter
+				if (last_datapoint !== undefined && last_datapoint.weights.length > 0) {
+					this.log.silly(`Updating remaining water data from sureFlapReport.`);
+					this.getObject(obj_name + '.water', (err, obj) => {
+						if (!err && obj) {
+							this.getState(obj_name + '.water.weight', (err, obj) => {
+								if (!err && obj) {
+									if (obj.val !== last_datapoint.weights[0].weight) {
+										this.log.debug(`updating remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
+										this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
+									}
+									this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
+								} else if (!err && obj == null) {
+									this.log.debug(`setting remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
+									this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
+									this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
+								} else {
+									if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
+										this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
+										this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = true;
+									}
+								}
+							});
+						} else {
+							if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
+								this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
+								this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = true;
+							}
+						}
+					});
+				} else {
+					this.log.debug(`no remaining water data for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' found`);
+				}
 			}
 		}
 	}
@@ -2565,6 +2629,9 @@ class Sureflap extends utils.Adapter {
 									})));
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.target', this.buildStateObject('target weight', 'value', 'number')));
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.weight', this.buildStateObject('weight', 'value', 'number')));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
+									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.last_zeroed_at', this.buildStateObject('last zeroed at', 'date', 'string')));
 
 									if (this.sureFlapState.devices[device].control.bowls.type === FEEDER_SINGLE_BOWL) {
 										// remove bowl 1 (e.g. after change from dual to single bowl)
@@ -2583,6 +2650,9 @@ class Sureflap extends utils.Adapter {
 											})));
 											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.target', this.buildStateObject('target weight', 'value', 'number')));
 											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.weight', this.buildStateObject('weight', 'value', 'number')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
+											promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.1.last_zeroed_at', this.buildStateObject('last zeroed at', 'date', 'string')));
 
 											Promise.all(promiseArray).then(() => {
 												return resolve();
@@ -2630,6 +2700,8 @@ class Sureflap extends utils.Adapter {
 					}
 					this.setObjectNotExists(obj_name + '.water', this.buildChannelObject('remaining water'), () => {
 						promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water.weight', this.buildStateObject('weight', 'value', 'number')));
+						promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
+						promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.water.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
 						Promise.all(promiseArray).then(() => {
 							return resolve();
 						}).catch(error => {

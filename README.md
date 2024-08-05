@@ -84,6 +84,8 @@ adapter<br>
 │ │ │ ├ assigned_pets<br>
 │ │ │ │ └ pet_name<br>
 │ │ │ └ water<br>
+│ │ │ &nbsp;&nbsp;&nbsp; ├ fill_percent<br>
+│ │ │ &nbsp;&nbsp;&nbsp; ├ last_filled_at<br>
 │ │ │ &nbsp;&nbsp;&nbsp; └ weight<br>
 │ │ ├ feeder_name<br>
 │ │ │ ├ battery<br>
@@ -100,7 +102,10 @@ adapter<br>
 │ │ │ │ └ pet_name<br>
 │ │ │ ├ bowls<br>
 │ │ │ │ └ 0..1<br>
+│ │ │ │ &nbsp;&nbsp;&nbsp; ├ fill_percent<br>
 │ │ │ │ &nbsp;&nbsp;&nbsp; ├ food_type<br>
+│ │ │ │ &nbsp;&nbsp;&nbsp; ├ last_filled_at<br>
+│ │ │ │ &nbsp;&nbsp;&nbsp; ├ Last_zeroed_at<br>
 │ │ │ │ &nbsp;&nbsp;&nbsp; ├ target<br>
 │ │ │ │ &nbsp;&nbsp;&nbsp; └ weight<br>
 │ │ │ └ control<br>

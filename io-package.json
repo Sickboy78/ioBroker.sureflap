@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "2.2.0",
+    "version": "2.2.1",
     "news": {
+      "2.2.1": {
+        "en": "dependency updates",
+        "de": "Aktualisierungen der Abhängigkeiten",
+        "ru": "Слава Украины",
+        "pt": "actualizações de dependências",
+        "nl": "afhankelijkheidsupdates",
+        "fr": "mises à jour de la dépendance",
+        "it": "aggiornamenti sulla dipendenza",
+        "es": "actualizaciones de dependencia",
+        "pl": "aktualizacje zależności",
+        "uk": "оновлення залежностей",
+        "zh-cn": "依赖性更新"
+      },
       "2.2.0": {
         "en": "new JSON states for history and curfew",
         "de": "neue JSON Zustände für Chronik und Ausgangssperre",
