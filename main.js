@@ -272,19 +272,21 @@ class Sureflap extends utils.Adapter {
 	startLoadingData() {
 		this.log.debug(`starting SureFlap Adapter v` + ADAPTER_VERSION);
 		clearTimeout(this.timerId);
-		this.doAuthenticate().then(() => this.startUpdateLoop()).catch(error => {
-			if (error.message === this.lastLoginError) {
-				this.log.debug(error);
-			} else {
-				this.log.error(error);
-				this.lastLoginError = error.message;
-			}
-			this.log.info(`disconnected`);
-			if (!this.adapterUnloaded) {
-				// @ts-ignore
-				this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
-			}
-		});
+		this.doAuthenticate()
+			.then(() => this.startUpdateLoop())
+			.catch(error => {
+				if (error.message === this.lastLoginError) {
+					this.log.debug(error);
+				} else {
+					this.log.error(error);
+					this.lastLoginError = error.message;
+				}
+				this.log.info(`disconnected`);
+				if (!this.adapterUnloaded) {
+					// @ts-ignore
+					this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
+				}
+			});
 	}
 
 	/**
@@ -327,22 +329,31 @@ class Sureflap extends utils.Adapter {
 	 */
 	updateLoop() {
 		clearTimeout(this.timerId);
-		this.getDataFromApi().then(() => this.getAdditionalDataFromApi()).then(() => this.createAdapterObjectHierarchy()).then(() => this.getDeviceStatusFromData()).then(() => this.getPetStatusFromData()).then(() => this.getEventHistoryFromData()).then(() => this.updateAdapterVersion()).then(() => this.setUpdateTimer()).catch(error => {
-			if (error.message === this.lastError) {
-				this.log.debug(error);
-			} else {
-				this.log.error(error);
-				this.lastError = error.message;
-			}
-			this.log.info(`update loop stopped`);
-			this.log.info(`disconnected`);
-			if (!this.adapterUnloaded) {
-				// @ts-ignore
-				this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
-			}
-		}).finally(() => {
-			this.firstLoop = false;
-		});
+		this.getDataFromApi()
+			.then(() => this.getAdditionalDataFromApi())
+			.then(() => this.createAdapterObjectHierarchy())
+			.then(() => this.getDeviceStatusFromData())
+			.then(() => this.getPetStatusFromData())
+			.then(() => this.getEventHistoryFromData())
+			.then(() => this.updateAdapterVersion())
+			.then(() => this.setUpdateTimer())
+			.catch(error => {
+				if (error.message === this.lastError) {
+					this.log.debug(error);
+				} else {
+					this.log.error(error);
+					this.lastError = error.message;
+				}
+				this.log.info(`update loop stopped`);
+				this.log.info(`disconnected`);
+				if (!this.adapterUnloaded) {
+					// @ts-ignore
+					this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
+				}
+			})
+			.finally(() => {
+				this.firstLoop = false;
+			});
 	}
 
 	/**
@@ -2372,13 +2383,19 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			if (this.firstLoop === true) {
 				this.log.debug(`creating device hierarchy...`);
-				this.removeDeprecatedDataFromAdapter().then(() => this.removeDeletedAndRenamedPetsFromAdapter()).then(() => this.createHouseholdsAndHubsToAdapter()).then(() => this.createDevicesToAdapter()).then(() => this.createPetsToAdapter()).then(() => {
-					this.log.debug(`device hierarchy created.`);
-					return resolve();
-				}).catch(() => {
-					this.log.error(`creating device hierarchy failed.`);
-					return reject();
-				});
+				this.removeDeprecatedDataFromAdapter()
+					.then(() => this.removeDeletedAndRenamedPetsFromAdapter())
+					.then(() => this.createHouseholdsAndHubsToAdapter())
+					.then(() => this.createDevicesToAdapter())
+					.then(() => this.createPetsToAdapter())
+					.then(() => {
+						this.log.debug(`device hierarchy created.`);
+						return resolve();
+					})
+					.catch(() => {
+						this.log.error(`creating device hierarchy failed.`);
+						return reject();
+					});
 			} else {
 				return resolve();
 			}
@@ -3895,7 +3912,7 @@ class Sureflap extends utils.Adapter {
 	 */
 	httpRequest(tag, options, postData) {
 		return new Promise((resolve, reject) => {
-			this.log.silly(`doing http request with tag ${tag}`);
+			this.log.silly(`doing http request '${tag}'`);
 			const req = https.request(options, (res) => {
 				if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
 					this.log.debug(`Request (${tag}) returned status code ${res.statusCode}.`);

@@ -107,19 +107,6 @@
         "uk": "новий конфігурований хост API",
         "zh-cn": "新的可配置 API 主机"
       },
-      "1.2.2": {
-        "en": "more features",
-        "de": "weitere Funktionen",
-        "ru": "Слава Украины",
-        "pt": "mais funcionalidades",
-        "nl": "meer functies",
-        "fr": "plus de fonctionnalités",
-        "it": "altre caratteristiche",
-        "es": "más funciones",
-        "pl": "Dziękuję, drodzy sąsiedzi",
-        "uk": "більше можливостей",
-        "zh-cn": "更多功能"
-      },
       "1.2.1": {
         "en": "adjustments for Surepet API changes",
         "de": "Anpassungen für Surepet API Änderungen",
@@ -282,7 +269,7 @@
     },
     "dependencies": [
       {
-        "js-controller": ">=3.0.0"
+        "js-controller": ">=5.0.19"
       }
     ],
     "globalDependencies": [
