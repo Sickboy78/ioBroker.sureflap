@@ -4,17 +4,17 @@
     "version": "2.2.1",
     "news": {
       "2.2.1": {
-        "en": "dependency updates",
-        "de": "Aktualisierungen der Abhängigkeiten",
+        "en": "new data states for feeder and water dispenser",
+        "de": "neue Zustände für Futterautomat und Wasserspender",
         "ru": "Слава Украины",
-        "pt": "actualizações de dependências",
-        "nl": "afhankelijkheidsupdates",
-        "fr": "mises à jour de la dépendance",
-        "it": "aggiornamenti sulla dipendenza",
-        "es": "actualizaciones de dependencia",
-        "pl": "aktualizacje zależności",
-        "uk": "оновлення залежностей",
-        "zh-cn": "依赖性更新"
+        "pt": "Novos pontos de dados para o alimentador automático e o distribuidor de água",
+        "nl": "Nieuwe gegevenspunten voor voederautomaat en waterdispenser",
+        "fr": "Nouveaux points de données pour l'alimentation automatique et le distributeur d'eau",
+        "it": "Nuovi punti dati per l'alimentatore automatico e l'erogatore d'acqua",
+        "es": "Nuevos puntos de datos para el alimentador automático y el dispensador de agua",
+        "pl": "Nowe punkty danych dla automatycznego podajnika i dystrybutora wody",
+        "uk": "Нові дані для автоматичної годівниці та дозатора води",
+        "zh-cn": "自动喂料机和饮水机的新数据点"
       },
       "2.2.0": {
         "en": "new JSON states for history and curfew",
