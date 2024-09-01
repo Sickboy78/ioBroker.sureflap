@@ -38,6 +38,8 @@ const FEEDER_SINGLE_BOWL = 1;
 const FEEDER_FOOD_WET = 1;
 const FEEDER_FOOD_DRY = 2;
 // Constants - repeatable errors
+const DEVICE_BATTERY_DATA_MISSING = 101;
+const DEVICE_BATTERY_PERCENTAGE_DATA_MISSING = 102;
 const PET_POSITION_DATA_MISSING = 201;
 const PET_FEEDING_DATA_MISSING = 202;
 const PET_DRINKING_DATA_MISSING = 203;
@@ -108,6 +110,8 @@ class Sureflap extends utils.Adapter {
 		/* remember repeatable warnings to not spam iobroker log */
 		// noinspection JSPrimitiveTypeWrapperUsage
 		this.warnings = new Array();
+		this.warnings[DEVICE_BATTERY_DATA_MISSING] = [];
+		this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING] = [];
 		this.warnings[PET_POSITION_DATA_MISSING] = [];
 		this.warnings[PET_FEEDING_DATA_MISSING] = [];
 		this.warnings[PET_DRINKING_DATA_MISSING] = [];
@@ -1468,12 +1472,26 @@ class Sureflap extends utils.Adapter {
 	 */
 	setBatteryStatusToAdapter(prefix, hierarchy, deviceIndex) {
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery !== this.sureFlapStatePrev.devices[deviceIndex].status.battery)) {
-			const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery';
-			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery, true);
+			if (this.sureFlapState.devices[deviceIndex].status.battery !== undefined) {
+				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery, true);
+			} else {
+				if (!this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex]) {
+					this.log.warn(`no battery data found for '${this.sureFlapState.devices[deviceIndex].name}..`);
+					this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex] = true;
+				}
+			}
 		}
 		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== this.sureFlapStatePrev.devices[deviceIndex].status.battery_percentage)) {
-			const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery_percentage';
-			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery_percentage, true);
+			if (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== undefined) {
+				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery_percentage';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery_percentage, true);
+			} else {
+				if (!this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex]) {
+					this.log.warn(`no battery percentage data found for '${this.sureFlapState.devices[deviceIndex].name}..`);
+					this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex] = true;
+				}
+			}
 		}
 	}
 
@@ -3428,10 +3446,12 @@ class Sureflap extends utils.Adapter {
 	smoothBatteryOutliers() {
 		if (this.sureFlapStatePrev.devices) {
 			for (let d = 0; d < this.sureFlapState.devices.length; d++) {
-				if (this.sureFlapState.devices[d].status.battery > this.sureFlapStatePrev.devices[d].status.battery) {
-					this.sureFlapState.devices[d].status.battery = Math.ceil(this.sureFlapState.devices[d].status.battery * 10 + this.sureFlapStatePrev.devices[d].status.battery * 990) / 1000;
-				} else if (this.sureFlapState.devices[d].status.battery < this.sureFlapStatePrev.devices[d].status.battery) {
-					this.sureFlapState.devices[d].status.battery = Math.floor(this.sureFlapState.devices[d].status.battery * 10 + this.sureFlapStatePrev.devices[d].status.battery * 990) / 1000;
+				if (this.sureFlapState.devices[d].status.battery) {
+					if (this.sureFlapState.devices[d].status.battery > this.sureFlapStatePrev.devices[d].status.battery) {
+						this.sureFlapState.devices[d].status.battery = Math.ceil(this.sureFlapState.devices[d].status.battery * 10 + this.sureFlapStatePrev.devices[d].status.battery * 990) / 1000;
+					} else if (this.sureFlapState.devices[d].status.battery < this.sureFlapStatePrev.devices[d].status.battery) {
+						this.sureFlapState.devices[d].status.battery = Math.floor(this.sureFlapState.devices[d].status.battery * 10 + this.sureFlapStatePrev.devices[d].status.battery * 990) / 1000;
+					}
 				}
 			}
 		}
