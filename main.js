@@ -1078,17 +1078,21 @@ class Sureflap extends utils.Adapter {
 	setPetLocation(pet, value) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const pet_id = this.getPetId(pet);
-			const postData = JSON.stringify({
-				'where': (value ? '1' : '2'),
-				'since': this.getCurrentDateFormattedForSurepetApi()
-			});
-			const options = this.buildOptions('/api/pet/' + pet_id + '/position', 'POST', this.sureFlapState['token']);
+			if (pet_id !== undefined) {
+				const postData = JSON.stringify({
+					'where': (value ? '1' : '2'),
+					'since': this.getCurrentDateFormattedForSurepetApi()
+				});
+				const options = this.buildOptions('/api/pet/' + pet_id + '/position', 'POST', this.sureFlapState['token']);
 
-			this.httpRequest('set_pet_location', options, postData).then(() => {
-				return resolve();
-			}).catch(error => {
-				return reject(error);
-			});
+				this.httpRequest('set_pet_location', options, postData).then(() => {
+					return resolve();
+				}).catch(error => {
+					return reject(error);
+				});
+			} else {
+				return reject(`could not get pet id for pet '${pet}'.`);
+			}
 		}));
 	}
 
@@ -1231,7 +1235,7 @@ class Sureflap extends utils.Adapter {
 								this.log.error(`could not set pet type to adapter (${error})`);
 							}
 						} else {
-							this.log.warn(`could not get pet name for pet id (${this.sureFlapState.devices[deviceIndex].tags[t].id})`);
+							this.log.warn(`could not get pet name for pet tag id (${this.sureFlapState.devices[deviceIndex].tags[t].id})`);
 							this.log.debug(`cat flap '${this.sureFlapState.devices[deviceIndex].name}' has ${this.sureFlapState.devices[deviceIndex].tags.length} pets assigned and household has ${this.sureFlapState.pets.length} pets assigned.`);
 						}
 					}
@@ -2251,7 +2255,7 @@ class Sureflap extends utils.Adapter {
 										if (name !== undefined) {
 											deletePromiseArray.push(this.removeAssignedPetsFromPetFlap(obj_name + '.assigned_pets.' + name));
 										} else {
-											this.log.warn(`could not get pet name for pet id (${this.sureFlapState.devices[d].tags[t].id})`);
+											this.log.warn(`could not get pet name for pet tag id (${this.sureFlapState.devices[d].tags[t].id})`);
 											this.log.debug(`pet flap '${obj_name}' has ${this.sureFlapState.devices[d].tags.length} pets assigned and household has ${this.sureFlapState.pets.length} pets assigned.`);
 										}
 									}
@@ -2570,9 +2574,9 @@ class Sureflap extends utils.Adapter {
 								} else {
 									const name = this.getPetNameForTagId(this.sureFlapState.devices[deviceIndex].tags[t].id);
 									if (name !== undefined) {
-										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.sureFlapState.devices[deviceIndex].tags[t].id + '\')', 'text', 'string')));
+										promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (\'' + this.getPetId(name) + '\')', 'text', 'string')));
 									} else {
-										this.log.warn(`could not get pet name for pet id (${this.sureFlapState.devices[deviceIndex].tags[t].id})`);
+										this.log.warn(`could not get pet name for pet tag id (${this.sureFlapState.devices[deviceIndex].tags[t].id})`);
 										this.log.debug(`pet flap '${this.sureFlapState.devices[deviceIndex].name}' has ${this.sureFlapState.devices[deviceIndex].tags.length} pets assigned and household has ${this.sureFlapState.pets.length} pets assigned.`);
 									}
 								}
@@ -2617,7 +2621,7 @@ class Sureflap extends utils.Adapter {
 								if (name !== undefined) {
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (' + this.getPetId(name) + ')', 'text', 'string')));
 								} else {
-									this.log.warn(`could not get pet name for pet id (${this.sureFlapState.devices[deviceIndex].tags[t].id})`);
+									this.log.warn(`could not get pet name for pet tag id (${this.sureFlapState.devices[deviceIndex].tags[t].id})`);
 									this.log.debug(`feeder '${this.sureFlapState.devices[deviceIndex].name}' has ${this.sureFlapState.devices[deviceIndex].tags.length} pets assigned and household has ${this.sureFlapState.pets.length} pets assigned.`);
 								}
 							}
@@ -2699,7 +2703,7 @@ class Sureflap extends utils.Adapter {
 							if (name !== undefined) {
 								promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + name + '\' (' + this.getPetId(name) + ')', 'text', 'string')));
 							} else {
-								this.log.warn(`could not get pet name for pet id (${this.sureFlapState.devices[deviceIndex].tags[t].id})`);
+								this.log.warn(`could not get pet name for pet tag id (${this.sureFlapState.devices[deviceIndex].tags[t].id})`);
 								this.log.debug(`water dispenser '${this.sureFlapState.devices[deviceIndex].name}' has ${this.sureFlapState.devices[deviceIndex].tags.length} pets assigned and household has ${this.sureFlapState.pets.length} pets assigned.`);
 							}
 						}
@@ -2746,7 +2750,7 @@ class Sureflap extends utils.Adapter {
 					});
 				});
 			} else {
-				this.log.warn(`could not get pet name for pet id (${this.sureFlapState.devices[deviceIndex].tags[tag].id})`);
+				this.log.warn(`could not get pet name for pet tag id (${this.sureFlapState.devices[deviceIndex].tags[tag].id})`);
 				this.log.debug(`cat flap '${this.sureFlapState.devices[deviceIndex].name}' has ${this.sureFlapState.devices[deviceIndex].tags.length} pets assigned and household has ${this.sureFlapState.pets.length} pets assigned.`);
 				return reject();
 			}
@@ -3314,7 +3318,7 @@ class Sureflap extends utils.Adapter {
 	 * returns the pet id of the pet
 	 *
 	 * @param {string} name
-	 * @return {string} pet id
+	 * @return {string|undefined} pet id
 	 */
 	getPetId(name) {
 		for (let i = 0; i < this.sureFlapState.pets.length; i++) {
@@ -3322,7 +3326,7 @@ class Sureflap extends utils.Adapter {
 				return this.sureFlapState.pets[i].id;
 			}
 		}
-		return '';
+		return undefined;
 	}
 
 	/**
