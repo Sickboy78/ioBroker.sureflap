@@ -38,19 +38,32 @@ const FEEDER_SINGLE_BOWL = 1;
 const FEEDER_FOOD_WET = 1;
 const FEEDER_FOOD_DRY = 2;
 // Constants - repeatable errors
-const DEVICE_BATTERY_DATA_MISSING = 101;
-const DEVICE_BATTERY_PERCENTAGE_DATA_MISSING = 102;
-const PET_POSITION_DATA_MISSING = 201;
-const PET_FEEDING_DATA_MISSING = 202;
-const PET_DRINKING_DATA_MISSING = 203;
-const PET_FLAP_STATUS_DATA_MISSING = 204;
-const PET_OUTSIDE_DATA_MISSING = 205;
-const PET_HOUSEHOLD_MISSING = 206;
+const HUB_LED_MODE_MISSING = 101;
+const DEVICE_BATTERY_DATA_MISSING = 201;
+const DEVICE_BATTERY_PERCENTAGE_DATA_MISSING = 202;
+const DEVICE_SERIAL_NUMBER_MISSING = 203;
+const DEVICE_SIGNAL_STRENGTH_MISSING = 204;
+const DEVICE_VERSION_NUMBER_MISSING = 205;
+const DEVICE_ONLINE_STATUS_MISSING = 206;
 const FLAP_LOCK_MODE_DATA_MISSING = 301;
-const FEEDER_CONFIG_BOWL_DATA_MISSING = 401;
-const FEEDER_FOOD_BOWL_DATA_MISSING = 402;
-const FEEDER_STATUS_BOWL_DATA_MISSING = 403;
-const DISPENSER_WATER_DATA_MISSING = 801;
+const FLAP_CURFEW_DATA_MISSING = 302;
+const FEEDER_CLOSE_DELAY_DATA_MISSING = 401;
+const FEEDER_BOWL_CONFIG_DATA_MISSING = 402;
+const FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING = 403;
+const FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING = 404;
+const FEEDER_BOWL_REMAINING_FOOD_DATA_MISSING = 405;
+const FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING = 406;
+const CAT_FLAP_PET_TYPE_DATA_MISSING = 601;
+const DISPENSER_WATER_STATUS_ADAPTER_OBJECT_MISSING = 801;
+const DISPENSER_WATER_REMAINING_DATA_MISSING = 802;
+const DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING = 803;
+const PET_POSITION_DATA_MISSING = 901;
+const PET_FEEDING_DATA_MISSING = 902;
+const PET_DRINKING_DATA_MISSING = 903;
+const PET_FLAP_STATUS_DATA_MISSING = 904;
+const PET_OUTSIDE_DATA_MISSING = 905;
+const PET_HOUSEHOLD_MISSING = 906;
+const PET_NAME_MISSING = 907;
 
 class Sureflap extends utils.Adapter {
 
@@ -110,19 +123,32 @@ class Sureflap extends utils.Adapter {
 		/* remember repeatable warnings to not spam iobroker log */
 		// noinspection JSPrimitiveTypeWrapperUsage
 		this.warnings = new Array();
+		this.warnings[HUB_LED_MODE_MISSING] = [];
 		this.warnings[DEVICE_BATTERY_DATA_MISSING] = [];
 		this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING] = [];
+		this.warnings[DEVICE_SERIAL_NUMBER_MISSING] = [];
+		this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING] = [];
+		this.warnings[DEVICE_VERSION_NUMBER_MISSING] = [];
+		this.warnings[DEVICE_ONLINE_STATUS_MISSING] = [];
+		this.warnings[FLAP_LOCK_MODE_DATA_MISSING] = [];
+		this.warnings[FLAP_CURFEW_DATA_MISSING] = [];
+		this.warnings[FEEDER_CLOSE_DELAY_DATA_MISSING] = [];
+		this.warnings[FEEDER_BOWL_CONFIG_DATA_MISSING] = [];
+		this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING] = [];
+		this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING] = [];
+		this.warnings[FEEDER_BOWL_REMAINING_FOOD_DATA_MISSING] = [];
+		this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING] = [];
+		this.warnings[DISPENSER_WATER_STATUS_ADAPTER_OBJECT_MISSING] = [];
+		this.warnings[DISPENSER_WATER_REMAINING_DATA_MISSING] = [];
+		this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING] = [];
+		this.warnings[CAT_FLAP_PET_TYPE_DATA_MISSING] = [];
 		this.warnings[PET_POSITION_DATA_MISSING] = [];
 		this.warnings[PET_FEEDING_DATA_MISSING] = [];
 		this.warnings[PET_DRINKING_DATA_MISSING] = [];
 		this.warnings[PET_FLAP_STATUS_DATA_MISSING] = [];
 		this.warnings[PET_OUTSIDE_DATA_MISSING] = [];
 		this.warnings[PET_HOUSEHOLD_MISSING] = [];
-		this.warnings[FLAP_LOCK_MODE_DATA_MISSING] = [];
-		this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING] = [];
-		this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING] = [];
-		this.warnings[FEEDER_STATUS_BOWL_DATA_MISSING] = [];
-		this.warnings[DISPENSER_WATER_DATA_MISSING] = [];
+		this.warnings[PET_NAME_MISSING] = [];
 		this.lastError = null;
 		this.lastLoginError = null;
 
@@ -250,24 +276,6 @@ class Sureflap extends utils.Adapter {
 		}
 	}
 
-	// If you need to accept messages in your adapter, uncomment the following block and the corresponding line in the constructor.
-	// /**
-	//  * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-	//  * Using this method requires "common.messagebox" property to be set to true in io-package.json
-	//  * @param {ioBroker.Message} obj
-	//  */
-	// onMessage(obj) {
-	// 	if (typeof obj === "object" && obj.message) {
-	// 		if (obj.command === "send") {
-	// 			// e.g. send email or pushover or whatever
-	// 			this.log.info("send command");
-
-	// 			// Send response in callback if required
-	// 			if (obj.callback) this.sendTo(obj.from, obj.command, "Message received", obj.callback);
-	// 		}
-	// 	}
-	// }
-
 	/*************************************************
 	 * methods to start and keep update loop running *
 	 *************************************************/
@@ -360,25 +368,6 @@ class Sureflap extends utils.Adapter {
 			.finally(() => {
 				this.firstLoop = false;
 			});
-	}
-
-	/**
-	 * updates the adapter version state
-	 *
-	 * @return {Promise}
-	 */
-	updateAdapterVersion() {
-		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
-			if (!this.adapterUnloaded) {
-				// update adapter version after fist loop, so we can react to old version
-				if (this.firstLoop) {
-					this.setVersionToAdapter(ADAPTER_VERSION);
-				}
-				return resolve();
-			} else {
-				return reject(new Error(`cannot set adapter version. Adapter already unloaded.`));
-			}
-		}));
 	}
 
 	/**
@@ -678,45 +667,41 @@ class Sureflap extends utils.Adapter {
 			const numPets = this.sureFlapState.pets.length;
 
 			for (let p = 0; p < numPets; p++) {
-				const pet_name = this.sureFlapState.pets[p].name;
-				const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[p].household_id);
-				const household_index = this.getHouseholdIndexForId(this.sureFlapState.pets[p].household_id);
-				if (household_name !== undefined && household_index !== -1) {
-					const prefix = household_name + '.pets';
-					if (this.hasFlap) {
-						if ('position' in this.sureFlapState.pets[p] && 'where' in this.sureFlapState.pets[p].position && 'since' in this.sureFlapState.pets[p].position) {
-							const where = this.sureFlapState.pets[p].position.where;
-							const since = this.sureFlapState.pets[p].position.since;
-							this.setPetStatusWithPositionToAdapter(prefix, pet_name, where, since, p);
-							this.warnings[PET_POSITION_DATA_MISSING][p] = false;
-						} else {
-							this.setPetStatusToAdapter(prefix, pet_name, p);
-							if (!this.warnings[PET_POSITION_DATA_MISSING][p]) {
-								this.log.debug(`no position object found for pet '${this.sureFlapState.pets[p].name}'`);
-								this.warnings[PET_POSITION_DATA_MISSING][p] = true;
+				if (this.sureFlapState.pets[p].name !== undefined) {
+					const pet_name = this.sureFlapState.pets[p].name;
+					const household_name = this.getHouseholdNameForId(this.sureFlapState.pets[p].household_id);
+					const household_index = this.getHouseholdIndexForId(this.sureFlapState.pets[p].household_id);
+					if (household_name !== undefined && household_index !== -1) {
+						const prefix = household_name + '.pets';
+						if (this.hasFlap) {
+							this.setPetNameAndPositionToAdapter(prefix, pet_name, p);
+							// add time spent outside and number of entries
+							if (this.updateReport) {
+								this.setPetOutsideToAdapter(prefix + '.' + pet_name + '.movement', p);
 							}
+							// add last used flap and direction
+							if (this.updateHistory) {
+								this.setPetLastMovementToAdapter(prefix, p, pet_name, household_index);
+							}
+						} else {
+							this.setPetNameToAdapter(prefix, pet_name, p);
 						}
-						// add time spent outside and number of entries
-						if (this.updateReport) {
-							this.setPetOutsideToAdapter(prefix + '.' + pet_name + '.movement', p);
+						if (this.hasFeeder && this.updateReport) {
+							this.setPetFeedingToAdapter(prefix + '.' + pet_name + '.food', p);
 						}
-						// add last used flap and direction
-						if (this.updateHistory) {
-							this.setPetLastMovementToAdapter(prefix, p, pet_name, household_index);
+						if (this.hasDispenser && this.updateReport) {
+							this.setPetDrinkingToAdapter(prefix + '.' + pet_name + '.water', p);
 						}
 					} else {
-						this.setPetStatusToAdapter(prefix, pet_name, p);
-					}
-					if (this.hasFeeder && this.updateReport) {
-						this.setPetFeedingToAdapter(prefix + '.' + pet_name + '.food', p);
-					}
-					if (this.hasDispenser && this.updateReport) {
-						this.setPetDrinkingToAdapter(prefix + '.' + pet_name + '.water', p);
+						if (!this.warnings[PET_HOUSEHOLD_MISSING][p]) {
+							this.log.warn(`could not get household for pet (${pet_name})`);
+							this.warnings[PET_HOUSEHOLD_MISSING][p] = true;
+						}
 					}
 				} else {
-					if (!this.warnings[PET_HOUSEHOLD_MISSING][p]) {
-						this.log.warn(`could not get household for pet (${pet_name})`);
-						this.warnings[PET_HOUSEHOLD_MISSING][p] = true;
+					if (!this.warnings[PET_NAME_MISSING][p]) {
+						this.log.warn(`no name found for pet with id '${this.sureFlapState.devices[p].id}.`);
+						this.warnings[PET_NAME_MISSING][p] = true;
 					}
 				}
 			}
@@ -788,14 +773,14 @@ class Sureflap extends utils.Adapter {
 	 */
 	changeCloseDelay(hierarchy, device, value) {
 		if (value !== 0 && value !== 4 && value !== 20) {
-			this.log.warn(`invalid value for close delay: ${value}`);
+			this.log.warn(`invalid value for close delay: '${value}'`);
 			this.resetControlCloseDelayToAdapter(hierarchy, device);
 			return;
 		}
 
-		this.log.debug(`changing close delay to ${value}...`);
-		this.setCloseDelay(device, value).then(() => {
-			this.log.info(`close delay changed to ${value}`);
+		this.log.debug(`changing close delay to '${value}' ...`);
+		this.setCloseDelayToApi(device, value).then(() => {
+			this.log.info(`close delay changed to '${value}'`);
 		}).catch(err => {
 			this.log.error(`changing close delay failed: ${err}`);
 			this.resetControlCloseDelayToAdapter(hierarchy, device);
@@ -811,14 +796,14 @@ class Sureflap extends utils.Adapter {
 	 */
 	changeLockmode(hierarchy, device, value) {
 		if (value < 0 || value > 3) {
-			this.log.warn(`invalid value for lock mode: ${value}`);
+			this.log.warn(`invalid value for lock mode: '${value}'`);
 			this.resetControlLockmodeToAdapter(hierarchy, device);
 			return;
 		}
 
-		this.log.debug(`changing lock mode to ${value}...`);
-		this.setLockmode(device, value).then(() => {
-			this.log.info(`lock mode changed to ${value}`);
+		this.log.debug(`changing lock mode to '${value}' ...`);
+		this.setLockmodeToApi(device, value).then(() => {
+			this.log.info(`lock mode changed to '${value}'`);
 		}).catch(err => {
 			this.log.error(`changing lock mode failed: ${err}`);
 			this.resetControlLockmodeToAdapter(hierarchy, device);
@@ -835,14 +820,14 @@ class Sureflap extends utils.Adapter {
 	 */
 	changePetType(hierarchy, device, tag, value) {
 		if (value < 2 || value > 3) {
-			this.log.warn(`invalid value for pet type: ${value}`);
+			this.log.warn(`invalid value for pet type: '${value}'`);
 			this.resetControlPetTypeToAdapter(hierarchy, device, tag);
 			return;
 		}
 
-		this.log.debug(`changing pet type to ${value}...`);
-		this.setPetType(device, tag, value).then(() => {
-			this.log.info(`pet type changed to ${value}`);
+		this.log.debug(`changing pet type to '${value}' ...`);
+		this.setPetTypeToApi(device, tag, value).then(() => {
+			this.log.info(`pet type changed to '${value}'`);
 		}).catch(err => {
 			this.log.error(`changing pet type failed: ${err}`);
 			this.resetControlPetTypeToAdapter(hierarchy, device, tag);
@@ -876,8 +861,8 @@ class Sureflap extends utils.Adapter {
 								curfew.enabled = true;
 							}
 							const curfewJSON = JSON.stringify(curfew);
-							this.log.debug(`setting curfew to: ${curfewJSON}`);
-							this.setCurfew(device, curfew).then(() => {
+							this.log.debug(`setting curfew to: '${curfewJSON}' ...`);
+							this.setCurfewToApi(device, curfew).then(() => {
 								this.log.info(`curfew successfully enabled`);
 							}).catch(err => {
 								this.log.error(`could not enable curfew because: ${err}`);
@@ -903,7 +888,7 @@ class Sureflap extends utils.Adapter {
 							curfew = curfew[0];
 						}
 						this.log.debug('setting curfew to: ' + JSON.stringify(curfew));
-						this.setCurfew(device, curfew).then(() => {
+						this.setCurfewToApi(device, curfew).then(() => {
 							this.log.info(`curfew successfully disabled`);
 						}).catch(err => {
 							this.log.error(`could not disable curfew because: ${err}`);
@@ -936,8 +921,8 @@ class Sureflap extends utils.Adapter {
 				// pet flap takes single object instead of array
 				curfew = curfew[0];
 			}
-			this.log.debug('setting curfew to: ' + JSON.stringify(curfew));
-			this.setCurfew(device, curfew).then(() => {
+			this.log.debug(`changing curfew to: '${JSON.stringify(curfew)}' ...`);
+			this.setCurfewToApi(device, curfew).then(() => {
 				this.log.info(`curfew successfully updated`);
 			}).catch(err => {
 				this.log.error(`could not update curfew because: ${err}`);
@@ -954,8 +939,9 @@ class Sureflap extends utils.Adapter {
 	 * @param {boolean} value
 	 */
 	changePetLocation(hierarchy, pet, value) {
+		this.log.debug(`changing pet location inside to '${value}' ...`);
 		this.getStateValueFromAdapter(hierarchy + '.pets.' + pet + '.name').then(name => {
-			this.setPetLocation(name, value).then(() => {
+			this.setPetLocationToApi(name, value).then(() => {
 				this.log.info(`pet location successfully set`);
 			}).catch(error => {
 				this.log.error(`could not set pet location because: ${error}`);
@@ -975,7 +961,14 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} value
 	 */
 	changeHubLedMode(hierarchy, hub, value) {
-		this.setHubLedMode(hub, value).then(() => {
+		if (value !== 0 && value !== 1 && value !== 4) {
+			this.log.warn(`invalid value for led mode: '${value}'`);
+			this.resetHubLedModeToAdapter(hierarchy, hub);
+			return;
+		}
+
+		this.log.debug(`changing hub led mode to '${value}' ...`);
+		this.setHubLedModeToApi(hub, value).then(() => {
 			this.log.info(`hub led mode successfully set`);
 		}).catch(error => {
 			this.log.error(`could not set hub led mode because: ${error}`);
@@ -990,7 +983,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} close_delay
 	 * @return {Promise}
 	 */
-	setCloseDelay(device, close_delay) {
+	setCloseDelayToApi(device, close_delay) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const device_id = this.getDeviceId(device, [DEVICE_TYPE_FEEDER]);
 			const postData = JSON.stringify({'lid': {'close_delay': close_delay}});
@@ -1012,7 +1005,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} type
 	 * @return {Promise}
 	 */
-	setPetType(device, tag, type) {
+	setPetTypeToApi(device, tag, type) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const device_id = this.getDeviceId(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 			const postData = JSON.stringify({'profile': type});
@@ -1033,7 +1026,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} lockmode
 	 * @return {Promise}
 	 */
-	setLockmode(device, lockmode) {
+	setLockmodeToApi(device, lockmode) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const device_id = this.getDeviceId(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 			const postData = JSON.stringify({'locking': lockmode});
@@ -1054,7 +1047,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {object} curfew
 	 * @return {Promise}
 	 */
-	setCurfew(device, curfew) {
+	setCurfewToApi(device, curfew) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const device_id = this.getDeviceId(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 			const postData = JSON.stringify({curfew});
@@ -1075,7 +1068,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {boolean} value
 	 * @return {Promise}
 	 */
-	setPetLocation(pet, value) {
+	setPetLocationToApi(pet, value) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const pet_id = this.getPetId(pet);
 			if (pet_id !== undefined) {
@@ -1103,7 +1096,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} value
 	 * @return {Promise}
 	 */
-	setHubLedMode(hub, value) {
+	setHubLedModeToApi(hub, value) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const hub_id = this.getDeviceId(hub, [DEVICE_TYPE_HUB]);
 			const postData = JSON.stringify({'led_mode': value});
@@ -1119,6 +1112,25 @@ class Sureflap extends utils.Adapter {
 	/****************************************
 	 * methods to set values to the adapter *
 	 ****************************************/
+
+	/**
+	 * updates the adapter version state on the first update loop
+	 *
+	 * @return {Promise}
+	 */
+	updateAdapterVersion() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			if (!this.adapterUnloaded) {
+				// update adapter version after fist loop, so we can react to old version
+				if (this.firstLoop) {
+					this.setVersionToAdapter(ADAPTER_VERSION);
+				}
+				return resolve();
+			} else {
+				return reject(new Error(`cannot set adapter version. Adapter already unloaded.`));
+			}
+		}));
+	}
 
 	/**
 	 * sets the current adapter version to the adapter
@@ -1145,10 +1157,12 @@ class Sureflap extends utils.Adapter {
 	 */
 	setGlobalOnlineStatusToAdapter() {
 		// all devices online status
-		if (!this.sureFlapStatePrev.all_devices_online || (this.sureFlapState.all_devices_online !== this.sureFlapStatePrev.all_devices_online)) {
-			const obj_name = 'info.all_devices_online';
-			/* objects created via io-package.json, no need to create them here */
-			this.setState(obj_name, this.sureFlapState.all_devices_online, true);
+		if (this.sureFlapState.all_devices_online !== undefined) {
+			if (!this.sureFlapStatePrev || (this.sureFlapState.all_devices_online !== this.sureFlapStatePrev.all_devices_online)) {
+				const obj_name = 'info.all_devices_online';
+				/* objects created via io-package.json, no need to create them here */
+				this.setState(obj_name, this.sureFlapState.all_devices_online, true);
+			}
 		}
 	}
 
@@ -1171,8 +1185,8 @@ class Sureflap extends utils.Adapter {
 	 */
 	setSureflapConnectToAdapter(prefix, hierarchy, deviceIndex, isCatFlap) {
 		// lock mode
-		if (this.sureFlapState.devices[deviceIndex].status !== undefined && this.sureFlapState.devices[deviceIndex].status.locking !== undefined && this.sureFlapState.devices[deviceIndex].status.locking.mode !== undefined) {
-			if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.locking.mode !== this.sureFlapStatePrev.devices[deviceIndex].status.locking.mode)) {
+		if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.locking.mode')) {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.locking.mode') || (this.sureFlapState.devices[deviceIndex].status.locking.mode !== this.sureFlapStatePrev.devices[deviceIndex].status.locking.mode)) {
 				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.lockmode';
 				try {
 					this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.locking.mode, true);
@@ -1180,50 +1194,59 @@ class Sureflap extends utils.Adapter {
 					this.log.error(`could not set lock mode to adapter (${error})`);
 				}
 			}
+			this.warnings[FLAP_LOCK_MODE_DATA_MISSING][deviceIndex] = false;
 		} else {
 			if (!this.warnings[FLAP_LOCK_MODE_DATA_MISSING][deviceIndex]) {
-				this.log.warn(`device data for flap '${this.sureFlapState.devices[deviceIndex].name}' does not contain locking mode data`);
+				this.log.warn(`no lock mode data found for flap '${this.sureFlapState.devices[deviceIndex].name}'.`);
 				this.warnings[FLAP_LOCK_MODE_DATA_MISSING][deviceIndex] = true;
 			}
 		}
 
 		// curfew
-		if (!this.sureFlapStatePrev.devices || (JSON.stringify(this.sureFlapState.devices[deviceIndex].control.curfew) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].control.curfew))) {
-			if (this.sureFlapStatePrev.devices && this.sureFlapStatePrev.devices[deviceIndex].control.curfew && this.isCurfewEnabled(this.sureFlapStatePrev.devices[deviceIndex].control.curfew)) {
-				const obj_name_last_enabled_curfew = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.last_enabled_curfew';
-				this.setCurfewToAdapter(obj_name_last_enabled_curfew, this.sureFlapStatePrev.devices[deviceIndex].control.curfew);
-			}
-
-			const obj_name_current_curfew = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.current_curfew';
-			this.setCurfewToAdapter(obj_name_current_curfew, this.sureFlapState.devices[deviceIndex].control.curfew);
-
-			const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.curfew_enabled';
-			try {
-				this.setState(obj_name, this.isCurfewEnabled(this.sureFlapState.devices[deviceIndex].control.curfew), true);
-			} catch (error) {
-				this.log.error(`could not set curfew to adapter (${error})`);
-			}
-		}
-
-		const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.curfew_active';
-		try {
-			const new_val = this.isCurfewActive(this.sureFlapState.devices[deviceIndex].control.curfew);
-			this.getStateValueFromAdapter(obj_name).then(old_val => {
-				if (old_val !== new_val) {
-					this.setState(obj_name, new_val, true);
-					this.log.debug(`changing curfew_active from ${old_val} to ${new_val}`);
+		if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'control.curfew')) {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'control.curfew') || (JSON.stringify(this.sureFlapState.devices[deviceIndex].control.curfew) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].control.curfew))) {
+				if (this.sureFlapStatePrev.devices && this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'control.curfew') && this.isCurfewEnabled(this.sureFlapStatePrev.devices[deviceIndex].control.curfew)) {
+					const obj_name_last_enabled_curfew = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.last_enabled_curfew';
+					this.setCurfewToAdapter(obj_name_last_enabled_curfew, this.sureFlapStatePrev.devices[deviceIndex].control.curfew);
 				}
-			}).catch(() => {
-				this.setState(obj_name, new_val, true);
-				this.log.debug(`setting curfew_active to ${new_val}`);
-			});
-		} catch (error) {
-			this.log.error(`could not set curfew_active to adapter (${error})`);
+
+				const obj_name_current_curfew = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.current_curfew';
+				this.setCurfewToAdapter(obj_name_current_curfew, this.sureFlapState.devices[deviceIndex].control.curfew);
+
+				const obj_name_curfew_enabled = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.control' + '.curfew_enabled';
+				try {
+					this.setState(obj_name_curfew_enabled, this.isCurfewEnabled(this.sureFlapState.devices[deviceIndex].control.curfew), true);
+				} catch (error) {
+					this.log.error(`could not set curfew to adapter (${error})`);
+				}
+				const obj_name_curfew_active = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.curfew_active';
+				try {
+					const new_val = this.isCurfewActive(this.sureFlapState.devices[deviceIndex].control.curfew);
+					this.getStateValueFromAdapter(obj_name_curfew_active).then(old_val => {
+						if (old_val !== new_val) {
+							this.setState(obj_name_curfew_active, new_val, true);
+							this.log.debug(`changing curfew_active from ${old_val} to ${new_val}`);
+						}
+					}).catch(() => {
+						this.setState(obj_name_curfew_active, new_val, true);
+						this.log.debug(`setting curfew_active to ${new_val}`);
+					});
+				} catch (error) {
+					this.log.error(`could not set curfew_active to adapter (${error})`);
+				}
+
+			}
+			this.warnings[FLAP_CURFEW_DATA_MISSING][deviceIndex] = false;
+		} else {
+			if (!this.warnings[FLAP_CURFEW_DATA_MISSING][deviceIndex]) {
+				this.log.warn(`no curfew data found for flap '${this.sureFlapState.devices[deviceIndex].name}'.`);
+				this.warnings[FLAP_CURFEW_DATA_MISSING][deviceIndex] = true;
+			}
 		}
 
 		// assigned pets type
 		if (isCatFlap) {
-			if ('tags' in this.sureFlapState.devices[deviceIndex] && Array.isArray(this.sureFlapState.devices[deviceIndex].tags)) {
+			if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'tags') && Array.isArray(this.sureFlapState.devices[deviceIndex].tags)) {
 				for (let t = 0; t < this.sureFlapState.devices[deviceIndex].tags.length; t++) {
 					if (!this.sureFlapStatePrev.devices || !this.sureFlapStatePrev.devices[deviceIndex].tags[t] || !this.sureFlapStatePrev.devices[deviceIndex].tags[t].profile || (this.sureFlapState.devices[deviceIndex].tags[t].profile !== this.sureFlapStatePrev.devices[deviceIndex].tags[t].profile)) {
 						const name = this.getPetNameForTagId(this.sureFlapState.devices[deviceIndex].tags[t].id);
@@ -1240,6 +1263,12 @@ class Sureflap extends utils.Adapter {
 						}
 					}
 				}
+				this.warnings[CAT_FLAP_PET_TYPE_DATA_MISSING][deviceIndex] = false;
+			} else {
+				if (!this.warnings[CAT_FLAP_PET_TYPE_DATA_MISSING][deviceIndex]) {
+					this.log.warn(`no pet type data found for cat flap '${this.sureFlapState.devices[deviceIndex].name}'.`);
+					this.warnings[CAT_FLAP_PET_TYPE_DATA_MISSING][deviceIndex] = true;
+				}
 			}
 		}
 	}
@@ -1253,55 +1282,76 @@ class Sureflap extends utils.Adapter {
 	 */
 	setFeederConnectToAdapter(prefix, hierarchy, deviceIndex) {
 		const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name;
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].control.lid.close_delay !== this.sureFlapStatePrev.devices[deviceIndex].control.lid.close_delay)) {
-			this.setState(obj_name + '.control' + '.close_delay', this.sureFlapState.devices[deviceIndex].control.lid.close_delay, true);
-		}
-		// feeder config data from sureFlapState
-		if (!this.sureFlapStatePrev.devices || !this.sureFlapState.devices[deviceIndex].control || !this.sureFlapState.devices[deviceIndex].control.bowls || !this.sureFlapState.devices[deviceIndex].control.bowls.settings || (JSON.stringify(this.sureFlapState.devices[deviceIndex].control.bowls.settings) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].control.bowls.settings))) {
-			for (let b = 0; b < this.sureFlapState.devices[deviceIndex].control.bowls.settings.length; b++) {
-				this.getObject(obj_name + '.bowls.' + b, (err, obj) => {
-					if (!err && obj) {
-						if ('food_type' in this.sureFlapState.devices[deviceIndex].control.bowls.settings[b] && this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].food_type !== undefined) {
-							this.setState(obj_name + '.bowls.' + b + '.food_type', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].food_type, true);
-						}
-						if ('target' in this.sureFlapState.devices[deviceIndex].control.bowls.settings[b] && this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target !== undefined) {
-							this.setState(obj_name + '.bowls.' + b + '.target', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target, true);
-						}
-						this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING][deviceIndex] = false;
-					} else {
-						if (!this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING][deviceIndex]) {
-							this.log.warn(`got feeder config data for object '${obj_name + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-							this.warnings[FEEDER_CONFIG_BOWL_DATA_MISSING][deviceIndex] = true;
-						}
-					}
-				});
+
+		// close delay
+		if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'control.lid.close_delay')) {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'control.lid.close_delay') || (this.sureFlapState.devices[deviceIndex].control.lid.close_delay !== this.sureFlapStatePrev.devices[deviceIndex].control.lid.close_delay)) {
+				this.setState(obj_name + '.control' + '.close_delay', this.sureFlapState.devices[deviceIndex].control.lid.close_delay, true);
+				this.warnings[FEEDER_CLOSE_DELAY_DATA_MISSING][deviceIndex] = false;
+			}
+			this.warnings[FEEDER_CLOSE_DELAY_DATA_MISSING][deviceIndex] = false;
+		} else {
+			if (!this.warnings[FEEDER_CLOSE_DELAY_DATA_MISSING][deviceIndex]) {
+				this.log.warn(`no close delay setting found for '${this.sureFlapState.devices[deviceIndex].name}'.`);
+				this.warnings[FEEDER_CLOSE_DELAY_DATA_MISSING][deviceIndex] = true;
 			}
 		}
+
+		// feeder config data from sureFlapState
+		if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'control.bowls.settings') && Array.isArray(this.sureFlapState.devices[deviceIndex].control.bowls.settings)) {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'control.bowls.settings') || (JSON.stringify(this.sureFlapState.devices[deviceIndex].control.bowls.settings) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].control.bowls.settings))) {
+				for (let b = 0; b < this.sureFlapState.devices[deviceIndex].control.bowls.settings.length; b++) {
+					this.getObject(obj_name + '.bowls.' + b, (err, obj) => {
+						if (!err && obj) {
+							if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].control.bowls.settings[b], 'food_type')) {
+								this.setState(obj_name + '.bowls.' + b + '.food_type', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].food_type, true);
+							}
+							if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].control.bowls.settings[b], 'target')) {
+								this.setState(obj_name + '.bowls.' + b + '.target', this.sureFlapState.devices[deviceIndex].control.bowls.settings[b].target, true);
+							}
+							this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
+						} else {
+							if (!this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING][deviceIndex]) {
+								this.log.warn(`got feeder config data for object '${obj_name + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+								this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
+							}
+						}
+					});
+				}
+			}
+			this.warnings[FEEDER_BOWL_CONFIG_DATA_MISSING][deviceIndex] = false;
+		} else {
+			if (!this.warnings[FEEDER_BOWL_CONFIG_DATA_MISSING][deviceIndex]) {
+				this.log.warn(`no feeder config data found for '${this.sureFlapState.devices[deviceIndex].name}'.`);
+				this.warnings[FEEDER_BOWL_CONFIG_DATA_MISSING][deviceIndex] = true;
+			}
+		}
+
 		// feeder remaining food data
-		if (('status' in this.sureFlapState.devices[deviceIndex]) && ('bowl_status' in this.sureFlapState.devices[deviceIndex].status)) {
+		if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.bowl_status') && Array.isArray(this.sureFlapState.devices[deviceIndex].status.bowl_status)) {
 			// get feeder remaining food data from new bowl_status
-			if (!this.sureFlapStatePrev.devices || (JSON.stringify(this.sureFlapState.devices[deviceIndex].status.bowl_status) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].status.bowl_status))) {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.bowl_status') || (JSON.stringify(this.sureFlapState.devices[deviceIndex].status.bowl_status) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].status.bowl_status))) {
 				this.log.silly(`Updating remaining food data from bowl_status.`);
 				for (let b = 0; b < this.sureFlapState.devices[deviceIndex].status.bowl_status.length; b++) {
 					this.getObject(obj_name + '.bowls.' + b, (err, obj) => {
 						if (!err && obj) {
-							if ('current_weight' in this.sureFlapState.devices[deviceIndex].status.bowl_status[b] && this.sureFlapState.devices[deviceIndex].status.bowl_status[b].current_weight !== undefined) {
+							if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].status.bowl_status[b], 'current_weight')) {
 								this.setState(obj_name + '.bowls.' + b + '.weight', this.sureFlapState.devices[deviceIndex].status.bowl_status[b].current_weight, true);
 							}
-							if ('fill_percent' in this.sureFlapState.devices[deviceIndex].status.bowl_status[b] && this.sureFlapState.devices[deviceIndex].status.bowl_status[b].fill_percent !== undefined) {
+							if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].status.bowl_status[b], 'fill_percent')) {
 								this.setState(obj_name + '.bowls.' + b + '.fill_percent', this.sureFlapState.devices[deviceIndex].status.bowl_status[b].fill_percent, true);
 							}
-							if ('last_filled_at' in this.sureFlapState.devices[deviceIndex].status.bowl_status[b] && this.sureFlapState.devices[deviceIndex].status.bowl_status[b].last_filled_at !== undefined) {
+							if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].status.bowl_status[b], 'last_filled_at')) {
 								this.setState(obj_name + '.bowls.' + b + '.last_filled_at', this.sureFlapState.devices[deviceIndex].status.bowl_status[b].last_filled_at, true);
 							}
-							if ('last_zeroed_at' in this.sureFlapState.devices[deviceIndex].status.bowl_status[b] && this.sureFlapState.devices[deviceIndex].status.bowl_status[b].last_zeroed_at !== undefined) {
+							if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].status.bowl_status[b], 'last_zeroed_at')) {
 								this.setState(obj_name + '.bowls.' + b + '.last_zeroed_at', this.sureFlapState.devices[deviceIndex].status.bowl_status[b].last_zeroed_at, true);
 							}
-							this.warnings[FEEDER_STATUS_BOWL_DATA_MISSING][deviceIndex] = false;
+							this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 						} else {
-							if (!this.warnings[FEEDER_STATUS_BOWL_DATA_MISSING][deviceIndex]) {
+							if (!this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex]) {
 								this.log.warn(`got feeder status data for object '${obj_name + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-								this.warnings[FEEDER_STATUS_BOWL_DATA_MISSING][deviceIndex] = true;
+								this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 							}
 						}
 					});
@@ -1316,13 +1366,15 @@ class Sureflap extends utils.Adapter {
 				// look in feeding data for every pet
 				for (let p = 0; p < this.sureFlapState.pets.length; p++) {
 					// look in feeding data points starting with latest (last)
-					for (let i = this.sureFlapReport[p].feeding.datapoints.length - 1; i >= 0; i--) {
-						// check if datapoint is for this feeder
-						if (this.sureFlapReport[p].feeding.datapoints[i].device_id === device_id) {
-							// check if datapoint is newer than saved datapoint
-							if (last_datapoint === undefined || last_datapoint.to === undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].feeding.datapoints[i].to)) {
-								last_datapoint = this.sureFlapReport[p].feeding.datapoints[i];
-								break;
+					if (this.objectContainsPath(this.sureFlapReport[p], 'feeding.datapoints') && Array.isArray(this.sureFlapReport[p].feeding.datapoints)) {
+						for (let i = this.sureFlapReport[p].feeding.datapoints.length - 1; i >= 0; i--) {
+							// check if datapoint is for this feeder
+							if (this.sureFlapReport[p].feeding.datapoints[i].device_id === device_id) {
+								// check if datapoint is newer than saved datapoint
+								if (last_datapoint === undefined || last_datapoint.to === undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].feeding.datapoints[i].to)) {
+									last_datapoint = this.sureFlapReport[p].feeding.datapoints[i];
+									break;
+								}
 							}
 						}
 					}
@@ -1339,28 +1391,33 @@ class Sureflap extends utils.Adapter {
 											this.log.debug(`updating remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
 											this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
 										}
-										this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = false;
+										this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 									} else if (!err && obj == null) {
 										this.log.debug(`setting remaining food for feeder '${this.sureFlapState.devices[deviceIndex].name}' bowl '${last_datapoint.weights[b].index}' with '${last_datapoint.weights[b].weight}'.`);
 										this.setState(obj_name + '.bowls.' + last_datapoint.weights[b].index + '.weight', last_datapoint.weights[b].weight, true);
-										this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = false;
+										this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 									} else {
-										if (!this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex]) {
+										if (!this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex]) {
 											this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}.weight' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-											this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = true;
+											this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 										}
 									}
 								});
 							} else {
-								if (!this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex]) {
+								if (!this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex]) {
 									this.log.warn(`got feeder remaining food data for object '${obj_name}.bowls.${last_datapoint.weights[b].index}' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
-									this.warnings[FEEDER_FOOD_BOWL_DATA_MISSING][deviceIndex] = true;
+									this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 								}
 							}
 						});
 					}
+					this.warnings[FEEDER_BOWL_REMAINING_FOOD_DATA_MISSING][deviceIndex] = false;
 				} else {
-					this.log.debug(`no remaining food data for feeder '${this.sureFlapState.devices[deviceIndex].name}' found`);
+					if (!this.warnings[FEEDER_BOWL_REMAINING_FOOD_DATA_MISSING][deviceIndex]) {
+						this.log.warn(`no remaining food data for feeder '${this.sureFlapState.devices[deviceIndex].name}' found`);
+						this.warnings[FEEDER_BOWL_REMAINING_FOOD_DATA_MISSING][deviceIndex] = true;
+					}
+
 				}
 			}
 		}
@@ -1375,27 +1432,28 @@ class Sureflap extends utils.Adapter {
 	 */
 	setWaterDispenserConnectToAdapter(prefix, hierarchy, deviceIndex) {
 		const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name;
+
 		// water dispenser remaining water data
-		if (('status' in this.sureFlapState.devices[deviceIndex]) && ('bowl_status' in this.sureFlapState.devices[deviceIndex].status)) {
+		if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.bowl_status') && Array.isArray(this.sureFlapState.devices[deviceIndex].status.bowl_status)) {
 			// get feeder remaining food data from new bowl_status
-			if (!this.sureFlapStatePrev.devices || (JSON.stringify(this.sureFlapState.devices[deviceIndex].status.bowl_status) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].status.bowl_status))) {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.bowl_status') || (JSON.stringify(this.sureFlapState.devices[deviceIndex].status.bowl_status) !== JSON.stringify(this.sureFlapStatePrev.devices[deviceIndex].status.bowl_status))) {
 				this.log.silly(`Updating remaining water data from bowl_status.`);
 				this.getObject(obj_name + '.water', (err, obj) => {
 					if (!err && obj) {
-						if ('current_weight' in this.sureFlapState.devices[deviceIndex].status.bowl_status[0] && this.sureFlapState.devices[deviceIndex].status.bowl_status[0].current_weight !== undefined) {
+						if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].status.bowl_status[0], 'current_weight')) {
 							this.setState(obj_name + '.water' + '.weight', this.sureFlapState.devices[deviceIndex].status.bowl_status[0].current_weight, true);
 						}
-						if ('fill_percent' in this.sureFlapState.devices[deviceIndex].status.bowl_status[0] && this.sureFlapState.devices[deviceIndex].status.bowl_status[0].fill_percent !== undefined) {
+						if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].status.bowl_status[0], 'fill_percent')) {
 							this.setState(obj_name + '.water' + '.fill_percent', this.sureFlapState.devices[deviceIndex].status.bowl_status[0].fill_percent, true);
 						}
-						if ('last_filled_at' in this.sureFlapState.devices[deviceIndex].status.bowl_status[0] && this.sureFlapState.devices[deviceIndex].status.bowl_status[0].last_filled_at !== undefined) {
+						if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex].status.bowl_status[0], 'last_filled_at')) {
 							this.setState(obj_name + '.water' + '.last_filled_at', this.sureFlapState.devices[deviceIndex].status.bowl_status[0].last_filled_at, true);
 						}
-						this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
+						this.warnings[DISPENSER_WATER_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 					} else {
-						if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
+						if (!this.warnings[DISPENSER_WATER_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex]) {
 							this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
-							this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = true;
+							this.warnings[DISPENSER_WATER_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 						}
 					}
 				});
@@ -1408,19 +1466,21 @@ class Sureflap extends utils.Adapter {
 				// look in drinking data for every pet
 				for (let p = 0; p < this.sureFlapState.pets.length; p++) {
 					// look in drinking data points starting with latest (last)
-					for (let i = this.sureFlapReport[p].drinking.datapoints.length - 1; i >= 0; i--) {
-						// check if datapoint is for this water dispenser
-						if (this.sureFlapReport[p].drinking.datapoints[i].device_id === device_id) {
-							// check if datapoint is newer than saved datapoint
-							if (last_datapoint === undefined || last_datapoint.to === undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].drinking.datapoints[i].to)) {
-								last_datapoint = this.sureFlapReport[p].drinking.datapoints[i];
-								break;
+					if (this.objectContainsPath(this.sureFlapReport[p], 'drinking.datapoints') && Array.isArray(this.sureFlapReport[p].drinking.datapoints)) {
+						for (let i = this.sureFlapReport[p].drinking.datapoints.length - 1; i >= 0; i--) {
+							// check if datapoint is for this water dispenser
+							if (this.sureFlapReport[p].drinking.datapoints[i].device_id === device_id) {
+								// check if datapoint is newer than saved datapoint
+								if (last_datapoint === undefined || last_datapoint.to === undefined || new Date(last_datapoint.to) < new Date(this.sureFlapReport[p].drinking.datapoints[i].to)) {
+									last_datapoint = this.sureFlapReport[p].drinking.datapoints[i];
+									break;
+								}
 							}
 						}
 					}
 				}
 				// if datapoint with drinking data found for this device, write it to adapter
-				if (last_datapoint !== undefined && last_datapoint.weights.length > 0) {
+				if (last_datapoint !== undefined && last_datapoint.weights !== undefined && Array.isArray(last_datapoint.weights) && last_datapoint.weights.length > 0) {
 					this.log.silly(`Updating remaining water data from sureFlapReport.`);
 					this.getObject(obj_name + '.water', (err, obj) => {
 						if (!err && obj) {
@@ -1430,27 +1490,31 @@ class Sureflap extends utils.Adapter {
 										this.log.debug(`updating remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
 										this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
 									}
-									this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
+									this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 								} else if (!err && obj == null) {
 									this.log.debug(`setting remaining water for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' with '${last_datapoint.weights[0].weight}'.`);
 									this.setState(obj_name + '.water.weight', last_datapoint.weights[0].weight, true);
-									this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = false;
+									this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 								} else {
-									if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
+									if (!this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING][deviceIndex]) {
 										this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
-										this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = true;
+										this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 									}
 								}
 							});
 						} else {
-							if (!this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex]) {
+							if (!this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING][deviceIndex]) {
 								this.log.warn(`got remaining water data for object '${obj_name}.water' but object does not exist. This can happen if you newly added a water dispenser. In this case restart the adapter. If you did not add a water dispenser or if a restart does not help, contact developer.`);
-								this.warnings[DISPENSER_WATER_DATA_MISSING][deviceIndex] = true;
+								this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 							}
 						}
 					});
+					this.warnings[DISPENSER_WATER_REMAINING_DATA_MISSING][deviceIndex] = false;
 				} else {
-					this.log.debug(`no remaining water data for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' found`);
+					if (!this.warnings[DISPENSER_WATER_REMAINING_DATA_MISSING][deviceIndex]) {
+						this.log.warn(`no remaining water data for water dispenser '${this.sureFlapState.devices[deviceIndex].name}' found`);
+						this.warnings[DISPENSER_WATER_REMAINING_DATA_MISSING][deviceIndex] = true;
+					}
 				}
 			}
 		}
@@ -1475,27 +1539,30 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} deviceIndex
 	 */
 	setBatteryStatusToAdapter(prefix, hierarchy, deviceIndex) {
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery !== this.sureFlapStatePrev.devices[deviceIndex].status.battery)) {
-			if (this.sureFlapState.devices[deviceIndex].status.battery !== undefined) {
+		if (!this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.battery')) {
+			if (!this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex]) {
+				this.log.warn(`no battery data found for '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.battery') || this.sureFlapState.devices[deviceIndex].status.battery !== this.sureFlapStatePrev.devices[deviceIndex].status.battery) {
 				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery';
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery, true);
-			} else {
-				if (!this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex]) {
-					this.log.warn(`no battery data found for '${this.sureFlapState.devices[deviceIndex].name}..`);
-					this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex] = true;
-				}
 			}
+			this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex] = false;
 		}
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== this.sureFlapStatePrev.devices[deviceIndex].status.battery_percentage)) {
-			if (this.sureFlapState.devices[deviceIndex].status.battery_percentage !== undefined) {
+
+		if (!this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.battery_percentage')) {
+			if (!this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex]) {
+				this.log.warn(`no battery percentage data found for '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.battery_percentage') || this.sureFlapState.devices[deviceIndex].status.battery_percentage !== this.sureFlapStatePrev.devices[deviceIndex].status.battery_percentage) {
 				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'battery_percentage';
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.battery_percentage, true);
-			} else {
-				if (!this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex]) {
-					this.log.warn(`no battery percentage data found for '${this.sureFlapState.devices[deviceIndex].name}..`);
-					this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex] = true;
-				}
 			}
+			this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex] = false;
 		}
 	}
 
@@ -1507,11 +1574,17 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} deviceIndex
 	 */
 	setSerialNumberToAdapter(prefix, hierarchy, deviceIndex) {
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].serial_number !== this.sureFlapStatePrev.devices[deviceIndex].serial_number)) {
-			if (this.sureFlapState.devices[deviceIndex].serial_number !== undefined) {
+		if (!this.sureFlapState.devices[deviceIndex].serial_number) {
+			if (!this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex]) {
+				this.log.warn(`no serial number found for '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.sureFlapStatePrev.devices[deviceIndex].serial_number || (this.sureFlapState.devices[deviceIndex].serial_number !== this.sureFlapStatePrev.devices[deviceIndex].serial_number)) {
 				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'serial_number';
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].serial_number, true);
 			}
+			this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex] = false;
 		}
 	}
 
@@ -1523,17 +1596,30 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} deviceIndex
 	 */
 	setSignalStrengthToAdapter(prefix, hierarchy, deviceIndex) {
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.signal.device_rssi !== this.sureFlapStatePrev.devices[deviceIndex].status.signal.device_rssi)) {
-			if (this.sureFlapState.devices[deviceIndex].status.signal.device_rssi !== undefined) {
+		if (!this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.signal.device_rssi')) {
+			if (!this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex]) {
+				this.log.warn(`no device rssi found for '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.signal.device_rssi') || (this.sureFlapState.devices[deviceIndex].status.signal.device_rssi !== this.sureFlapStatePrev.devices[deviceIndex].status.signal.device_rssi)) {
 				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.signal' + '.device_rssi';
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.signal.device_rssi, true);
 			}
+			this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = false;
 		}
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.signal.hub_rssi !== this.sureFlapStatePrev.devices[deviceIndex].status.signal.hub_rssi)) {
-			if (this.sureFlapState.devices[deviceIndex].status.signal.hub_rssi !== undefined) {
+
+		if (!this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.signal.hub_rssi')) {
+			if (!this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex]) {
+				this.log.warn(`no hub rssi found for '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.signal.hub_rssi') || (this.sureFlapState.devices[deviceIndex].status.signal.hub_rssi !== this.sureFlapStatePrev.devices[deviceIndex].status.signal.hub_rssi)) {
 				const obj_name = prefix + hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.signal' + '.hub_rssi';
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.signal.hub_rssi, true);
 			}
+			this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = false;
 		}
 	}
 
@@ -1548,17 +1634,31 @@ class Sureflap extends utils.Adapter {
 		if (this.hasParentDevice(this.sureFlapState.devices[deviceIndex])) {
 			hierarchy = prefix + '.' + this.getParentDeviceName(this.sureFlapState.devices[deviceIndex]);
 		}
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.version.device.hardware !== this.sureFlapStatePrev.devices[deviceIndex].status.version.device.hardware)) {
-			if (this.sureFlapState.devices[deviceIndex].status.version.device.hardware !== undefined) {
+
+		if (!this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.version.device.hardware')) {
+			if (!this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex]) {
+				this.log.warn(`no hardware version found for '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.version.device.hardware') || (this.sureFlapState.devices[deviceIndex].status.version.device.hardware !== this.sureFlapStatePrev.devices[deviceIndex].status.version.device.hardware)) {
 				const obj_name = hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.version' + '.hardware';
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.version.device.hardware, true);
 			}
+			this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex] = false;
 		}
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.version.device.firmware !== this.sureFlapStatePrev.devices[deviceIndex].status.version.device.firmware)) {
-			if (this.sureFlapState.devices[deviceIndex].status.version.device.firmware !== undefined) {
+
+		if (!this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.version.device.firmware')) {
+			if (!this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex]) {
+				this.log.warn(`no firmware version found for '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.version.device.firmware') || (this.sureFlapState.devices[deviceIndex].status.version.device.firmware !== this.sureFlapStatePrev.devices[deviceIndex].status.version.device.firmware)) {
 				const obj_name = hierarchy + '.' + this.sureFlapState.devices[deviceIndex].name + '.version' + '.firmware';
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.version.device.firmware, true);
 			}
+			this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex] = false;
 		}
 	}
 
@@ -1569,15 +1669,30 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} deviceIndex
 	 */
 	setHubStatusToAdapter(prefix, deviceIndex) {
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.led_mode !== this.sureFlapStatePrev.devices[deviceIndex].status.led_mode)) {
-			const obj_name = prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + 'led_mode';
-			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.led_mode, true);
+		if (!this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.led_mode')) {
+			if (!this.warnings[HUB_LED_MODE_MISSING][deviceIndex]) {
+				this.log.warn(`no led mode found for hub '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[HUB_LED_MODE_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.led_mode') || (this.sureFlapState.devices[deviceIndex].status.led_mode !== this.sureFlapStatePrev.devices[deviceIndex].status.led_mode)) {
+				const obj_name = prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.control.' + 'led_mode';
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.led_mode, true);
+			}
+			this.warnings[HUB_LED_MODE_MISSING][deviceIndex] = false;
 		}
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].serial_number !== this.sureFlapStatePrev.devices[deviceIndex].serial_number)) {
-			if (this.sureFlapState.devices[deviceIndex].serial_number !== undefined) {
+
+		if (!this.sureFlapState.devices[deviceIndex].serial_number) {
+			if (!this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex]) {
+				this.log.warn(`no serial number found for hub '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.sureFlapStatePrev.devices[deviceIndex].serial_number || (this.sureFlapState.devices[deviceIndex].serial_number !== this.sureFlapStatePrev.devices[deviceIndex].serial_number)) {
 				const obj_name = prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.serial_number';
 				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].serial_number, true);
 			}
+			this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex] = false;
 		}
 	}
 
@@ -1589,12 +1704,20 @@ class Sureflap extends utils.Adapter {
 	 */
 	setOnlineStatusToAdapter(prefix, deviceIndex) {
 		// online status
-		if (!this.sureFlapStatePrev.devices || (this.sureFlapState.devices[deviceIndex].status.online !== this.sureFlapStatePrev.devices[deviceIndex].status.online)) {
-			let obj_name = prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
-			if (this.hasParentDevice(this.sureFlapState.devices[deviceIndex])) {
-				obj_name = prefix + '.' + this.getParentDeviceName(this.sureFlapState.devices[deviceIndex]) + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
+		if (!this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.online')) {
+			if (!this.warnings[DEVICE_ONLINE_STATUS_MISSING][deviceIndex]) {
+				this.log.warn(`no online status found for '${this.sureFlapState.devices[deviceIndex].name}.`);
+				this.warnings[DEVICE_ONLINE_STATUS_MISSING][deviceIndex] = true;
 			}
-			this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.online, true);
+		} else {
+			if (!this.sureFlapStatePrev.devices || !this.objectContainsPath(this.sureFlapStatePrev.devices[deviceIndex], 'status.online') || this.sureFlapState.devices[deviceIndex].status.online !== this.sureFlapStatePrev.devices[deviceIndex].status.online) {
+				let obj_name = prefix + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
+				if (this.hasParentDevice(this.sureFlapState.devices[deviceIndex])) {
+					obj_name = prefix + '.' + this.getParentDeviceName(this.sureFlapState.devices[deviceIndex]) + '.' + this.sureFlapState.devices[deviceIndex].name + '.' + 'online';
+				}
+				this.setState(obj_name, this.sureFlapState.devices[deviceIndex].status.online, true);
+			}
+			this.warnings[DEVICE_ONLINE_STATUS_MISSING][deviceIndex] = false;
 		}
 	}
 
@@ -1605,8 +1728,8 @@ class Sureflap extends utils.Adapter {
 	 * @param {string} name
 	 * @param {number} petIndex
 	 */
-	setPetStatusToAdapter(prefix, name, petIndex) {
-		if (!this.sureFlapStatePrev.pets || !this.sureFlapStatePrev.pets[petIndex] || (name !== this.sureFlapStatePrev.pets[petIndex].name)) {
+	setPetNameToAdapter(prefix, name, petIndex) {
+		if (!this.sureFlapStatePrev.pets || !this.sureFlapStatePrev.pets[petIndex] || !this.sureFlapStatePrev.pets[petIndex].name || name !== this.sureFlapStatePrev.pets[petIndex].name) {
 			const obj_name = prefix + '.' + name;
 			this.setState(obj_name + '.name', name, true);
 		}
@@ -1617,16 +1740,23 @@ class Sureflap extends utils.Adapter {
 	 *
 	 * @param {string} prefix
 	 * @param {string} name
-	 * @param {number} where
-	 * @param {string} since
 	 * @param {number} petIndex
 	 */
-	setPetStatusWithPositionToAdapter(prefix, name, where, since, petIndex) {
-		this.setPetStatusToAdapter(prefix, name, petIndex);
-		const obj_name = prefix + '.' + name;
-		if (!this.sureFlapStatePrev.pets || !this.sureFlapStatePrev.pets[petIndex] || !('position' in this.sureFlapStatePrev.pets[petIndex]) || (where !== this.sureFlapStatePrev.pets[petIndex].position.where) || (since !== this.sureFlapStatePrev.pets[petIndex].position.since)) {
-			this.setState(obj_name + '.inside', (where === 1), true);
-			this.setState(obj_name + '.since', since, true);
+	setPetNameAndPositionToAdapter(prefix, name, petIndex) {
+		this.setPetNameToAdapter(prefix, name, petIndex);
+
+		if (!this.objectContainsPath(this.sureFlapState.pets[petIndex], 'position.where') || !this.objectContainsPath(this.sureFlapState.pets[petIndex], 'position.since')) {
+			if (!this.warnings[PET_POSITION_DATA_MISSING][petIndex]) {
+				this.log.debug(`no position object found for pet '${name}'`);
+				this.warnings[PET_POSITION_DATA_MISSING][petIndex] = true;
+			}
+		} else {
+			if (!this.sureFlapStatePrev.pets || !this.sureFlapStatePrev.pets[petIndex] || !this.objectContainsPath(this.sureFlapStatePrev.pets[petIndex], 'position.where') || !this.objectContainsPath(this.sureFlapStatePrev.pets[petIndex], 'position.since') || this.sureFlapState.pets[petIndex].position.where !== this.sureFlapStatePrev.pets[petIndex].position.where || this.sureFlapState.pets[petIndex].position.since !== this.sureFlapStatePrev.pets[petIndex].position.since) {
+				const obj_name = prefix + '.' + name;
+				this.setState(obj_name + '.inside', (this.sureFlapState.pets[petIndex].position.where === 1), true);
+				this.setState(obj_name + '.since', this.sureFlapState.pets[petIndex].position.since, true);
+			}
+			this.warnings[PET_POSITION_DATA_MISSING][petIndex] = false;
 		}
 	}
 
@@ -1637,7 +1767,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} p
 	 */
 	setPetFeedingToAdapter(prefix, p) {
-		if (this.sureFlapReport[p].feeding !== undefined && this.sureFlapReport[p].feeding.datapoints !== undefined && Array.isArray(this.sureFlapReport[p].feeding.datapoints) && this.sureFlapReport[p].feeding.datapoints.length > 0) {
+		if (this.objectContainsPath(this.sureFlapReport[p], 'feeding.datapoints') && Array.isArray(this.sureFlapReport[p].feeding.datapoints) && this.sureFlapReport[p].feeding.datapoints.length > 0) {
 			if (!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].feeding || JSON.stringify(this.sureFlapReport[p].feeding) !== JSON.stringify(this.sureFlapReportPrev[p].feeding)) {
 				const consumption_data = this.calculateFoodConsumption(p);
 				this.log.debug(`updating food consumed for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(consumption_data)}'`);
@@ -1663,7 +1793,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} p
 	 */
 	setPetDrinkingToAdapter(prefix, p) {
-		if (this.sureFlapReport[p].drinking !== undefined && this.sureFlapReport[p].drinking.datapoints !== undefined && Array.isArray(this.sureFlapReport[p].drinking.datapoints) && this.sureFlapReport[p].drinking.datapoints.length > 0) {
+		if (this.objectContainsPath(this.sureFlapReport[p], 'drinking.datapoints') && Array.isArray(this.sureFlapReport[p].drinking.datapoints) && this.sureFlapReport[p].drinking.datapoints.length > 0) {
 			if (!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].drinking || JSON.stringify(this.sureFlapReport[p].drinking) !== JSON.stringify(this.sureFlapReportPrev[p].drinking)) {
 				const consumption_data = this.calculateWaterConsumption(p);
 				this.log.debug(`updating water consumed for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(consumption_data)}'`);
@@ -1688,7 +1818,7 @@ class Sureflap extends utils.Adapter {
 	 * @param {number} p
 	 */
 	setPetOutsideToAdapter(prefix, p) {
-		if (this.sureFlapReport[p].movement !== undefined && this.sureFlapReport[p].movement.datapoints !== undefined && Array.isArray(this.sureFlapReport[p].movement.datapoints) && this.sureFlapReport[p].movement.datapoints.length > 0) {
+		if (this.objectContainsPath(this.sureFlapReport[p], 'movement.datapoints') && Array.isArray(this.sureFlapReport[p].movement.datapoints) && this.sureFlapReport[p].movement.datapoints.length > 0) {
 			if (!this.sureFlapReportPrev[p] || !this.sureFlapReportPrev[p].movement || JSON.stringify(this.sureFlapReport[p].movement) !== JSON.stringify(this.sureFlapReportPrev[p].movement)) {
 				const outside_data = this.calculateTimeOutside(p);
 				this.log.debug(`updating time outside for pet '${this.sureFlapState.pets[p].name}' with '${JSON.stringify(outside_data)}'`);
@@ -1788,9 +1918,13 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetControlCloseDelayToAdapter(hierarchy, device) {
 		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_FEEDER]);
-		const value = this.sureFlapState.devices[deviceIndex].control.lid.close_delay;
-		this.log.debug(`resetting control close delay for ${device} to: ${value}`);
-		this.setState(hierarchy + '.control' + '.close_delay', value, true);
+		if (this.objectContainsPath(this.sureFlapState, 'devices') && Array.isArray(this.sureFlapState.devices) && this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'control.lid.close_delay')) {
+			const value = this.sureFlapState.devices[deviceIndex].control.lid.close_delay;
+			this.log.debug(`resetting control close delay for ${device} to: ${value}`);
+			this.setState(hierarchy + '.control' + '.close_delay', value, true);
+		} else {
+			this.log.warn(`can not reset control close delay for device '${device}' because there is no previous value`);
+		}
 	}
 
 	/**
@@ -1801,9 +1935,13 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetControlLockmodeToAdapter(hierarchy, device) {
 		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
-		const value = this.sureFlapState.devices[deviceIndex].status.locking.mode;
-		this.log.debug(`resetting control lockmode for ${device} to: ${value}`);
-		this.setState(hierarchy + '.control' + '.lockmode', value, true);
+		if (this.objectContainsPath(this.sureFlapState, 'devices') && Array.isArray(this.sureFlapState.devices) && this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'status.locking.mode')) {
+			const value = this.sureFlapState.devices[deviceIndex].status.locking.mode;
+			this.log.debug(`resetting control lockmode for ${device} to: ${value}`);
+			this.setState(hierarchy + '.control' + '.lockmode', value, true);
+		} else {
+			this.log.warn(`can not reset control lockmode for device '${device}' because there is no previous value`);
+		}
 	}
 
 	/**
@@ -1817,9 +1955,13 @@ class Sureflap extends utils.Adapter {
 		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 		const tagIndex = this.getTagIndexForDeviceIndex(deviceIndex, tag);
 		const name = this.getPetNameForTagId(tag) !== undefined ? this.getPetNameForTagId(tag) : 'undefined';
-		const value = this.sureFlapState.devices[deviceIndex].tags[tagIndex].profile;
-		this.log.debug(`resetting control pet type for ${device} and ${name} to: ${value}`);
-		this.setState(hierarchy + '.control' + '.type', value, true);
+		if (tagIndex !== -1 && this.objectContainsPath(this.sureFlapState.devices[deviceIndex].tags[tagIndex], 'profile')) {
+			const value = this.sureFlapState.devices[deviceIndex].tags[tagIndex].profile;
+			this.log.debug(`resetting control pet type for ${device} and ${name} to: ${value}`);
+			this.setState(hierarchy + '.control' + '.type', value, true);
+		} else {
+			this.log.warn(`can not reset pet type for device '${device}' and pet '${name}' because there is no previous value`);
+		}
 	}
 
 	/**
@@ -1830,9 +1972,13 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetControlCurfewEnabledToAdapter(hierarchy, device) {
 		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
-		const value = this.sureFlapState.devices[deviceIndex].control.curfew && this.isCurfewEnabled(this.sureFlapState.devices[deviceIndex].control.curfew);
-		this.log.debug(`resetting control curfew_enabled for ${device} to: ${value}`);
-		this.setState(hierarchy + '.control' + '.curfew_enabled', value, true);
+		if (this.objectContainsPath(this.sureFlapState, 'devices') && Array.isArray(this.sureFlapState.devices) && this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'control.curfew')) {
+			const value = this.isCurfewEnabled(this.sureFlapState.devices[deviceIndex].control.curfew);
+			this.log.debug(`resetting control curfew_enabled for ${device} to: ${value}`);
+			this.setState(hierarchy + '.control' + '.curfew_enabled', value, true);
+		} else {
+			this.log.warn(`can not reset control curfew_enabled for device '${device}' because there is no previous value`);
+		}
 	}
 
 	/**
@@ -1843,9 +1989,13 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetControlCurrentCurfewToAdapter(hierarchy, device) {
 		const deviceIndex = this.getDeviceIndex(device, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
-		const value = JSON.stringify(this.sureFlapState.devices[deviceIndex].control.curfew);
-		this.log.debug(`resetting control current_curfew for ${device}`);
-		this.setState(hierarchy + '.control' + '.current_curfew', value, true);
+		if (this.objectContainsPath(this.sureFlapState, 'devices') && Array.isArray(this.sureFlapState.devices) && this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'control.curfew')) {
+			const value = JSON.stringify(this.sureFlapState.devices[deviceIndex].control.curfew);
+			this.log.debug(`resetting control current_curfew for ${device}`);
+			this.setState(hierarchy + '.control' + '.current_curfew', value, true);
+		} else {
+			this.log.warn(`can not reset control current_curfew for device '${device}' because there is no previous value`);
+		}
 	}
 
 	/**
@@ -1856,12 +2006,12 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetPetInsideToAdapter(hierarchy, pet) {
 		const petIndex = this.getPetIndex(pet);
-		if ('position' in this.sureFlapStatePrev.pets[petIndex]) {
-			const value = this.sureFlapStatePrev.pets[petIndex].position.where;
+		if (this.objectContainsPath(this.sureFlapState, 'pets') && Array.isArray(this.sureFlapState.pets) && this.objectContainsPath(this.sureFlapState.pets[petIndex], 'position.where')) {
+			const value = this.sureFlapState.pets[petIndex].position.where;
 			this.log.debug(`resetting pet inside for ${pet} to: ${value}`);
 			this.setState(hierarchy + '.pets.' + pet + '.inside', value, true);
 		} else {
-			this.log.warn(`can not reset pet inside for ${pet} because there is no previous value`);
+			this.log.warn(`can not reset pet inside for '${pet}' because there is no previous value`);
 		}
 	}
 
@@ -1873,12 +2023,12 @@ class Sureflap extends utils.Adapter {
 	 */
 	resetHubLedModeToAdapter(hierarchy, hub) {
 		const hubIndex = this.getDeviceIndex(hub, [DEVICE_TYPE_HUB]);
-		if ('devices' in this.sureFlapStatePrev && Array.isArray(this.sureFlapStatePrev.devices) && 'status' in this.sureFlapStatePrev.devices[hubIndex] && 'led_mode' in this.sureFlapStatePrev.devices[hubIndex].status) {
-			const value = this.sureFlapStatePrev.devices[hubIndex].status.led_mode;
+		if (this.objectContainsPath(this.sureFlapState, 'devices') && Array.isArray(this.sureFlapState.devices) && this.objectContainsPath(this.sureFlapState.devices[hubIndex], 'status.led_mode')) {
+			const value = this.sureFlapState.devices[hubIndex].status.led_mode;
 			this.log.debug(`resetting hub led mode for ${hub} to: ${value}`);
-			this.setState(hierarchy + '.' + hub + 'control.led_mode', value, true);
+			this.setState(hierarchy + '.' + hub + '.control.led_mode', value, true);
 		} else {
-			this.log.warn(`can not reset hub led mode for ${hub} because there is no previous value`);
+			this.log.warn(`can not reset hub led mode for '${hub}' because there is no previous value`);
 		}
 	}
 
@@ -3528,6 +3678,28 @@ class Sureflap extends utils.Adapter {
 				this.sureFlapState.pets[d].name = this.sureFlapState.pets[d].name_org.replace(reg, rep);
 			}
 		}
+	}
+
+	/**
+	 * Returns the value of a deep object defined by path.
+	 *
+	 * @param {Object} obj an object with deep values
+	 * @param {String} path the path to the desired value
+	 * @returns {any|undefined} the deep value or undefined
+	 */
+	getObjectValueForPath(obj, path) {
+		return path.split(".").reduce((deep_object, path_part) => (deep_object ? deep_object[path_part] : undefined), obj);
+	}
+
+	/**
+	 * Determines whether an object contains a deep object defined by path.
+	 *
+	 * @param {Object} obj an object with deep values
+	 * @param {String} path the path to the deep object
+	 * @returns {boolean} true, if object contains a value at the specified path, false otherwise
+	 */
+	objectContainsPath(obj, path) {
+		return this.getObjectValueForPath(obj, path) !== undefined;
 	}
 
 	/**
