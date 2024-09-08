@@ -3688,7 +3688,7 @@ class Sureflap extends utils.Adapter {
 	 * @returns {any|undefined} the deep value or undefined
 	 */
 	getObjectValueForPath(obj, path) {
-		return path.split(".").reduce((deep_object, path_part) => (deep_object ? deep_object[path_part] : undefined), obj);
+		return path.split('.').reduce((deep_object, path_part) => (deep_object ? deep_object[path_part] : undefined), obj);
 	}
 
 	/**
