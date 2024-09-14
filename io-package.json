@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "2.2.1",
+    "version": "2.3.0",
     "news": {
+      "2.3.0": {
+        "en": "handling of API data more error-tolerant",
+        "de": "fehlertolerantere Verarbeitung von API-Daten",
+        "ru": "Слава Украины",
+        "pt": "tratamento de dados API mais tolerante a erros",
+        "nl": "fouttolerantere afhandeling van API-gegevens",
+        "fr": "traitement des données de l'API plus tolérant aux erreurs",
+        "it": "gestione dei dati API più tollerante agli errori",
+        "es": "manejo de los datos de la API más tolerante a errores",
+        "pl": "obsługa danych API bardziej odporna na błędy",
+        "uk": "обробка даних API більш стійка до помилок",
+        "zh-cn": "处理应用程序接口数据的容错能力更强"
+      },
       "2.2.1": {
         "en": "new data states for feeder and water dispenser",
         "de": "neue Zustände für Futterautomat und Wasserspender",
@@ -67,19 +80,6 @@
         "pl": "Dodano opcję włączenia danych historii, domyślnie wyłączona",
         "uk": "додано опцію увімкнення даних історії, за замовчуванням вимкнено",
         "zh-cn": "添加了启用历史数据的选项，默认为关闭"
-      },
-      "2.0.2": {
-        "en": "added flap id to last movement and bugfix for duplicate names",
-        "de": "Klappen ID der letzten Bewegung hinzugefügt und Fehlerbehebung für doppelte Namen",
-        "ru": "Слава Украины",
-        "pt": "adição da identificação da aba ao último movimento e correção de erros para nomes duplicados",
-        "nl": "flap id toegevoegd aan laatste beweging en bugfix voor dubbele namen",
-        "fr": "ajout d'un identifiant de volet au dernier mouvement et correction de bogues pour les noms en double",
-        "it": "aggiunta dell'id del lembo all'ultimo movimento e correzione del bug per i nomi duplicati",
-        "es": "añadido identificador de solapa al último movimiento y corrección de errores de nombres duplicados",
-        "pl": "Dodano identyfikator klapy do ostatniego ruchu i poprawiono błąd zduplikowanych nazw",
-        "uk": "додано ідентифікатор клаптя до останнього руху та виправлено помилку для повторюваних назв",
-        "zh-cn": "为最后一个动作添加了翻页 ID，并修复了名称重复的错误"
       }
     },
     "titleLang": {

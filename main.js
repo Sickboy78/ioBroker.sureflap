@@ -19,7 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const https = require('https');
 const util = require('util');
 
-const ADAPTER_VERSION = '2.2.1';
+const ADAPTER_VERSION = '2.3.0';
 
 const REQUEST_TIMEOUT = 120000;
 // Constants - data update frequency
