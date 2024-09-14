@@ -939,10 +939,10 @@ class Sureflap extends utils.Adapter {
 	 * @param {boolean} value
 	 */
 	changePetLocation(hierarchy, pet, value) {
-		this.log.debug(`changing pet location inside to '${value}' ...`);
+		this.log.debug(`changing location of pet '${pet}' to '${value ? 'inside' : 'outside'}' ...`);
 		this.getStateValueFromAdapter(hierarchy + '.pets.' + pet + '.name').then(name => {
 			this.setPetLocationToApi(name, value).then(() => {
-				this.log.info(`pet location successfully set`);
+				this.log.info(`location for pet '${name}' successfully set to '${value ? 'inside' : 'outside'}'`);
 			}).catch(error => {
 				this.log.error(`could not set pet location because: ${error}`);
 				this.resetPetInsideToAdapter(hierarchy, pet);
