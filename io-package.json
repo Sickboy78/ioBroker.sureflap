@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "2.3.0",
+    "version": "2.3.1",
     "news": {
+      "2.3.1": {
+        "en": "improved responsive design of admin page",
+        "de": "verbessertes responsives Design der Admin-Seite",
+        "ru": "Слава Украины",
+        "pt": "design responsivo melhorado da página de administração",
+        "nl": "verbeterd responsief ontwerp van adminpagina",
+        "fr": "amélioration de la conception réactive de la page d'administration",
+        "it": "migliorato il design reattivo della pagina di amministrazione",
+        "es": "mejora del diseño adaptativo de la página de administración",
+        "pl": "Ulepszony responsywny wygląd strony administratora",
+        "uk": "покращено адаптивний дизайн сторінки адміністратора",
+        "zh-cn": "改进了管理页面的响应式设计"
+      },
       "2.3.0": {
         "en": "handling of API data more error-tolerant",
         "de": "fehlertolerantere Verarbeitung von API-Daten",
@@ -67,19 +80,6 @@
         "pl": "poprawka błędu",
         "uk": "виправлення помилки",
         "zh-cn": "错误修正"
-      },
-      "2.1.0": {
-        "en": "added option to enable history, default off",
-        "de": "Option zum Aktivieren der Chronik hinzugefügt, standardmäßig ausgeschaltet",
-        "ru": "Слава Украины",
-        "pt": "opção adicionada para ativar os dados do histórico, por defeito desligada",
-        "nl": "optie toegevoegd om geschiedenisgegevens in te schakelen, standaard uitgeschakeld",
-        "fr": "ajout d'une option permettant d'activer les données historiques, désactivée par défaut",
-        "it": "aggiunta l'opzione per abilitare i dati della cronologia, per default disattivata",
-        "es": "se ha añadido la opción de activar los datos del historial, por defecto desactivada",
-        "pl": "Dodano opcję włączenia danych historii, domyślnie wyłączona",
-        "uk": "додано опцію увімкнення даних історії, за замовчуванням вимкнено",
-        "zh-cn": "添加了启用历史数据的选项，默认为关闭"
       }
     },
     "titleLang": {
