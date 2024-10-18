@@ -3,19 +3,23 @@
 <head>
 
 	<!-- Load ioBroker scripts and styles-->
+	<link rel="stylesheet" type="text/css" href="../../lib/css/fancytree/ui.fancytree.min.css"/>
 	<link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
 	<link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
 
 	<script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
 	<script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
-	<script type="text/javascript" src="../../js/translate.js"></script>
 	<script type="text/javascript" src="../../lib/js/materialize.js"></script>
+	<script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="../../lib/js/jquery.fancytree-all.min.js"></script>
+
+	<script type="text/javascript" src="../../js/translate.js"></script>
 	<script type="text/javascript" src="../../js/adapter-settings.js"></script>
+	<script type="text/javascript" src="words.js"></script>
 
 	<!-- Load our own files -->
 	<link rel="stylesheet" type="text/css" href="style.css" />
-	<script type="text/javascript" src="words.js"></script>
 
 	<script type="text/javascript">
 		let timerId = 0;
@@ -144,7 +148,7 @@
 			return new Promise((resolve, reject) => {
 				const options = buildOptions(host,'/api/me/start', 'GET', token);
 				httpRequest(options).then(result => {
-					if (result == undefined || result.data == undefined) {
+					if (result === undefined || result.data === undefined) {
 						return reject(new Error(`Getting surepet data failed.`));
 					} else {
 						return resolve(result.data);
@@ -178,7 +182,7 @@
 				}
 			};
 
-			if (token != undefined && token != '') {
+			if (token !== undefined && token !== '') {
 				options.headers['Authorization'] = 'Bearer ' + token;
 			}
 
@@ -355,49 +359,51 @@
 		<!-- battery voltages -->
 
 		<div class="row">
-			<div class="col s12 m4">
-				<p class="title">Sureflap</p>
+			<div class="col s12 m4 input-field">
+				<div>
+					<p class="title">Sureflap</p>
+				</div>
+				<div>
+					<input type="number" class="value" id="sureflap_battery_full" step="0.1" min="1" max="10"/>
+					<label for="sureflap_battery_full" class="translate">battery voltage full</label>
+				</div>
+				<div>
+					<input type="number" class="value" id="sureflap_battery_empty" step="0.1" min="1" max="10"/>
+					<label for="sureflap_battery_empty" class="translate">battery voltage empty</label>
+				</div>
 			</div>
-			<div class="col s12 m4">
-				<p class="title">Surefeed</p>
+			<div class="col s12 m4 input-field">
+				<div>
+					<p class="title">Surefeed</p>
+				</div>
+				<div>
+					<input type="number" class="value" id="surefeed_battery_full" step="0.1" min="1" max="10"/>
+					<label for="surefeed_battery_full" class="translate">battery voltage full</label>
+				</div>
+				<div>
+					<input type="number" class="value" id="surefeed_battery_empty" step="0.1" min="1" max="10"/>
+					<label for="surefeed_battery_empty" class="translate">battery voltage empty</label>
+				</div>
 			</div>
-			<div class="col s12 m4">
-				<p class="title">Felaqua</p>
+			<div class="col s12 m4 input-field">
+				<div>
+					<p class="title">Felaqua</p>
+				</div>
+				<div>
+					<input type="number" class="value" id="felaqua_battery_full" step="0.1" min="1" max="10"/>
+					<label for="felaqua_battery_full" class="translate">battery voltage full</label>
+				</div>
+				<div>
+					<input type="number" class="value" id="felaqua_battery_empty" step="0.1" min="1" max="10"/>
+					<label for="felaqua_battery_empty" class="translate">battery voltage empty</label>
+				</div>
 			</div>
 		</div>
 
 		<div class="row">
-			<div class="col s12 m4 input-field">
-				<input type="number" class="value" id="sureflap_battery_full" step="0.1" min="1" max="10"/>
-				<label for="sureflap_battery_full" class="translate">battery voltage full</label>
-			</div>
-			<div class="col s12 m4 input-field">
-				<input type="number" class="value" id="surefeed_battery_full" step="0.1" min="1" max="10" />
-				<label for="surefeed_battery_full" class="translate">battery voltage full</label>
-			</div>
-			<div class="col s12 m4 input-field">
-				<input type="number" class="value" id="felaqua_battery_full" step="0.1" min="1" max="10" />
-				<label for="felaqua_battery_full" class="translate">battery voltage full</label>
-			</div>			
-		</div>
-
-		<div class="row">
-			<div class="col s12 m4 input-field">
-				<input type="number" class="value" id="sureflap_battery_empty" step="0.1" min="1" max="10" />
-				<label for="sureflap_battery_empty" class="translate">battery voltage empty</label>
-			</div>
-			<div class="col s12 m4 input-field">
-				<input type="number" class="value" id="surefeed_battery_empty" step="0.1" min="1" max="10" />
-				<label for="surefeed_battery_empty" class="translate">battery voltage empty</label>
-			</div>
-			<div class="col s12 m4 input-field">
-				<input type="number" class="value" id="felaqua_battery_empty" step="0.1" min="1" max="10" />
-				<label for="felaqua_battery_empty" class="translate">battery voltage empty</label>
-			</div>
-
-		</div>
-
-		<div class="row" id="result">
+			<div class="col s1 m2 l3"></div>
+			<div class="col s10 m8 l6" id="result"></div>
+			<div class="col s1 m2 l3"></div>
 		</div>
 
 	</div>
