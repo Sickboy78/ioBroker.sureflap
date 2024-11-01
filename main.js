@@ -3923,39 +3923,48 @@ class Sureflap extends utils.Adapter {
 	checkAdapterConfig() {
 		// The adapters config (in the instance object everything under the attribute "native") is accessible via
 		// this.config:
+		let configOk = true;
 		this.log.info('checking adapter configuration...');
 		if (!this.config.username || typeof this.config.username !== 'string' || this.config.username.length === 0) {
 			this.log.warn(`Username is invalid. Adapter probably won't work.`);
+			configOk = false;
 		}
 		if (!this.config.password || typeof this.config.password !== 'string' || this.config.password.length === 0) {
 			this.log.warn(`Password is invalid. Adapter probably won't work.`);
+			configOk = false;
 		}
 		if (!this.config.api_host || typeof this.config.api_host !== 'string' || this.config.api_host.length === 0) {
 			this.log.warn(`API host is invalid, using default value.`);
 			this.config.api_host = 'app-api.production.surehub.io';
+			configOk = false;
 		}
 		if (!this.config.sureflap_battery_full || !this.config.sureflap_battery_empty || this.config.sureflap_battery_full <= this.config.sureflap_battery_empty) {
 			this.log.warn(`Battery voltage values for sureflap are invalid, using default values.`);
 			this.config.sureflap_battery_full = 6.1;
 			this.config.sureflap_battery_empty = 5.1;
+			configOk = false;
 		}
 		if (!this.config.surefeed_battery_full || !this.config.surefeed_battery_empty || this.config.surefeed_battery_full <= this.config.surefeed_battery_empty) {
 			this.log.warn(`Battery voltage values for surefeed are invalid, using default values.`);
 			this.config.surefeed_battery_full = 6.2;
 			this.config.surefeed_battery_empty = 5.2;
+			configOk = false;
 		}
 		if (!this.config.felaqua_battery_full || !this.config.felaqua_battery_empty || this.config.felaqua_battery_full <= this.config.felaqua_battery_empty) {
 			this.log.warn(`Battery voltage values for felaqua are invalid, using default values.`);
 			this.config.felaqua_battery_full = 6.2;
 			this.config.felaqua_battery_empty = 5.2;
+			configOk = false;
 		}
 		if (this.config.history_enable === undefined || typeof this.config.history_enable !== 'boolean') {
 			this.log.warn(`History toggle is invalid, using default value.`);
 			this.config.history_enable = false;
+			configOk = false;
 		}
 		if (this.config.history_entries === undefined || typeof this.config.history_entries !== 'number' || this.config.history_entries > 25 || this.config.history_entries < 1) {
 			this.log.warn(`Number of history entries is invalid, using default value.`);
 			this.config.history_entries = 10;
+			configOk = false;
 		}
 		this.log.info('API host: ' + this.config.api_host);
 		this.log.info('sureflap battery voltage full: ' + this.config.sureflap_battery_full);
@@ -3966,7 +3975,11 @@ class Sureflap extends utils.Adapter {
 		this.log.info('felaqua battery voltage empty: ' + this.config.felaqua_battery_empty);
 		this.log.info('history enabled: ' + this.config.history_enable);
 		this.log.info('number of history entries: ' + this.config.history_entries);
-		this.log.info('adapter configuration ok');
+		if (configOk) {
+			this.log.info('adapter configuration ok');
+		} else {
+			this.log.info('adapter configuration contains errors');
+		}
 	}
 
 	/**
