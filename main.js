@@ -462,12 +462,12 @@ class Sureflap extends utils.Adapter {
 			if (this.sureFlapState.pets && Array.isArray(this.sureFlapState.pets) && this.sureFlapState.pets.length > 0) {
 
 				// Quick Fix to get pet status again
-				let queryString = "?";
+				let queryString = '?';
 				for (let p = 0; p < this.sureFlapState.pets.length; p++) {
-					queryString += "Pet_Id=" + this.sureFlapState.pets[p].id + "&";
+					queryString += 'Pet_Id=' + this.sureFlapState.pets[p].id + '&';
 				}
 				const from = new Date(new Date().toDateString());
-				queryString += "From=" + from.toISOString() + "&dayshistory=7";
+				queryString += 'From=' + from.toISOString() + '&dayshistory=7';
 				const options = this.buildOptions('/api/dashboard/pet' + queryString, 'GET', this.sureFlapState['token'], true);
 				this.httpRequest('get_pets', options, '').then(result => {
 					if (result === undefined || result.data === undefined) {
