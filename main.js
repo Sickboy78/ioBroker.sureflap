@@ -19,7 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const https = require('https');
 const util = require('util');
 
-const ADAPTER_VERSION = '2.3.1';
+const ADAPTER_VERSION = '2.3.2';
 
 const REQUEST_TIMEOUT = 120000;
 // Constants - data update frequency
@@ -344,6 +344,7 @@ class Sureflap extends utils.Adapter {
 	updateLoop() {
 		clearTimeout(this.timerId);
 		this.getDataFromApi()
+			.then(() => this.getPetsDataFromApi())
 			.then(() => this.getAdditionalDataFromApi())
 			.then(() => this.createAdapterObjectHierarchy())
 			.then(() => this.getDeviceStatusFromData())
@@ -419,7 +420,7 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * gets the data for devices and pets from surepet API
+	 * gets the data for devices from surepet API
 	 *
 	 * @return {Promise}
 	 */
@@ -448,6 +449,55 @@ class Sureflap extends utils.Adapter {
 				return reject(error);
 			});
 
+		}));
+	}
+
+	/**
+	 * gets the data for pets from surepet API
+	 *
+	 * @return {Promise}
+	 */
+	getPetsDataFromApi() {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			if (this.sureFlapState.pets && Array.isArray(this.sureFlapState.pets) && this.sureFlapState.pets.length > 0) {
+
+				// Quick Fix to get pet status again
+				let queryString = "?";
+				for (let p = 0; p < this.sureFlapState.pets.length; p++) {
+					queryString += "Pet_Id=" + this.sureFlapState.pets[p].id + "&";
+				}
+				const from = new Date(new Date().toDateString());
+				queryString += "From=" + from.toISOString() + "&dayshistory=7";
+				const options = this.buildOptions('/api/dashboard/pet' + queryString, 'GET', this.sureFlapState['token'], true);
+				this.httpRequest('get_pets', options, '').then(result => {
+					if (result === undefined || result.data === undefined) {
+						return reject(new Error(`getting pets failed. retrying login in ${RETRY_FREQUENCY_LOGIN} seconds`));
+					} else {
+						if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+							for (let i = 0; i < result.data.length; i++) {
+								for (let p = 0; p < this.sureFlapState.pets.length; p++) {
+									if (this.objectContainsPath(result.data[i], 'pet_id') && result.data[i].pet_id === this.sureFlapState.pets[p].id) {
+										if (!this.objectContainsPath(this.sureFlapState.pets[p], 'position')) {
+											this.sureFlapState.pets[p].position = {};
+											if (this.objectContainsPath(result.data[i], 'movement.where')) {
+												this.sureFlapState.pets[p].position.where = result.data[i].movement.where;
+											}
+											if (this.objectContainsPath(result.data[i], 'movement.since')) {
+												this.sureFlapState.pets[p].position.since = result.data[i].movement.since;
+											}
+										}
+									}
+								}
+							}
+						}
+						return resolve();
+					}
+				}).catch(error => {
+					return reject(error);
+				});
+			} else {
+				return resolve();
+			}
 		}));
 	}
 
