@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "2.3.1",
+    "version": "2.3.2",
     "news": {
+      "2.3.2": {
+        "en": "quick fix for api changes",
+        "de": "schneller Fix für API Änderungen",
+        "ru": "Слава Украины",
+        "pt": "correção rápida para alterações da API",
+        "nl": "snelle oplossing voor api-wijzigingen",
+        "fr": "correction rapide des changements d'api",
+        "it": "soluzione rapida per le modifiche all'API",
+        "es": "solución rápida para los cambios de api",
+        "pl": "Szybka poprawka dla zmian api",
+        "uk": "швидке виправлення змін в api",
+        "zh-cn": "快速更改 api"
+      },
       "2.3.1": {
         "en": "improved responsive design of admin page",
         "de": "verbessertes responsives Design der Admin-Seite",
@@ -67,19 +80,6 @@
         "pl": "aktualizacje zależności",
         "uk": "оновлення залежностей",
         "zh-cn": "依赖性更新"
-      },
-      "2.1.1": {
-        "en": "bugfix",
-        "de": "Fehlerbehebung",
-        "ru": "Слава Украины",
-        "pt": "correção de erros",
-        "nl": "bugfix",
-        "fr": "correction de bogues",
-        "it": "correzione del bug",
-        "es": "corrección de errores",
-        "pl": "poprawka błędu",
-        "uk": "виправлення помилки",
-        "zh-cn": "错误修正"
       }
     },
     "titleLang": {
