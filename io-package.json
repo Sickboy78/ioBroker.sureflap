@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "2.3.2",
+    "version": "2.3.3",
     "news": {
+      "2.3.3": {
+        "en": "minor bugfix",
+        "de": "kleinere Fehlerbehebung",
+        "ru": "Слава Украины",
+        "pt": "pequena correção de erros",
+        "nl": "kleine bugfix",
+        "fr": "correction d'un bug mineur",
+        "it": "correzione di un bug minore",
+        "es": "corrección de errores menores",
+        "pl": "drobna poprawka błędu",
+        "uk": "незначне виправлення",
+        "zh-cn": "小故障修复"
+      },
       "2.3.2": {
         "en": "quick fix for api changes",
         "de": "schneller Fix für API Änderungen",
@@ -67,19 +80,6 @@
         "pl": "nowe stany JSON dla kroniki i godziny policyjnej",
         "uk": "нові JSON-стани для хроніки та комендантської години",
         "zh-cn": "为编年史和宵禁新增 JSON 状态"
-      },
-      "2.1.2": {
-        "en": "dependency updates",
-        "de": "Aktualisierungen der Abhängigkeiten",
-        "ru": "Слава Украины",
-        "pt": "actualizações de dependências",
-        "nl": "afhankelijkheidsupdates",
-        "fr": "mises à jour de la dépendance",
-        "it": "aggiornamenti sulla dipendenza",
-        "es": "actualizaciones de dependencia",
-        "pl": "aktualizacje zależności",
-        "uk": "оновлення залежностей",
-        "zh-cn": "依赖性更新"
       }
     },
     "titleLang": {
