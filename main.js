@@ -2658,18 +2658,22 @@ class Sureflap extends utils.Adapter {
 							switch (this.sureFlapState.devices[d].product_id) {
 								case DEVICE_TYPE_PET_FLAP:
 									// pet flap
+									this.log.debug(`found pet flap`);
 									promiseArray.push(this.createFlapDevicesToAdapter(d, obj_name, false));
 									break;
 								case DEVICE_TYPE_CAT_FLAP:
 									// cat flap
+									this.log.debug(`found cat flap`);
 									promiseArray.push(this.createFlapDevicesToAdapter(d, obj_name, true));
 									break;
 								case DEVICE_TYPE_FEEDER:
-									// feeding bowl
+									// feeder
+									this.log.debug(`found feeder`);
 									promiseArray.push(this.createFeederDevicesToAdapter(d, obj_name));
 									break;
 								case DEVICE_TYPE_WATER_DISPENSER:
 									// water dispenser
+									this.log.debug(`found felaqua`);
 									promiseArray.push(this.createWaterDispenserDevicesToAdapter(d, obj_name));
 									break;
 								default:
