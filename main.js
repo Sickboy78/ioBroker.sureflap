@@ -2842,7 +2842,7 @@ class Sureflap extends utils.Adapter {
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
 									promiseArray.push(this.setObjectNotExistsPromise(obj_name + '.bowls.0.last_zeroed_at', this.buildStateObject('last zeroed at', 'date', 'string')));
 
-									if (this.sureFlapState.devices[deviceIndex].control.bowls.type === FEEDER_SINGLE_BOWL) {
+									if (this.objectContainsPath(this.sureFlapState.devices[deviceIndex], 'control.bowls.type') && this.sureFlapState.devices[deviceIndex].control.bowls.type === FEEDER_SINGLE_BOWL) {
 										// remove bowl 1 (e.g. after change from dual to single bowl)
 										promiseArray.push(this.deleteObjectFormAdapterIfExists(obj_name + '.bowls.1', true));
 										Promise.all(promiseArray).then(() => {
