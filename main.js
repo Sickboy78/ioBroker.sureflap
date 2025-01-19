@@ -179,7 +179,7 @@ class Sureflap extends utils.Adapter {
 		this.on('ready', this.onReady.bind(this));
 		this.on('stateChange', this.onStateChange.bind(this));
 		// this.on("objectChange", this.onObjectChange.bind(this));
-		this.on("message", this.onMessage.bind(this));
+		this.on('message', this.onMessage.bind(this));
 		this.on('unload', this.onUnload.bind(this));
 	}
 
@@ -655,21 +655,21 @@ class Sureflap extends utils.Adapter {
 						const hierarchy = '.' + this.getParentDeviceName(this.devices[hid][d]);
 
 						if ([DEVICE_TYPE_PET_FLAP, DEVICE_TYPE_CAT_FLAP].includes(this.devices[hid][d].product_id)) {
-								// Sureflap Connect
+							// Sureflap Connect
 							this.setSureflapConnectToAdapter(prefix, hierarchy, hid, d, this.devices[hid][d].product_id === DEVICE_TYPE_CAT_FLAP);
 						} else if (this.devices[hid][d].product_id === DEVICE_TYPE_FEEDER) {
-								// Feeder Connect
+							// Feeder Connect
 							this.setFeederConnectToAdapter(prefix, hierarchy, hid, d);
 						} else if (this.devices[hid][d].product_id === DEVICE_TYPE_WATER_DISPENSER) {
-								// water dispenser
+							// water dispenser
 							this.setWaterDispenserConnectToAdapter(prefix, hierarchy, hid, d);
-							}
+						}
 						this.setBatteryStatusToAdapter(prefix, hierarchy, hid, d);
 						this.setSerialNumberToAdapter(prefix, hierarchy, hid, d);
 						this.setSignalStrengthToAdapter(prefix, hierarchy, hid, d);
-						} else {
+					} else {
 						this.setHubStatusToAdapter(prefix, hid, d);
-						}
+					}
 					this.setVersionsToAdapter(prefix, hid, d);
 					this.setOnlineStatusToAdapter(prefix, hid, d);
 				}
