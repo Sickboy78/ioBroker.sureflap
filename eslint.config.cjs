@@ -24,8 +24,8 @@ module.exports = [...compat.extends('eslint:recommended'), {
 			...globals.jquery,
 		},
 
-		ecmaVersion: 2018,
-		sourceType: 'commonjs',
+		ecmaVersion: 2020,
+		sourceType: 'module',
 	},
 
 	rules: {

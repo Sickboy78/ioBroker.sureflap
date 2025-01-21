@@ -1,10 +1,16 @@
 {
-    "account settings": "accountinstellingen",
-    "battery voltage empty": "Batterijspanning leeg",
-    "battery voltage full": "Batterijspanning vol",
+    "account settings": "Accountinstellingen",
+    "battery voltage empty": "batterijspanning leeg",
+    "battery voltage full": "batterijspanning vol",
     "battery voltages": "Batterijspanning",
-    "password": "Paswoord",
+    "password": "paswoord",
     "sure petcare account": "Sure Petcare Account",
-    "sureflap adapter settings": "Adapterinstellingen voor sureflap",
-    "username": "username"
+    "username": "username",
+    "api_host": "API hostnaam",
+    "login result": "Login resultaat",
+    "result": "resultaat",
+    "event history": "Gebeurtenisgeschiedenis",
+    "enable JSON event history": "JSON-gebeurtenisgeschiedenis inschakelen",
+    "enable event history as data points (deprecated)": "gebeurtenishistorie inschakelen als gegevenspunten (verouderd)",
+    "number of items": "aantal items"
 }

@@ -1,10 +1,16 @@
 {
     "account settings": "Акаунт Sure Petcare",
-    "battery voltage empty": "Напруга акумулятора розряджена",
-    "battery voltage full": "Заряд акумулятора повний",
-    "battery voltages": "напруги акумулятора",
-    "password": "Пароль",
+    "battery voltage empty": "напруга акумулятора розряджена",
+    "battery voltage full": "заряд акумулятора повний",
+    "battery voltages": "Напруги акумулятора",
+    "password": "пароль",
     "sure petcare account": "Акаунт Sure Petcare",
-    "sureflap adapter settings": "Налаштування адаптера для sureflap",
-    "username": "Логін"
+    "username": "логін",
+    "api_host": "iм'я хосту API",
+    "login result": "Логін Результат",
+    "result": "результат",
+    "event history": "Історія подій",
+    "enable JSON event history": "увімкнути історію подій у форматі JSON",
+    "enable event history as data points (deprecated)": "увімкнути історію подій у вигляді точок даних (застаріло)",
+    "number of items": "кількість елементів"
 }

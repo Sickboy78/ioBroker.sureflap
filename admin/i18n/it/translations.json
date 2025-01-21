@@ -1,10 +1,16 @@
 {
-    "account settings": "impostazioni dell'account",
-    "battery voltage empty": "Tensione della batteria esaurita",
-    "battery voltage full": "Tensione della batteria piena",
+    "account settings": "Impostazioni dell'account",
+    "battery voltage empty": "tensione della batteria esaurita",
+    "battery voltage full": "tensione della batteria piena",
     "battery voltages": "Tensione della batteria",
-    "password": "Password",
+    "password": "password",
     "sure petcare account": "Conto Sure Petcare",
-    "sureflap adapter settings": "Impostazioni dell'adattatore per sureflap",
-    "username": "nome utente"
+    "username": "nome utente",
+    "api_host": "nome host dell'API",
+    "login result": "Login risultato",
+    "result": "risultato",
+    "event history": "Storia dell'evento",
+    "enable JSON event history": "abilitare la cronologia eventi JSON",
+    "enable event history as data points (deprecated)": "abilita la cronologia degli eventi come punti dati (deprecato)",
+    "number of items": "numero di elementi"
 }

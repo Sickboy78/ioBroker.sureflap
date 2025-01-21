@@ -1,169 +1,306 @@
 {
-    "type": "tabs",
-    "tabsStyle": {
-        "width": "calc(100% - 100px)"
-    },
-    "i18n": true,
-    "items": {
-        "loginTab": {
-            "type": "panel",
-            "label": "account settings",
-            "items": {
-                "_header_login": {
-                    "type": "header",
-                    "size": 2,
-                    "text": "sure petcare account"
-                },
-                "username": {
-                    "type": "text",
-                    "label": "username",
-                    "xs": 12,
-                    "sm": 12,
-                    "md": 6,
-                    "lg": 4
-                },
-                "password": {
-                    "type": "password",
-                    "label": "password",
-                    "visible": true,
-                    "xs": 12,
-                    "sm": 12,
-                    "md": 6,
-                    "lg": 4
-                },
-                "api_host": {
-                    "type": "text",
-                    "label": "api_host",
-                    "visible": true,
-                    "xs": 12,
-                    "sm": 12,
-                    "md": 6,
-                    "lg": 4
-                }
-            }
+  "type": "tabs",
+  "i18n": true,
+  "items": {
+    "loginTab": {
+      "type": "panel",
+      "label": "account settings",
+      "items": {
+        "_header_login": {
+          "type": "header",
+          "size": 2,
+          "text": "sure petcare account"
         },
-        "batteryTab": {
-            "type": "panel",
-            "label": "battery voltages",
-            "items": {
-                "sureflapPanel": {
-                    "type": "panel",
-                    "label": "Sureflap",
-                    "xs": 12,
-                    "sm": 12,
-                    "md": 6,
-                    "lg": 4,
-                    "items": {
-                        "_header_sureflap": {
-                            "type": "header",
-                            "size": 2,
-                            "text": "Sureflap"
-                        },
-                        "sureflap_battery_full": {
-                            "type": "number",
-                            "label": "battery voltage full",
-                            "newLine": true,
-                            "min": 1,
-                            "max": 10,
-                            "step": 0.1,
-                            "xs": 12,
-                            "sm": 12,
-                            "md": 12,
-                            "lg": 12
-                        },
-                        "sureflap_battery_empty": {
-                            "type": "number",
-                            "label": "battery voltage empty",
-                            "newLine": true,
-                            "min": 1,
-                            "max": 10,
-                            "step": 0.1,
-                            "xs": 12,
-                            "sm": 12,
-                            "md": 12,
-                            "lg": 12
-                        }                        
-                    }
-                },
-                "surefeedPanel": {
-                    "type": "panel",
-                    "label": "Surefeed",
-                    "xs": 12,
-                    "sm": 12,
-                    "md": 6,
-                    "lg": 4,
-                    "items": {
-                        "_header_surefeed": {
-                            "type": "header",
-                            "size": 2,
-                            "text": "Surefeed"
-                        },
-                        "surefeed_battery_full": {
-                            "type": "number",
-                            "label": "battery voltage full",
-                            "newLine": true,
-                            "min": 1,
-                            "max": 10,
-                            "step": 0.1,
-                            "xs": 12,
-                            "sm": 12,
-                            "md": 12,
-                            "lg": 12
-                        },
-                        "surefeed_battery_empty": {
-                            "type": "number",
-                            "label": "battery voltage empty",
-                            "newLine": true,
-                            "min": 1,
-                            "max": 10,
-                            "step": 0.1,
-                            "xs": 12,
-                            "sm": 12,
-                            "md": 12,
-                            "lg": 12
-                        }                        
-                    }
-                },
-                "felaquaPanel": {
-                    "type": "panel",
-                    "label": "Felaqua",
-                    "xs": 12,
-                    "sm": 12,
-                    "md": 6,
-                    "lg": 4,
-                    "items": {
-                        "_header_felaqua": {
-                            "type": "header",
-                            "size": 2,
-                            "text": "Felaqua"
-                        },
-                        "felaqua_battery_full": {
-                            "type": "number",
-                            "label": "battery voltage full",
-                            "newLine": true,
-                            "min": 1,
-                            "max": 10,
-                            "step": 0.1,
-                            "xs": 12,
-                            "sm": 12,
-                            "md": 12,
-                            "lg": 12
-                        },
-                        "felaqua_battery_empty": {
-                            "type": "number",
-                            "label": "battery voltage empty",
-                            "newLine": true,
-                            "min": 1,
-                            "max": 10,
-                            "step": 0.1,
-                            "xs": 12,
-                            "sm": 12,
-                            "md": 12,
-                            "lg": 12
-                        }                        
-                    }
-                }
+        "username": {
+          "type": "text",
+          "label": "username",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        },
+        "password": {
+          "type": "password",
+          "label": "password",
+          "visible": true,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        },
+        "api_host": {
+          "type": "text",
+          "label": "api_host",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4
+        },
+        "_test_login": {
+          "type": "panel",
+          "label": "test login",
+          "hidden": "!_alive",
+          "items": {
+            "_send_to": {
+              "type": "sendTo",
+              "label": "test login",
+              "variant": "outlined",
+              "command": "testLogin",
+              "jsonData": "{\"host\": \"${data.api_host}\", \"username\": \"${data.username}\", \"password\": \"${data.password}\"}",
+              "showProcess": false,
+              "useNative": true,
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
             }
+          }
+        },
+        "_login_result": {
+          "type": "panel",
+          "label": "login result",
+          "hidden": "!_alive || (!data._error && !data._login)",
+          "xs": 12,
+          "sm": 12,
+          "md": 12,
+          "lg": 12,
+          "xl": 12,
+          "items": {
+            "_header_login_result": {
+              "type": "header",
+              "size": 2,
+              "text": "login result"
+            },
+            "_error": {
+              "type": "text",
+              "label": "result",
+              "readOnly": true,
+              "doNotSave": true,
+              "text": "Login failed.",
+              "hidden": "!data._error",
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            },
+            "_success": {
+              "type": "text",
+              "label": "result",
+              "readOnly": true,
+              "doNotSave": true,
+              "default": "Successfully logged in.",
+              "hidden": "!data._login || data._error",
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            },
+            "_login": {
+              "type": "text",
+              "label": "login",
+              "readOnly": true,
+              "doNotSave": true,
+              "hidden": "true",
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            }
+          }
         }
+      }
+    },
+    "historyTab": {
+      "type": "panel",
+      "label": "event history",
+      "items": {
+        "_header_history": {
+          "type": "header",
+          "size": 2,
+          "text": "event history"
+        },
+        "history_json_enable": {
+          "type": "checkbox",
+          "label": "enable JSON event history",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 6,
+          "xl": 6
+        },
+        "history_json_entries": {
+          "type": "number",
+          "label": "number of items",
+          "min": 1,
+          "max": 25,
+          "step": 1,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 6,
+          "xl": 6
+        },
+        "history_enable": {
+          "type": "checkbox",
+          "label": "enable event history as data points (deprecated)",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 6,
+          "xl": 6
+        },
+        "history_entries": {
+          "type": "number",
+          "label": "number of items",
+          "min": 1,
+          "max": 25,
+          "step": 1,
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 6,
+          "xl": 6
+        }
+      }
+    },
+    "batteryTab": {
+      "type": "panel",
+      "label": "battery voltages",
+      "items": {
+        "sureflapPanel": {
+          "type": "panel",
+          "label": "Sureflap",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4,
+          "items": {
+            "_header_sureflap": {
+              "type": "header",
+              "size": 2,
+              "text": "Sureflap"
+            },
+            "sureflap_battery_full": {
+              "type": "number",
+              "label": "battery voltage full",
+              "newLine": true,
+              "min": 1,
+              "max": 10,
+              "step": 0.1,
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            },
+            "sureflap_battery_empty": {
+              "type": "number",
+              "label": "battery voltage empty",
+              "newLine": true,
+              "min": 1,
+              "max": 10,
+              "step": 0.1,
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            }
+          }
+        },
+        "surefeedPanel": {
+          "type": "panel",
+          "label": "Surefeed",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4,
+          "items": {
+            "_header_surefeed": {
+              "type": "header",
+              "size": 2,
+              "text": "Surefeed"
+            },
+            "surefeed_battery_full": {
+              "type": "number",
+              "label": "battery voltage full",
+              "newLine": true,
+              "min": 1,
+              "max": 10,
+              "step": 0.1,
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            },
+            "surefeed_battery_empty": {
+              "type": "number",
+              "label": "battery voltage empty",
+              "newLine": true,
+              "min": 1,
+              "max": 10,
+              "step": 0.1,
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            }
+          }
+        },
+        "felaquaPanel": {
+          "type": "panel",
+          "label": "Felaqua",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 4,
+          "xl": 4,
+          "items": {
+            "_header_felaqua": {
+              "type": "header",
+              "size": 2,
+              "text": "Felaqua"
+            },
+            "felaqua_battery_full": {
+              "type": "number",
+              "label": "battery voltage full",
+              "newLine": true,
+              "min": 1,
+              "max": 10,
+              "step": 0.1,
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            },
+            "felaqua_battery_empty": {
+              "type": "number",
+              "label": "battery voltage empty",
+              "newLine": true,
+              "min": 1,
+              "max": 10,
+              "step": 0.1,
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
+            }
+          }
+        }
+      }
     }
+  }
 }

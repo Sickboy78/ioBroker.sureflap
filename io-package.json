@@ -1,8 +1,47 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "2.3.1",
+    "version": "3.0.0",
     "news": {
+      "3.0.0": {
+        "en": "adaptions and refactoring for latest API version",
+        "de": "Anpassungen und Refactoring für die neueste API-Version",
+        "ru": "Слава Украины",
+        "pt": "adaptações e refacções para a versão mais recente da API",
+        "nl": "aanpassingen en refactoring voor de nieuwste API-versie",
+        "fr": "adaptations et remaniements pour la dernière version de l'API",
+        "it": "adattamenti e refactoring per l'ultima versione dell'API",
+        "es": "adaptaciones y refactorizaciones para la última versión de la API",
+        "pl": "adaptacje i refaktoryzacja dla najnowszej wersji API",
+        "uk": "адаптація та рефакторинг для останньої версії API",
+        "zh-cn": "针对最新的应用程序接口版本进行调整和重构"
+      },
+      "2.3.3": {
+        "en": "minor bugfix",
+        "de": "kleinere Fehlerbehebung",
+        "ru": "Слава Украины",
+        "pt": "pequena correção de erros",
+        "nl": "kleine bugfix",
+        "fr": "correction d'un bug mineur",
+        "it": "correzione di un bug minore",
+        "es": "corrección de errores menores",
+        "pl": "drobna poprawka błędu",
+        "uk": "незначне виправлення",
+        "zh-cn": "小故障修复"
+      },
+      "2.3.2": {
+        "en": "quick fix for api changes",
+        "de": "schneller Fix für API Änderungen",
+        "ru": "Слава Украины",
+        "pt": "correção rápida para alterações da API",
+        "nl": "snelle oplossing voor api-wijzigingen",
+        "fr": "correction rapide des changements d'api",
+        "it": "soluzione rapida per le modifiche all'API",
+        "es": "solución rápida para los cambios de api",
+        "pl": "Szybka poprawka dla zmian api",
+        "uk": "швидке виправлення змін в api",
+        "zh-cn": "快速更改 api"
+      },
       "2.3.1": {
         "en": "improved responsive design of admin page",
         "de": "verbessertes responsives Design der Admin-Seite",
@@ -41,45 +80,6 @@
         "pl": "Nowe punkty danych dla automatycznego podajnika i dystrybutora wody",
         "uk": "Нові дані для автоматичної годівниці та дозатора води",
         "zh-cn": "自动喂料机和饮水机的新数据点"
-      },
-      "2.2.0": {
-        "en": "new JSON states for history and curfew",
-        "de": "neue JSON Zustände für Chronik und Ausgangssperre",
-        "ru": "Слава Украины",
-        "pt": "novos estados JSON para a crónica e o recolher obrigatório",
-        "nl": "nieuwe JSON-staten voor kroniek en avondklok",
-        "fr": "nouveaux états JSON pour l'historique et le couvre-feu",
-        "it": "nuovi stati JSON per cronaca e coprifuoco",
-        "es": "nuevos estados JSON para crónica y toque de queda",
-        "pl": "nowe stany JSON dla kroniki i godziny policyjnej",
-        "uk": "нові JSON-стани для хроніки та комендантської години",
-        "zh-cn": "为编年史和宵禁新增 JSON 状态"
-      },
-      "2.1.2": {
-        "en": "dependency updates",
-        "de": "Aktualisierungen der Abhängigkeiten",
-        "ru": "Слава Украины",
-        "pt": "actualizações de dependências",
-        "nl": "afhankelijkheidsupdates",
-        "fr": "mises à jour de la dépendance",
-        "it": "aggiornamenti sulla dipendenza",
-        "es": "actualizaciones de dependencia",
-        "pl": "aktualizacje zależności",
-        "uk": "оновлення залежностей",
-        "zh-cn": "依赖性更新"
-      },
-      "2.1.1": {
-        "en": "bugfix",
-        "de": "Fehlerbehebung",
-        "ru": "Слава Украины",
-        "pt": "correção de erros",
-        "nl": "bugfix",
-        "fr": "correction de bogues",
-        "it": "correzione del bug",
-        "es": "corrección de errores",
-        "pl": "poprawka błędu",
-        "uk": "виправлення помилки",
-        "zh-cn": "错误修正"
       }
     },
     "titleLang": {
@@ -125,6 +125,7 @@
     "platform": "Javascript/Node.js",
     "icon": "sureflap.png",
     "enabled": true,
+    "messagebox": true,
     "extIcon": "https://raw.githubusercontent.com/Sickboy78/ioBroker.sureflap/master/admin/sureflap.png",
     "readme": "https://github.com/Sickboy78/ioBroker.sureflap/blob/master/README.md",
     "loglevel": "info",
@@ -135,7 +136,7 @@
     "connectionType": "cloud",
     "dataSource": "poll",
     "adminUI": {
-      "config": "materialize"
+      "config": "json"
     },
     "dependencies": [
       {
@@ -249,6 +250,19 @@
         "read": true,
         "write": false,
         "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.offline_devices",
+      "type": "state",
+      "common": {
+        "role": "indicator.maintenance.unreach",
+        "name": "list of offline devices",
+        "type": "string",
+        "read": true,
+        "write": false,
+        "def": ""
       },
       "native": {}
     },

@@ -5,6 +5,12 @@
     "battery voltages": "Batteriespannungen",
     "password": "Passwort",
     "sure petcare account": "Sure Petcare Konto",
-    "sureflap adapter settings": "Adaptereinstellungen für sureflap",
-    "username": "Login"
+    "username": "Login",
+    "api_host": "API Hostname",
+    "login result": "Ergebnis der Anmeldung",
+    "result": "Ergebnis",
+    "event history": "Ereignisverlauf",
+    "enable JSON event history": "JSON Ereignisverlauf aktivieren",
+    "enable event history as data points (deprecated)": "Ereignisverlauf als Datenpunkte aktivieren (veraltet)",
+    "number of items": "Anzahl Einträge"
 }
