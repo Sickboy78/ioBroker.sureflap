@@ -51,7 +51,12 @@
               "command": "testLogin",
               "jsonData": "{\"host\": \"${data.api_host}\", \"username\": \"${data.username}\", \"password\": \"${data.password}\"}",
               "showProcess": false,
-              "useNative": true
+              "useNative": true,
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
             }
           }
         },
@@ -76,7 +81,12 @@
               "readOnly": true,
               "doNotSave": true,
               "text": "Login failed.",
-              "hidden": "!data._error"
+              "hidden": "!data._error",
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
             },
             "_success": {
               "type": "text",
@@ -84,14 +94,24 @@
               "readOnly": true,
               "doNotSave": true,
               "default": "Successfully logged in.",
-              "hidden": "!data._login || data._error"
+              "hidden": "!data._login || data._error",
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
             },
             "_login": {
               "type": "text",
               "label": "login",
               "readOnly": true,
               "doNotSave": true,
-              "hidden": "true"
+              "hidden": "true",
+              "xs": 12,
+              "sm": 12,
+              "md": 12,
+              "lg": 12,
+              "xl": 12
             }
           }
         }
