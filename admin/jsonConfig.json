@@ -17,7 +17,8 @@
           "xs": 12,
           "sm": 12,
           "md": 6,
-          "lg": 4
+          "lg": 4,
+          "xl": 4
         },
         "password": {
           "type": "password",
@@ -26,7 +27,8 @@
           "xs": 12,
           "sm": 12,
           "md": 6,
-          "lg": 4
+          "lg": 4,
+          "xl": 4
         },
         "api_host": {
           "type": "text",
@@ -34,7 +36,8 @@
           "xs": 12,
           "sm": 12,
           "md": 6,
-          "lg": 4
+          "lg": 4,
+          "xl": 4
         },
         "_test_login": {
           "type": "panel",
@@ -56,6 +59,7 @@
           "type": "panel",
           "label": "login result",
           "hidden": "!_alive || (!data._error && !data._login)",
+          "xs": 12,
           "sm": 12,
           "md": 12,
           "lg": 12,
@@ -108,7 +112,8 @@
           "xs": 12,
           "sm": 12,
           "md": 6,
-          "lg": 6
+          "lg": 6,
+          "xl": 6
         },
         "history_json_entries": {
           "type": "number",
@@ -119,7 +124,8 @@
           "xs": 12,
           "sm": 12,
           "md": 6,
-          "lg": 6
+          "lg": 6,
+          "xl": 6
         },
         "history_enable": {
           "type": "checkbox",
@@ -127,7 +133,8 @@
           "xs": 12,
           "sm": 12,
           "md": 6,
-          "lg": 6
+          "lg": 6,
+          "xl": 6
         },
         "history_entries": {
           "type": "number",
@@ -138,7 +145,8 @@
           "xs": 12,
           "sm": 12,
           "md": 6,
-          "lg": 6
+          "lg": 6,
+          "xl": 6
         }
       }
     },
@@ -153,6 +161,7 @@
           "sm": 12,
           "md": 6,
           "lg": 4,
+          "xl": 4,
           "items": {
             "_header_sureflap": {
               "type": "header",
@@ -169,7 +178,8 @@
               "xs": 12,
               "sm": 12,
               "md": 12,
-              "lg": 12
+              "lg": 12,
+              "xl": 12
             },
             "sureflap_battery_empty": {
               "type": "number",
@@ -181,7 +191,8 @@
               "xs": 12,
               "sm": 12,
               "md": 12,
-              "lg": 12
+              "lg": 12,
+              "xl": 12
             }
           }
         },
@@ -192,6 +203,7 @@
           "sm": 12,
           "md": 6,
           "lg": 4,
+          "xl": 4,
           "items": {
             "_header_surefeed": {
               "type": "header",
@@ -208,7 +220,8 @@
               "xs": 12,
               "sm": 12,
               "md": 12,
-              "lg": 12
+              "lg": 12,
+              "xl": 12
             },
             "surefeed_battery_empty": {
               "type": "number",
@@ -220,7 +233,8 @@
               "xs": 12,
               "sm": 12,
               "md": 12,
-              "lg": 12
+              "lg": 12,
+              "xl": 12
             }
           }
         },
@@ -231,6 +245,7 @@
           "sm": 12,
           "md": 6,
           "lg": 4,
+          "xl": 4,
           "items": {
             "_header_felaqua": {
               "type": "header",
@@ -247,7 +262,8 @@
               "xs": 12,
               "sm": 12,
               "md": 12,
-              "lg": 12
+              "lg": 12,
+              "xl": 12
             },
             "felaqua_battery_empty": {
               "type": "number",
@@ -259,7 +275,8 @@
               "xs": 12,
               "sm": 12,
               "md": 12,
-              "lg": 12
+              "lg": 12,
+              "xl": 12
             }
           }
         }
