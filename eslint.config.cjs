@@ -25,7 +25,7 @@ module.exports = [...compat.extends('eslint:recommended'), {
 		},
 
 		ecmaVersion: 2020,
-		sourceType: 'module',
+		sourceType: 'commonjs',
 	},
 
 	rules: {
