@@ -178,7 +178,7 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
-### 3.0.0 (work in progress)
+### 3.0.0 (2025-01-23)
 
 * (Sickboy78) complete refactoring of surepet API
 * (Sickboy78) complete refactoring of internal data structure
