@@ -720,7 +720,7 @@ class Sureflap extends utils.Adapter {
 					}
 				} else {
 					if (!this.warnings[PET_NAME_MISSING][p]) {
-						this.log.warn(`no name found for pet with id '${this.pets[p].id}.`);
+						this.log.warn(`no name found for pet with id '${this.pets[p].id}'.`);
 						this.warnings[PET_NAME_MISSING][p] = true;
 					}
 				}
@@ -1486,7 +1486,7 @@ class Sureflap extends utils.Adapter {
 	setBatteryStatusToAdapter(prefix, hierarchy, hid, deviceIndex) {
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.battery')) {
 			if (!this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex]) {
-				this.log.warn(`no battery data found for '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no battery data found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_BATTERY_DATA_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1499,7 +1499,7 @@ class Sureflap extends utils.Adapter {
 
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.battery_percentage')) {
 			if (!this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex]) {
-				this.log.warn(`no battery percentage data found for '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no battery percentage data found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1522,7 +1522,7 @@ class Sureflap extends utils.Adapter {
 	setSerialNumberToAdapter(prefix, hierarchy, hid, deviceIndex) {
 		if (!this.devices[hid][deviceIndex].serial_number) {
 			if (!this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex]) {
-				this.log.warn(`no serial number found for '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no serial number found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1545,7 +1545,7 @@ class Sureflap extends utils.Adapter {
 	setSignalStrengthToAdapter(prefix, hierarchy, hid, deviceIndex) {
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.signal.device_rssi')) {
 			if (!this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex]) {
-				this.log.warn(`no device rssi found for '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no device rssi found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1558,7 +1558,7 @@ class Sureflap extends utils.Adapter {
 
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.signal.hub_rssi')) {
 			if (!this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex]) {
-				this.log.warn(`no hub rssi found for '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no hub rssi found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1585,7 +1585,7 @@ class Sureflap extends utils.Adapter {
 
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.version.device.hardware')) {
 			if (!this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex]) {
-				this.log.warn(`no hardware version found for '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no hardware version found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1598,7 +1598,7 @@ class Sureflap extends utils.Adapter {
 
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.version.device.firmware')) {
 			if (!this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex]) {
-				this.log.warn(`no firmware version found for '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no firmware version found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_VERSION_NUMBER_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1620,7 +1620,7 @@ class Sureflap extends utils.Adapter {
 	setHubStatusToAdapter(prefix, hid, deviceIndex) {
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.led_mode')) {
 			if (!this.warnings[HUB_LED_MODE_MISSING][deviceIndex]) {
-				this.log.warn(`no led mode found for hub '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no led mode found for hub '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[HUB_LED_MODE_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1633,7 +1633,7 @@ class Sureflap extends utils.Adapter {
 
 		if (!this.devices[hid][deviceIndex].serial_number) {
 			if (!this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex]) {
-				this.log.warn(`no serial number found for hub '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no serial number found for hub '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_SERIAL_NUMBER_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -1656,7 +1656,7 @@ class Sureflap extends utils.Adapter {
 		// online status
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.online')) {
 			if (!this.warnings[DEVICE_ONLINE_STATUS_MISSING][deviceIndex]) {
-				this.log.warn(`no online status found for '${this.devices[hid][deviceIndex].name}.`);
+				this.log.warn(`no online status found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[DEVICE_ONLINE_STATUS_MISSING][deviceIndex] = true;
 			}
 		} else {
@@ -2340,12 +2340,12 @@ class Sureflap extends utils.Adapter {
 						// hardware and firmware version was changed from number to string
 						if (this.hasParentDevice(this.devices[hid][d])) {
 							const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
-							this.log.silly(`checking for version states with type number for device ${objName}.`);
+							this.log.silly(`checking for version states with type number for device '${objName}'.`);
 
 							deletePromiseArray.push(this.removeVersionNumberFromDevices(objName));
 						} else {
 							const objName = prefix + '.' + this.devices[hid][d].name;
-							this.log.silly(`checking for version states with type number for device ${objName}.`);
+							this.log.silly(`checking for version states with type number for device '${objName}'.`);
 
 							deletePromiseArray.push(this.removeVersionNumberFromDevices(objName));
 						}
@@ -2353,7 +2353,7 @@ class Sureflap extends utils.Adapter {
 						// missing parent object of API change on 2023_10_02 created all devices without hierarchy (as hubs)
 						if (this.hasParentDevice(this.devices[hid][d])) {
 							const objName = prefix + '.' + this.devices[hid][d].name;
-							this.log.silly(`checking for non hub devices under household with name ${objName}.`);
+							this.log.silly(`checking for non hub devices under household with name '${objName}'.`);
 
 							// remove non hub devices from top hierarchy
 							deletePromiseArray.push(this.deleteObsoleteObjectWithDeviceIdIfExists(objName, this.devices[hid][d].id, true));
@@ -2362,7 +2362,7 @@ class Sureflap extends utils.Adapter {
 						// hub
 						if (!this.hasParentDevice(this.devices[hid][d])) {
 							const objName = prefix + '.' + this.devices[hid][d].name;
-							this.log.silly(`checking for led_mode for hub ${objName}.`);
+							this.log.silly(`checking for led_mode for hub '${objName}'.`);
 
 							// made led_mode changeable and moved it to control.led_mode
 							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.led_mode', false));
@@ -2371,7 +2371,7 @@ class Sureflap extends utils.Adapter {
 							if (this.devices[hid][d].product_id === DEVICE_TYPE_FEEDER) {
 								// feeding bowl
 								const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
-								this.log.silly(`checking for curfew states for feeder ${objName}.`);
+								this.log.silly(`checking for curfew states for feeder '${objName}'.`);
 
 								// food_type was removed on 2023_10_02
 								// food_type was added again on 2023_10_03
@@ -2391,7 +2391,7 @@ class Sureflap extends utils.Adapter {
 							if (this.devices[hid][d].product_id === DEVICE_TYPE_PET_FLAP) {
 								// pet flap
 								const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
-								this.log.silly(`checking for pet types for pet flap ${objName}.`);
+								this.log.silly(`checking for pet types for pet flap '${objName}'.`);
 
 								// pet flap had pet type control which is an exclusive feature of cat flap
 								if ('tags' in this.devices[hid][d]) {
@@ -4092,8 +4092,14 @@ class Sureflap extends utils.Adapter {
 		this.log.info('surefeed battery voltage empty: ' + this.config.surefeed_battery_empty);
 		this.log.info('felaqua battery voltage full: ' + this.config.felaqua_battery_full);
 		this.log.info('felaqua battery voltage empty: ' + this.config.felaqua_battery_empty);
-		this.log.info('history enabled: ' + this.config.history_enable);
-		this.log.info('number of history entries: ' + this.config.history_entries);
+		this.log.info('json history enabled: ' + this.config.history_json_enable);
+		if (this.config.history_json_enable === true) {
+			this.log.info('number of json history entries: ' + this.config.history_json_entries);
+		}
+		this.log.info('history (deprecated) enabled: ' + this.config.history_enable);
+		if (this.config.history_enable === true) {
+			this.log.info('number of history (deprecated) entries: ' + this.config.history_entries);
+		}
 		if (configOk) {
 			this.log.info('adapter configuration ok');
 		} else {
