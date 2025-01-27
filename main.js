@@ -1174,7 +1174,7 @@ class Sureflap extends utils.Adapter {
 			this.curfewActive = this.isCurfewActive(this.devices[hid][deviceIndex].control.curfew);
 			if (this.curfewActivePrev === undefined || this.curfewActive !== this.curfewActivePrev) {
 				this.setState(prefix + hierarchy + '.' + this.devices[hid][deviceIndex].name + '.curfew_active', this.curfewActive, true);
-				this.log.debug(`changing curfew_active from ${this.curfewActivePrev} to ${this.curfewActive}`);
+				this.log.info(`changing curfew_active from ${this.curfewActivePrev} to ${this.curfewActive}`);
 				this.curfewActivePrev = this.curfewActive;
 			}
 
@@ -3961,7 +3961,7 @@ class Sureflap extends utils.Adapter {
 			const time = new Date();
 			time.setUTCHours(parseInt(timeParts[0]));
 			time.setUTCMinutes(parseInt(timeParts[1]));
-			return time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+			return time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false});
 		} else {
 			return time;
 		}
@@ -3979,7 +3979,7 @@ class Sureflap extends utils.Adapter {
 			const time = new Date();
 			time.setHours(parseInt(timeParts[0]));
 			time.setMinutes(parseInt(timeParts[1]));
-			return time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', timeZone: 'UTC'});
+			return time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', timeZone: 'UTC', hour12: false});
 		} else {
 			return time;
 		}
