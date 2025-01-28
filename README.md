@@ -178,6 +178,11 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
+### 3.0.1 (2025-01-28)
+
+* (Sickboy78) fix for curfew not being 24-hour format
+* (Sickboy78) fix typos in warnings
+
 ### 3.0.0 (2025-01-23)
 
 * (Sickboy78) complete refactoring of surepet API

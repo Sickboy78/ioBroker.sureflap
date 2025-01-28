@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "news": {
+      "3.0.1": {
+        "en": "minor bugfix",
+        "de": "kleinere Fehlerbehebung",
+        "ru": "Слава Украины",
+        "pt": "pequena correção de erros",
+        "nl": "kleine bugfix",
+        "fr": "correction d'un bug mineur",
+        "it": "correzione di un bug minore",
+        "es": "corrección de errores menores",
+        "pl": "drobna poprawka błędu",
+        "uk": "незначне виправлення",
+        "zh-cn": "小故障修复"
+      },
       "3.0.0": {
         "en": "adaptions and refactoring for latest API version",
         "de": "Anpassungen und Refactoring für die neueste API-Version",
@@ -67,19 +80,6 @@
         "pl": "obsługa danych API bardziej odporna na błędy",
         "uk": "обробка даних API більш стійка до помилок",
         "zh-cn": "处理应用程序接口数据的容错能力更强"
-      },
-      "2.2.1": {
-        "en": "new data states for feeder and water dispenser",
-        "de": "neue Zustände für Futterautomat und Wasserspender",
-        "ru": "Слава Украины",
-        "pt": "Novos pontos de dados para o alimentador automático e o distribuidor de água",
-        "nl": "Nieuwe gegevenspunten voor voederautomaat en waterdispenser",
-        "fr": "Nouveaux points de données pour l'alimentation automatique et le distributeur d'eau",
-        "it": "Nuovi punti dati per l'alimentatore automatico e l'erogatore d'acqua",
-        "es": "Nuevos puntos de datos para el alimentador automático y el dispensador de agua",
-        "pl": "Nowe punkty danych dla automatycznego podajnika i dystrybutora wody",
-        "uk": "Нові дані для автоматичної годівниці та дозатора води",
-        "zh-cn": "自动喂料机和饮水机的新数据点"
       }
     },
     "titleLang": {
