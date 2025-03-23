@@ -1055,7 +1055,7 @@ class Sureflap extends utils.Adapter {
 			if (!this.adapterUnloaded) {
 				// update adapter version after fist loop, so we can react to old version
 				if (this.firstLoop) {
-					this.setVersionToAdapter(ADAPTER_VERSION);
+					this.setAdapterVersionToAdapter(ADAPTER_VERSION);
 				}
 				return resolve();
 			} else {
@@ -1069,7 +1069,7 @@ class Sureflap extends utils.Adapter {
 	 *
 	 * @param {string} version
 	 */
-	setVersionToAdapter(version) {
+	setAdapterVersionToAdapter(version) {
 		this.log.silly(`setting adapter version to adapter`);
 
 		/* objects created via io-package.json, no need to create them here */
@@ -1255,7 +1255,7 @@ class Sureflap extends utils.Adapter {
 							this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 						} else {
 							if (!this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING][deviceIndex]) {
-								this.log.warn(`got feeder config data for object '${objName + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+								this.log.warn(`got feeder config data for object '${objName + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored.`);
 								this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 							}
 						}
@@ -1275,7 +1275,8 @@ class Sureflap extends utils.Adapter {
 			// get feeder remaining food data from new bowl_status
 			if (!this.devicesPrev[hid] || !this.objectContainsPath(this.devicesPrev[hid][deviceIndex], 'status.bowl_status') || (JSON.stringify(this.devices[hid][deviceIndex].status.bowl_status) !== JSON.stringify(this.devicesPrev[hid][deviceIndex].status.bowl_status))) {
 				this.log.silly(`Updating remaining food data from bowl_status.`);
-				for (let b = 0; b < this.devices[hid][deviceIndex].status.bowl_status.length; b++) {
+				const bowlCount = this.objectContainsPath(this.devices[hid][deviceIndex], 'control.bowls.type') && this.devices[hid][deviceIndex].control.bowls.type === FEEDER_SINGLE_BOWL ? 1 : this.devices[hid][deviceIndex].status.bowl_status.length;
+				for (let b = 0; b < bowlCount; b++) {
 					this.getObject(objName + '.bowls.' + b, (err, obj) => {
 						if (!err && obj) {
 							if (this.objectContainsPath(this.devices[hid][deviceIndex].status.bowl_status[b], 'current_weight')) {
@@ -1293,7 +1294,7 @@ class Sureflap extends utils.Adapter {
 							this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 						} else {
 							if (!this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex]) {
-								this.log.warn(`got feeder status data for object '${objName + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+								this.log.warn(`got feeder status data for object '${objName + '.bowls.' + b}' but object does not exist. This can happen if number of bowls is changed and can be ignored.`);
 								this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 							}
 						}
@@ -1325,7 +1326,8 @@ class Sureflap extends utils.Adapter {
 				// if datapoint with food data found for this device, write it to adapter
 				if (lastDatapoint !== undefined) {
 					this.log.silly(`Updating remaining food data from sureFlapReport.`);
-					for (let b = 0; b < lastDatapoint.weights.length; b++) {
+
+					for (let b = 0; b < (this.objectContainsPath(lastDatapoint, 'bowl_count') ? lastDatapoint.bowl_count : lastDatapoint.weights.length); b++) {
 						this.getObject(objName + '.bowls.' + lastDatapoint.weights[b].index, (err, obj) => {
 							if (!err && obj) {
 								this.getState(objName + '.bowls.' + lastDatapoint.weights[b].index + '.weight', (err, obj) => {
@@ -1341,14 +1343,14 @@ class Sureflap extends utils.Adapter {
 										this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex] = false;
 									} else {
 										if (!this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex]) {
-											this.log.warn(`got feeder remaining food data for object '${objName}.bowls.${lastDatapoint.weights[b].index}.weight' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+											this.log.warn(`got feeder remaining food data for object '${objName}.bowls.${lastDatapoint.weights[b].index}.weight' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored.`);
 											this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 										}
 									}
 								});
 							} else {
 								if (!this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex]) {
-									this.log.warn(`got feeder remaining food data for object '${objName}.bowls.${lastDatapoint.weights[b].index}' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored. If you did not change number of bowls or remaining food is not updated properly, contact developer.`);
+									this.log.warn(`got feeder remaining food data for object '${objName}.bowls.${lastDatapoint.weights[b].index}' (${b}) but object does not exist. This can happen if number of bowls is changed and can be ignored.`);
 									this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING][deviceIndex] = true;
 								}
 							}
@@ -2029,6 +2031,30 @@ class Sureflap extends utils.Adapter {
 	 ******************************************************/
 
 	/**
+	 * reads adapter version from the adapter
+	 *
+	 * @return {Promise} Promise of a version string
+	 */
+	getAdapterVersionFromAdapter() {
+		return new Promise((resolve, reject) => {
+			this.getStateValueFromAdapter('info.version').then(version => {
+				if (version === undefined || version === null) {
+					this.log.silly(`getting adapter version failed because it was null or empty`);
+					this.log.debug(`last running adapter version is unknown.`);
+					return resolve('unknown');
+				} else {
+					this.log.debug(`last running adapter version is '${version}'.`);
+					return resolve(version);
+				}
+			}).catch(err => {
+				this.log.silly(`getting adapter version failed because '${err}'`);
+				this.log.debug(`last running adapter version is unknown.`);
+				return resolve('unknown');
+			});
+		});
+	}
+
+	/**
 	 * reads curfew data from the adapter
 	 *
 	 * @param {string} objName
@@ -2325,95 +2351,98 @@ class Sureflap extends utils.Adapter {
 	 * removes obsolete data structures from the adapter
 	 * When there are changes to the data structures obsolete entries go here.
 	 *
+	 * @param {String} version a version string in format patch.major.minor or 'unknown'
 	 * @return {Promise}
 	 */
-	removeDeprecatedDataFromAdapter() {
+	removeDeprecatedDataFromAdapter(version) {
 		return /** @type {Promise<void>} */(new Promise((resolve) => {
 			const deletePromiseArray = [];
+
+			if (ADAPTER_VERSION !== version && version !== 'unknown') {
+				this.log.info(`adapter was upgraded from '${version}' to '${ADAPTER_VERSION}'.`);
+			}
 
 			this.log.debug(`searching and removing of obsolete objects`);
 			for (let h = 0; h < this.households.length; h++) {
 				const hid = this.households[h].id;
 				const prefix = this.households[h].name;
-				for (let d = 0; d < this.devices[hid].length; d++) {
-					if (this.devices[hid][d].household_id === this.households[h].id) {
-						// hardware and firmware version was changed from number to string
-						if (this.hasParentDevice(this.devices[hid][d])) {
-							const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
-							this.log.silly(`checking for version states with type number for device '${objName}'.`);
 
-							deletePromiseArray.push(this.removeVersionNumberFromDevices(objName));
-						} else {
-							const objName = prefix + '.' + this.devices[hid][d].name;
-							this.log.silly(`checking for version states with type number for device '${objName}'.`);
-
-							deletePromiseArray.push(this.removeVersionNumberFromDevices(objName));
-						}
-
-						// missing parent object of API change on 2023_10_02 created all devices without hierarchy (as hubs)
-						if (this.hasParentDevice(this.devices[hid][d])) {
-							const objName = prefix + '.' + this.devices[hid][d].name;
-							this.log.silly(`checking for non hub devices under household with name '${objName}'.`);
-
-							// remove non hub devices from top hierarchy
-							deletePromiseArray.push(this.deleteObsoleteObjectWithDeviceIdIfExists(objName, this.devices[hid][d].id, true));
-						}
-
-						// hub
-						if (!this.hasParentDevice(this.devices[hid][d])) {
-							const objName = prefix + '.' + this.devices[hid][d].name;
-							this.log.silly(`checking for led_mode for hub '${objName}'.`);
-
-							// made led_mode changeable and moved it to control.led_mode
-							deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.led_mode', false));
-						} else {
-							// feeding bowl
-							if (this.devices[hid][d].product_id === DEVICE_TYPE_FEEDER) {
-								// feeding bowl
+				if (version === 'unknown' || this.isVersionLessThan(version, "3.0.0")) {
+					// these fixes are only necessary for versions before 3.0.0
+					this.log.debug(`searching and removing of obsolete objects for adapter versions before 3.0.0`);
+					for (let d = 0; d < this.devices[hid].length; d++) {
+						if (this.devices[hid][d].household_id === this.households[h].id) {
+							// hardware and firmware version was changed from number to string
+							if (this.hasParentDevice(this.devices[hid][d])) {
 								const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
-								this.log.silly(`checking for curfew states for feeder '${objName}'.`);
+								this.log.silly(`checking for version states with type number for device '${objName}'.`);
 
-								// food_type was removed on 2023_10_02
-								// food_type was added again on 2023_10_03
-								/*
-								deletePromiseArray.push(this.removeObjectIfExists(objName + '.bowls.0.food_type'));
-								deletePromiseArray.push(this.removeObjectIfExists(objName + '.bowls.1.food_type'));
-								*/
+								deletePromiseArray.push(this.removeVersionNumberFromDevices(objName));
+							} else {
+								const objName = prefix + '.' + this.devices[hid][d].name;
+								this.log.silly(`checking for version states with type number for device '${objName}'.`);
 
-								// feeder had unnecessary attributes of flap
-								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.curfew', true));
-								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.last_curfew', true));
-								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.curfew_active', false));
-								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.control.lockmode', false));
-								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.control.curfew', false));
+								deletePromiseArray.push(this.removeVersionNumberFromDevices(objName));
 							}
-							// pet flap
-							if (this.devices[hid][d].product_id === DEVICE_TYPE_PET_FLAP) {
-								// pet flap
-								const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
-								this.log.silly(`checking for pet types for pet flap '${objName}'.`);
 
-								// pet flap had pet type control which is an exclusive feature of cat flap
-								if ('tags' in this.devices[hid][d]) {
-									for (let t = 0; t < this.devices[hid][d].tags.length; t++) {
-										const name = this.getPetNameForTagId(this.devices[hid][d].tags[t].id);
-										if (name !== undefined) {
-											deletePromiseArray.push(this.removeAssignedPetsFromPetFlap(objName + '.assigned_pets.' + name));
-										} else {
-											this.log.warn(`could not find pet with pet tag id (${this.devices[hid][d].tags[t].id})`);
-											this.log.debug(`pet flap '${objName}' has ${this.devices[hid][d].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
+							// missing parent object of API change on 2023_10_02 created all devices without hierarchy (as hubs)
+							if (this.hasParentDevice(this.devices[hid][d])) {
+								const objName = prefix + '.' + this.devices[hid][d].name;
+								this.log.silly(`checking for non hub devices under household with name '${objName}'.`);
+
+								// remove non hub devices from top hierarchy
+								deletePromiseArray.push(this.deleteObsoleteObjectWithDeviceIdIfExists(objName, this.devices[hid][d].id, true));
+							}
+
+							// hub
+							if (!this.hasParentDevice(this.devices[hid][d])) {
+								const objName = prefix + '.' + this.devices[hid][d].name;
+								this.log.silly(`checking for led_mode for hub '${objName}'.`);
+
+								// made led_mode changeable and moved it to control.led_mode
+								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.led_mode', false));
+							} else {
+								// feeding bowl
+								if (this.devices[hid][d].product_id === DEVICE_TYPE_FEEDER) {
+									// feeding bowl
+									const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
+									this.log.silly(`checking for curfew states for feeder '${objName}'.`);
+
+									// feeder had unnecessary attributes of flap
+									deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.curfew', true));
+									deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.last_curfew', true));
+									deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.curfew_active', false));
+									deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.control.lockmode', false));
+									deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.control.curfew', false));
+								}
+								// pet flap
+								if (this.devices[hid][d].product_id === DEVICE_TYPE_PET_FLAP) {
+									// pet flap
+									const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
+									this.log.silly(`checking for pet types for pet flap '${objName}'.`);
+
+									// pet flap had pet type control which is an exclusive feature of cat flap
+									if ('tags' in this.devices[hid][d]) {
+										for (let t = 0; t < this.devices[hid][d].tags.length; t++) {
+											const name = this.getPetNameForTagId(this.devices[hid][d].tags[t].id);
+											if (name !== undefined) {
+												deletePromiseArray.push(this.removeAssignedPetsFromPetFlap(objName + '.assigned_pets.' + name));
+											} else {
+												this.log.warn(`could not find pet with pet tag id (${this.devices[hid][d].tags[t].id})`);
+												this.log.debug(`pet flap '${objName}' has ${this.devices[hid][d].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
+											}
 										}
 									}
 								}
-							}
 
-							// cat flap and pet flap
-							if (this.devices[hid][d].product_id === DEVICE_TYPE_CAT_FLAP || this.devices[hid][d].product_id === DEVICE_TYPE_PET_FLAP) {
-								// remove deprecated curfew objects
-								const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
-								deletePromiseArray.push(this.deleteObsoleteObjectIfExistsAndHasType(objName + '.curfew', 'channel', true));
-								deletePromiseArray.push(this.deleteObsoleteObjectIfExistsAndHasType(objName + '.last_curfew', 'channel', true));
-								deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(objName + '.control' + '.curfew', false));
+								// cat flap and pet flap
+								if (this.devices[hid][d].product_id === DEVICE_TYPE_CAT_FLAP || this.devices[hid][d].product_id === DEVICE_TYPE_PET_FLAP) {
+									// remove deprecated curfew objects
+									const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
+									deletePromiseArray.push(this.deleteObsoleteObjectIfExistsAndHasType(objName + '.curfew', 'channel', true));
+									deletePromiseArray.push(this.deleteObsoleteObjectIfExistsAndHasType(objName + '.last_curfew', 'channel', true));
+									deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(objName + '.control' + '.curfew', false));
+								}
 							}
 						}
 					}
@@ -2507,7 +2536,8 @@ class Sureflap extends utils.Adapter {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			if (this.firstLoop === true) {
 				this.log.debug(`creating device hierarchy...`);
-				this.removeDeprecatedDataFromAdapter()
+				this.getAdapterVersionFromAdapter()
+					.then(version => this.removeDeprecatedDataFromAdapter(version))
 					.then(() => this.removeDeletedAndRenamedPetsFromAdapter())
 					.then(() => this.createHouseholdsAndHubsToAdapter())
 					.then(() => this.createDevicesToAdapter())
@@ -3058,6 +3088,30 @@ class Sureflap extends utils.Adapter {
 	/******************
 	 * helper methods *
 	 ******************/
+
+	/**
+	 * compares to version strings in format patch.major.minor
+	 *
+	 * @param version a version string
+	 * @param lessThan a version string
+	 * @return {boolean} true, if version is less than lessThan, false otherwise
+	 */
+	isVersionLessThan(version, lessThan) {
+		if (version === undefined || version === null || version === 'unknown' || version.split('.').length < 3) {
+			return false;
+		}
+		if (lessThan === undefined || lessThan === null || lessThan === 'unknown' || lessThan.split('.').length < 3) {
+			return false;
+		}
+		if (version === lessThan) {
+			return false;
+		}
+		const versionObj = version.split('.');
+		const lessThanObj = lessThan.split('.');
+		return parseInt(versionObj[0]) < parseInt(lessThanObj[0]) ||
+			(versionObj[0] === lessThanObj[0] && parseInt(versionObj[1]) < parseInt(lessThanObj[1])) ||
+			(versionObj[0] === lessThanObj[0] && versionObj[1] === lessThanObj[1] && parseInt(versionObj[2]) < parseInt(lessThanObj[2]));
+	}
 
 	/**
 	 * determines offline devices

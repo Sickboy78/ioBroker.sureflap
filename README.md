@@ -178,6 +178,12 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
+### work in progress
+
+* (Sickboy78) improved handling of number of bowls
+* (Sickboy78) added version specific handling of deprecated data
+* (Sickboy78) dependency updates
+
 ### 3.0.1 (2025-01-28)
 
 * (Sickboy78) fix for curfew not being 24-hour format
