@@ -145,7 +145,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=4.0.9"
+        "admin": ">=6.17.14"
       }
     ],
     "messages": [
