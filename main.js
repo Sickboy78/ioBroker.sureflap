@@ -2367,7 +2367,7 @@ class Sureflap extends utils.Adapter {
 				const hid = this.households[h].id;
 				const prefix = this.households[h].name;
 
-				if (version === 'unknown' || this.isVersionLessThan(version, "3.0.0")) {
+				if (version === 'unknown' || this.isVersionLessThan(version, '3.0.0')) {
 					// these fixes are only necessary for versions before 3.0.0
 					this.log.debug(`searching and removing of obsolete objects for adapter versions before 3.0.0`);
 					for (let d = 0; d < this.devices[hid].length; d++) {
