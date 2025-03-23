@@ -2036,7 +2036,7 @@ class Sureflap extends utils.Adapter {
 	 * @return {Promise} Promise of a version string
 	 */
 	getAdapterVersionFromAdapter() {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			this.getStateValueFromAdapter('info.version').then(version => {
 				if (version === undefined || version === null) {
 					this.log.silly(`getting adapter version failed because it was null or empty`);
