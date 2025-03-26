@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "3.0.1",
+    "version": "3.1.0",
     "news": {
+      "3.1.0": {
+        "en": "improved data handling",
+        "de": "verbesserte Datenverarbeitung",
+        "ru": "Слава Украины",
+        "pt": "tratamento de dados melhorado",
+        "nl": "verbeterde dataverwerking",
+        "fr": "amélioration du traitement des données",
+        "it": "migliore gestione dei dati",
+        "es": "tratamiento de datos mejorado",
+        "pl": "ulepszona obsługa danych",
+        "uk": "покращена обробка даних",
+        "zh-cn": "改进数据处理"
+      },
       "3.0.1": {
         "en": "minor bugfix",
         "de": "kleinere Fehlerbehebung",
@@ -67,19 +80,6 @@
         "pl": "Ulepszony responsywny wygląd strony administratora",
         "uk": "покращено адаптивний дизайн сторінки адміністратора",
         "zh-cn": "改进了管理页面的响应式设计"
-      },
-      "2.3.0": {
-        "en": "handling of API data more error-tolerant",
-        "de": "fehlertolerantere Verarbeitung von API-Daten",
-        "ru": "Слава Украины",
-        "pt": "tratamento de dados API mais tolerante a erros",
-        "nl": "fouttolerantere afhandeling van API-gegevens",
-        "fr": "traitement des données de l'API plus tolérant aux erreurs",
-        "it": "gestione dei dati API più tollerante agli errori",
-        "es": "manejo de los datos de la API más tolerante a errores",
-        "pl": "obsługa danych API bardziej odporna na błędy",
-        "uk": "обробка даних API більш стійка до помилок",
-        "zh-cn": "处理应用程序接口数据的容错能力更强"
       }
     },
     "titleLang": {

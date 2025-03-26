@@ -178,7 +178,7 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
-### work in progress
+### 3.1.0 (2025-03-26)
 
 * (Sickboy78) improved handling of number of bowls
 * (Sickboy78) added version specific handling of deprecated data
