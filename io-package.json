@@ -3,6 +3,19 @@
     "name": "sureflap",
     "version": "3.1.0",
     "news": {
+      "3.1.1": {
+        "en": "prevent log spam from missing rssi",
+        "de": "Verhinderung von Log-Spam durch fehlende rssi",
+        "ru": "Слава Украины",
+        "pt": "impedir o spam de registos por falta de rssi",
+        "nl": "voorkom log spam door ontbrekende rssi",
+        "fr": "empêcher le spam de logs en cas d'absence de rssi",
+        "it": "prevenire lo spam dei log a causa di rssi mancanti",
+        "es": "evitar el spam de registro de rssi falta",
+        "pl": "Zapobieganie spamowi w dzienniku z powodu braku rssi",
+        "uk": "запобігання спаму в журналах, що не пропускає rssi",
+        "zh-cn": "防止因缺少 rssi 而产生垃圾日志"
+      },
       "3.1.0": {
         "en": "improved data handling",
         "de": "verbesserte Datenverarbeitung",
@@ -67,19 +80,6 @@
         "pl": "Szybka poprawka dla zmian api",
         "uk": "швидке виправлення змін в api",
         "zh-cn": "快速更改 api"
-      },
-      "2.3.1": {
-        "en": "improved responsive design of admin page",
-        "de": "verbessertes responsives Design der Admin-Seite",
-        "ru": "Слава Украины",
-        "pt": "design responsivo melhorado da página de administração",
-        "nl": "verbeterd responsief ontwerp van adminpagina",
-        "fr": "amélioration de la conception réactive de la page d'administration",
-        "it": "migliorato il design reattivo della pagina di amministrazione",
-        "es": "mejora del diseño adaptativo de la página de administración",
-        "pl": "Ulepszony responsywny wygląd strony administratora",
-        "uk": "покращено адаптивний дизайн сторінки адміністратора",
-        "zh-cn": "改进了管理页面的响应式设计"
       }
     },
     "titleLang": {
