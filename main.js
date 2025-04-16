@@ -1555,7 +1555,8 @@ class Sureflap extends utils.Adapter {
 				const objName = prefix + hierarchy + '.' + this.devices[hid][deviceIndex].name + '.signal' + '.device_rssi';
 				this.setState(objName, this.devices[hid][deviceIndex].status.signal.device_rssi, true);
 			}
-			this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = false;
+			// API randomly does not return rssi -> do not reset warning until API is fixed or logs will be spammed
+			//this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = false;
 		}
 
 		if (!this.objectContainsPath(this.devices[hid][deviceIndex], 'status.signal.hub_rssi')) {
@@ -1568,7 +1569,8 @@ class Sureflap extends utils.Adapter {
 				const objName = prefix + hierarchy + '.' + this.devices[hid][deviceIndex].name + '.signal' + '.hub_rssi';
 				this.setState(objName, this.devices[hid][deviceIndex].status.signal.hub_rssi, true);
 			}
-			this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = false;
+			// API randomly does not return rssi -> do not reset warning until API is fixed or logs will be spammed
+			//this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING][deviceIndex] = false;
 		}
 	}
 
