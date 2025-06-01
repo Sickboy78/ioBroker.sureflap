@@ -19,7 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const util = require('util');
 const SurepetApi = require('./lib/surepet-api');
 
-const ADAPTER_VERSION = '3.1.1';
+const ADAPTER_VERSION = '3.2.0';
 
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
@@ -308,41 +308,48 @@ class Sureflap extends utils.Adapter {
 				if (this.isFlapControl(l)) {
 					// change in control section of sureflap
 					const hierarchy = l.slice(2, l.length - 2).join('.');
-					const device = l[4];
+					const deviceName = l[4];
 					const control = l[l.length - 1];
 
 					if (control === 'curfew_enabled') {
-						this.changeCurfewEnabled(hierarchy, device, state.val === true);
+						this.changeCurfewEnabled(hierarchy, deviceName, state.val === true);
 					} else if (control === 'lockmode' && typeof (state.val) === 'number') {
-						this.changeFlapLockMode(hierarchy, device, state.val);
+						this.changeFlapLockMode(hierarchy, deviceName, state.val);
 					} else if (control === 'current_curfew' && typeof (state.val) === 'string') {
-						this.changeCurrentCurfew(hierarchy, device, state.val);
+						this.changeCurrentCurfew(hierarchy, deviceName, state.val);
 					} else if (control === 'type' && typeof (state.val) === 'number') {
-						const tagId = this.getPetTagId(l[l.length - 3]);
-						this.changeFlapPetType(hierarchy, device, tagId, state.val);
+						const petName = l[l.length - 2];
+						const petTagId = this.getPetTagId(petName);
+						this.changeFlapPetType(hierarchy, deviceName, petName, petTagId, state.val);
 					}
 				} else if (this.isFeederControl(l)) {
 					// change in control section of feeder
 					const hierarchy = l.slice(2, l.length - 2).join('.');
-					const device = l[4];
+					const deviceName = l[4];
 					const control = l[l.length - 1];
 
 					if (control === 'close_delay' && typeof (state.val) === 'number') {
-						this.changeFeederCloseDelay(hierarchy, device, state.val);
+						this.changeFeederCloseDelay(hierarchy, deviceName, state.val);
 					}
 				} else if (this.isHubControl(l)) {
 					// change hub led mode
 					const hierarchy = l.slice(2, l.length - 3).join('.');
 					const hub = l[l.length - 3];
 					this.changeHubLedMode(hierarchy, hub, Number(state.val));
+				} else if (this.isPetAssigment(l)) {
+					// change pet assigment to device
+					const hierarchy = l.slice(2, l.length - 3).join('.');
+					const deviceName = l[4];
+					const petName = l[l.length - 2];
+					this.changePetAssigment(hierarchy, deviceName, petName, state.val === true);
 				} else {
 					this.log.warn(`not allowed to change object ${id}`);
 				}
 			} else if (this.isPetLocation(l)) {
 				// change of pet location
 				const hierarchy = l.slice(2, l.length - 3).join('.');
-				const pet = l[l.length - 2];
-				this.changePetLocation(hierarchy, pet, state.val === true);
+				const petName = l[l.length - 2];
+				this.changePetLocation(hierarchy, petName, state.val === true);
 			} else {
 				this.log.warn(`not allowed to change object ${id}`);
 			}
@@ -845,33 +852,33 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * changes the pet type of a flap for a pet (outdoor pet = 2, indoor pet = 3)
+	 * changes the pet type for an assigned pet of a flap (outdoor pet = 2, indoor pet = 3)
 	 *
 	 * @param {string} hierarchy
 	 * @param {string} flapName
-	 * @param {number} petTag
+	 * @param {string} petName
+	 * @param {number} petTagId
 	 * @param {number} value
 	 */
-	changeFlapPetType(hierarchy, flapName, petTag, value) {
+	changeFlapPetType(hierarchy, flapName, petName, petTagId, value) {
 		const deviceId = this.getDeviceId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 		if (deviceId === -1) {
 			this.log.warn(`could not find device Id for flap: '${flapName}'`);
-			this.resetFlapPetTypeToAdapter(hierarchy, flapName, petTag);
+			this.resetFlapPetTypeToAdapter(hierarchy, flapName, petName, petTagId);
 			return;
 		}
 		if (value < 2 || value > 3) {
 			this.log.warn(`invalid value for pet type: '${value}'`);
-			this.resetFlapPetTypeToAdapter(hierarchy, flapName, petTag);
+			this.resetFlapPetTypeToAdapter(hierarchy, flapName, petName, petTagId);
 			return;
 		}
 
-		const petName = this.getPetNameForTagId(petTag);
 		this.log.debug(`changing pet type of pet '${petName}' for flap '${flapName}' to '${value}' ...`);
-		this.api.setPetTypeForFlapAndPet(this.authToken, deviceId, petTag, value).then(() => {
+		this.api.setPetTypeForFlapAndPet(this.authToken, deviceId, petTagId, value).then(() => {
 			this.log.info(`pet type of pet '${petName}' for flap '${flapName}' changed to '${value}'`);
 		}).catch(err => {
 			this.log.error(`changing pet type of pet '${petName}' for flap '${flapName}' to '${value}' failed: ${err}`);
-			this.resetFlapPetTypeToAdapter(hierarchy, flapName, petTag);
+			this.resetFlapPetTypeToAdapter(hierarchy, flapName, petName, petTagId);
 		});
 	}
 
@@ -925,6 +932,36 @@ class Sureflap extends utils.Adapter {
 		}).catch(error => {
 			this.log.error(`changing location for pet '${petName}' to '${value ? 'inside' : 'outside'}' failed: ${error}`);
 			this.resetPetLocationToAdapter(hierarchy, petName);
+		});
+	}
+
+	/**
+	 * changes the assigment of a pet for a device (assigned = true, unassigned = false)
+	 *
+	 * @param {string} hierarchy
+	 * @param {string} deviceName
+	 * @param {string} petName
+	 * @param {boolean} value
+	 */
+	changePetAssigment(hierarchy, deviceName, petName, value) {
+		const petTagId = this.getPetTagId(petName);
+		const deviceId = this.getDeviceId(deviceName, []);
+		if (petTagId === -1) {
+			this.log.warn(`could not find pet tag Id for pet: '${petName}'`);
+			this.resetPetAssigmentToAdapter(hierarchy, deviceName, petName);
+			return;
+		} else if (deviceId === -1) {
+			this.log.warn(`could not find device Id for pet: '${deviceName}'`);
+			this.resetPetAssigmentToAdapter(hierarchy, deviceName, petName);
+			return;
+		}
+
+		this.log.debug(`changing assigment of pet '${petName}' for '${deviceName}' to '${value ? 'assigned' : 'unassigned'}' ...`);
+		this.api.setPetAssignmentForDevice(this.authToken, deviceId, petTagId, value).then(() => {
+			this.log.info(`assigment of pet '${petName}' for '${deviceName}' changed to '${value ? 'assigned' : 'unassigned'}'`);
+		}).catch(error => {
+			this.log.error(`changing assigment of pet '${petName}' for '${deviceName}' to '${value ? 'assigned' : 'unassigned'}' failed: ${error}`);
+			this.resetPetAssigmentToAdapter(hierarchy, deviceName, petName);
 		});
 	}
 
@@ -1186,25 +1223,55 @@ class Sureflap extends utils.Adapter {
 			}
 		}
 
-		// assigned pets type
+		// pets assigned status
+		for (let p = 0; p < this.pets.length; p++) {
+			const objName = prefix + hierarchy + '.' + this.devices[hid][deviceIndex].name + '.control.pets.';
+			this.setPetAssignedStatusToAdapter(hid, deviceIndex, objName, this.pets[p]);
+		}
+
 		if (isCatFlap) {
+			// assigned pets type
 			if (this.objectContainsPath(this.devices[hid][deviceIndex], 'tags') && Array.isArray(this.devices[hid][deviceIndex].tags)) {
+				// update type for all assigned pets
 				for (let t = 0; t < this.devices[hid][deviceIndex].tags.length; t++) {
-					if (!this.devicesPrev[hid] || !this.devicesPrev[hid][deviceIndex].tags[t] || !this.devicesPrev[hid][deviceIndex].tags[t].profile || (this.devices[hid][deviceIndex].tags[t].profile !== this.devicesPrev[hid][deviceIndex].tags[t].profile)) {
-						const name = this.getPetNameForTagId(this.devices[hid][deviceIndex].tags[t].id);
-						if (name !== undefined) {
-							const objName = prefix + hierarchy + '.' + this.devices[hid][deviceIndex].name + '.assigned_pets.' + name + '.control' + '.type';
-							try {
-								this.setState(objName, this.devices[hid][deviceIndex].tags[t].profile, true);
-							} catch (error) {
-								this.log.error(`could not set pet type to adapter (${error})`);
-							}
+					const name = this.getPetNameForTagId(this.devices[hid][deviceIndex].tags[t].id);
+					if (name !== undefined) {
+						const objName = prefix + hierarchy + '.' + this.devices[hid][deviceIndex].name + '.control.pets.' + name + '.type';
+						if (this.hasPetAssignedChanged(hid, deviceIndex, this.devices[hid][deviceIndex].tags[t].id)) {
+							// create type status first
+							this.setObjectNotExists(objName, this.buildStateObject('pet type', 'switch.mode.type', 'number', false, {
+								2: 'OUTDOOR PET',
+								3: 'INDOOR PET'
+							}), () => {
+								try {
+									this.setState(objName, this.devices[hid][deviceIndex].tags[t].profile, true);
+								} catch (error) {
+									this.log.error(`could not set pet type to adapter (${error})`);
+								}
+							});
 						} else {
-							this.log.warn(`could not find pet with pet tag id (${this.devices[hid][deviceIndex].tags[t].id})`);
-							this.log.debug(`cat flap '${this.devices[hid][deviceIndex].name}' has ${this.devices[hid][deviceIndex].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
+							if (!this.devicesPrev[hid] || !this.devicesPrev[hid][deviceIndex].tags[t] || !this.devicesPrev[hid][deviceIndex].tags[t].profile || (this.devices[hid][deviceIndex].tags[t].profile !== this.devicesPrev[hid][deviceIndex].tags[t].profile)) {
+								try {
+									this.setState(objName, this.devices[hid][deviceIndex].tags[t].profile, true);
+								} catch (error) {
+									this.log.error(`could not set pet type to adapter (${error})`);
+								}
+							}
 						}
+					} else {
+						this.log.warn(`could not find pet with pet tag id (${this.devices[hid][deviceIndex].tags[t].id})`);
+						this.log.debug(`cat flap '${this.devices[hid][deviceIndex].name}' has ${this.devices[hid][deviceIndex].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
 					}
 				}
+
+				// remove type for all unassigned pets
+				for (let p = 0; p < this.pets.length; p++) {
+					if (this.hasPetAssignedChanged(hid, deviceIndex, this.pets[p].tag_id) && !this.doesTagsArrayContainTagId(this.devices[hid][deviceIndex].tags, this.pets[p].tag_id)) {
+						const objName = prefix + hierarchy + '.' + this.devices[hid][deviceIndex].name + '.control.pets.' + this.pets[p].name + '.type';
+						this.deleteObjectFormAdapterIfExists(objName, false);
+					}
+				}
+
 				this.warnings[CAT_FLAP_PET_TYPE_DATA_MISSING][deviceIndex] = false;
 			} else {
 				if (!this.warnings[CAT_FLAP_PET_TYPE_DATA_MISSING][deviceIndex]) {
@@ -1238,6 +1305,11 @@ class Sureflap extends utils.Adapter {
 				this.log.warn(`no close delay setting found for '${this.devices[hid][deviceIndex].name}'.`);
 				this.warnings[FEEDER_CLOSE_DELAY_DATA_MISSING][deviceIndex] = true;
 			}
+		}
+
+		// pets assigned status
+		for (let p = 0; p < this.pets.length; p++) {
+			this.setPetAssignedStatusToAdapter(hid, deviceIndex, objName + '.control.pets.', this.pets[p]);
 		}
 
 		// feeder config
@@ -1379,6 +1451,11 @@ class Sureflap extends utils.Adapter {
 	setWaterDispenserConnectToAdapter(prefix, hierarchy, hid, deviceIndex) {
 		const objName = prefix + hierarchy + '.' + this.devices[hid][deviceIndex].name;
 
+		// pets assigned status
+		for (let p = 0; p < this.pets.length; p++) {
+			this.setPetAssignedStatusToAdapter(hid, deviceIndex, objName + '.control.pets.', this.pets[p]);
+		}
+
 		// water dispenser remaining water data
 		if (this.objectContainsPath(this.devices[hid][deviceIndex], 'status.bowl_status') && Array.isArray(this.devices[hid][deviceIndex].status.bowl_status)) {
 			// get feeder remaining food data from new bowl_status
@@ -1464,6 +1541,42 @@ class Sureflap extends utils.Adapter {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Sets the assigned status of a pet for the given device.
+	 *
+	 * @param {number} hid a household id
+	 * @param {number} deviceIndex
+	 * @param {string} objName
+	 * @param {object} pet
+	 */
+	setPetAssignedStatusToAdapter(hid, deviceIndex, objName, pet) {
+		if (pet !== undefined && pet.name !== undefined && pet.tag_id !== undefined) {
+			if (this.objectContainsPath(this.devices[hid][deviceIndex], 'tags') && this.doesTagsArrayContainTagId(this.devices[hid][deviceIndex].tags, pet.tag_id)) {
+				if (!this.devicesPrev[hid] || !this.devicesPrev[hid][deviceIndex] || !this.objectContainsPath(this.devicesPrev[hid][deviceIndex], 'tags') || !this.doesTagsArrayContainTagId(this.devicesPrev[hid][deviceIndex].tags, pet.tag_id)) {
+					this.setState(objName + pet.name + '.assigned', true, true);
+				}
+			} else if (!this.devicesPrev[hid] || !this.devicesPrev[hid][deviceIndex] || !this.objectContainsPath(this.devicesPrev[hid][deviceIndex], 'tags') || this.doesTagsArrayContainTagId(this.devicesPrev[hid][deviceIndex].tags, pet.tag_id)) {
+				this.setState(objName + pet.name + '.assigned', false, true);
+			}
+		}
+	}
+
+	/**
+	 * Returns whether the assigned state of the pet for the device has changed.
+	 *
+	 * @param {number} hid a household id
+	 * @param {number} deviceIndex
+	 * @param {number} tagId of a pet
+	 */
+	hasPetAssignedChanged(hid, deviceIndex, tagId) {
+		if (this.objectContainsPath(this.devices[hid][deviceIndex], 'tags') && this.devicesPrev && this.devicesPrev[hid] && this.devicesPrev[hid][deviceIndex] && this.objectContainsPath(this.devicesPrev[hid][deviceIndex], 'tags')) {
+			if (this.doesTagsArrayContainTagId(this.devices[hid][deviceIndex].tags, tagId) !== this.doesTagsArrayContainTagId(this.devicesPrev[hid][deviceIndex].tags, tagId)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1917,11 +2030,12 @@ class Sureflap extends utils.Adapter {
 	 *
 	 * @param {string} hierarchy
 	 * @param {string} flapName
+	 * @param {string} petName
 	 * @param {number} petTag
 	 */
-	resetFlapPetTypeToAdapter(hierarchy, flapName, petTag) {
-		const petName = this.getPetNameForTagId(petTag) !== undefined ? this.getPetNameForTagId(petTag) : 'undefined';
+	resetFlapPetTypeToAdapter(hierarchy, flapName, petName, petTag) {
 		const device = this.getDeviceIndexAndHouseholdId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+
 		if (device !== undefined) {
 			const deviceIndex = device.index;
 			const hid = device.householdId;
@@ -1930,7 +2044,7 @@ class Sureflap extends utils.Adapter {
 			if (tagIndex !== -1 && this.objectContainsPath(this.devices[hid][deviceIndex].tags[tagIndex], 'profile')) {
 				const value = this.devices[hid][deviceIndex].tags[tagIndex].profile;
 				this.log.debug(`resetting control pet type for ${flapName} and ${petName} to: ${value}`);
-				this.setState(hierarchy + '.control' + '.type', value, true);
+				this.setState(hierarchy + '.' + petName + '.type', value, true);
 			} else {
 				this.log.warn(`can not reset pet type for device '${flapName}' and pet '${petName}' because there is no previous value`);
 			}
@@ -1977,6 +2091,25 @@ class Sureflap extends utils.Adapter {
 			this.setState(hierarchy + '.pets.' + petName + '.inside', value, true);
 		} else {
 			this.log.warn(`can not reset pet inside for '${petName}' because there is no previous value`);
+		}
+	}
+
+	/**
+	 * resets the pet assigment adapter value to the state value
+	 *
+	 * @param {string} hierarchy
+	 * @param {string} deviceName
+	 * @param {string} petName
+	 */
+	resetPetAssigmentToAdapter(hierarchy, deviceName, petName) {
+		const device = this.getDeviceIndexAndHouseholdId(deviceName, []);
+		const petTagId = this.getPetTagId(petName);
+		if (device && petTagId !== -1 && this.devices && Array.isArray(this.devices[device.householdId]) && this.objectContainsPath(this.devices[device.householdId][device.index], 'tags')) {
+			const value = this.doesTagsArrayContainTagId(this.devices[device.householdId][device.index].tags, petTagId);
+			this.log.debug(`resetting pet assigment of ${petName} for '${deviceName}' to: ${value ? 'assigned' : 'unassigned'}`);
+			this.setState(hierarchy + '.pets.' + petName + '.assigned', value, true);
+		} else {
+			this.log.warn(`can not reset pet assignment of '${petName}' for '${deviceName}' because there is no previous value`);
 		}
 	}
 
@@ -2289,9 +2422,9 @@ class Sureflap extends utils.Adapter {
 			const numPets = this.pets.length;
 			const petsChannelNames = [];
 
-			for (let i = 0; i < numPets; i++) {
-				const nameOrg = this.pets[i].name_org;
-				const petId = this.pets[i].id;
+			for (let p = 0; p < numPets; p++) {
+				const nameOrg = this.pets[p].name_org;
+				const petId = this.pets[p].id;
 				petsChannelNames.push('Pet \'' + nameOrg + '\' (' + petId + ')');
 			}
 
@@ -2309,13 +2442,7 @@ class Sureflap extends utils.Adapter {
 						if (this.hasParentDevice(this.devices[hid][d])) {
 							if ([DEVICE_TYPE_FEEDER, DEVICE_TYPE_WATER_DISPENSER, DEVICE_TYPE_PET_FLAP, DEVICE_TYPE_CAT_FLAP].includes(this.devices[hid][d].product_id)) {
 								const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
-
-								let type = 'state';
-								if ([DEVICE_TYPE_CAT_FLAP].includes(this.devices[hid][d].product_id)) {
-									type = 'channel';
-								}
-
-								getObjectsPromiseArray.push(this.getObjectsByPatternAndType(this.name + '.' + this.instance + '.' + objName + '.assigned_pets.*', type, false));
+								getObjectsPromiseArray.push(this.getObjectsByPatternAndType(this.name + '.' + this.instance + '.' + objName + 'control.pets.*', 'channel', false));
 							}
 						}
 					}
@@ -2344,6 +2471,65 @@ class Sureflap extends utils.Adapter {
 				});
 			}).catch(() => {
 				this.log.debug(`searching and removing of deleted and renamed pets failed`);
+				return resolve();
+			});
+		}));
+	}
+
+	/**
+	 * removes type of unassigned pets
+	 *
+	 * @return {Promise}
+	 */
+	removePetTypeOfUnassignedPetsFromAdapter() {
+		return /** @type {Promise<void>} */(new Promise((resolve) => {
+			this.log.debug(`searching and removing of pet type for unassigned pets`);
+
+			const getObjectsPromiseArray = [];
+			const numPets = this.pets.length;
+
+			for (let h = 0; h < this.households.length; h++) {
+				const hid = this.households[h].id;
+				const prefix = this.households[h].name;
+
+				// check for unassigned_pets in devices
+				for (let d = 0; d < this.devices[hid].length; d++) {
+					if (this.devices[hid][d].household_id === this.households[h].id) {
+						// only cat flap supports pet type
+						if (this.hasParentDevice(this.devices[hid][d]) && [DEVICE_TYPE_CAT_FLAP].includes(this.devices[hid][d].product_id)) {
+							const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
+							for (let p = 0; p < numPets; p++) {
+								if (!this.objectContainsPath(this.devices[hid][d], 'tags') || !this.doesTagsArrayContainTagId(this.devices[hid][d].tags, this.pets[p].tag_id)) {
+									getObjectsPromiseArray.push(this.getObjectsByPatternAndType(this.name + '.' + this.instance + '.' + objName + '.control.pets.' + this.pets[p].name + '.type', 'state', false));
+									//deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(objName + '.control.pets.' + this.pets[p].name + '.type', false));
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// wait for all get object promises
+			Promise.all(getObjectsPromiseArray).then((objs) => {
+				const deletePromiseArray = [];
+				objs.forEach((obj) => {
+					if (obj) {
+						Object.keys(obj).forEach((key) => {
+							this.log.debug(`pet type for unassigned pet found (${obj[key]._id}). trying to delete (${obj[key].type})`);
+							deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(obj[key]._id, false));
+						});
+					}
+				});
+				// wait for all delete object promises
+				Promise.all(deletePromiseArray).then(() => {
+					this.log.debug(`searching and removing of pet type for unassigned pets complete`);
+					return resolve();
+				}).catch(() => {
+					this.log.warn(`searching and removing of pet type for unassigned pets failed`);
+					return resolve();
+				});
+			}).catch(() => {
+				this.log.warn(`searching and removing of pet type for unassigned pets failed`);
 				return resolve();
 			});
 		}));
@@ -2449,6 +2635,22 @@ class Sureflap extends utils.Adapter {
 						}
 					}
 				}
+
+				if (version === 'unknown' || this.isVersionLessThan(version, '3.2.0')) {
+					// these fixes are only necessary for versions before 3.2.0
+					this.log.debug(`searching and removing of obsolete objects for adapter versions before 3.2.0`);
+					for (let d = 0; d < this.devices[hid].length; d++) {
+						if (this.devices[hid][d].household_id === this.households[h].id) {
+							if (this.hasParentDevice(this.devices[hid][d])) {
+								// assigned pets moved from .assigned_pets.* to .control.pets.*.assigned
+								const objName = prefix + '.' + this.getParentDeviceName(this.devices[hid][d]) + '.' + this.devices[hid][d].name;
+								this.log.silly(`checking for .assigned_pets.* for device '${objName}'.`);
+								deletePromiseArray.push(this.deleteObsoleteObjectIfExists(objName + '.assigned_pets', true));
+							}
+						}
+					}
+				}
+
 				// deprecated history
 				if (!this.config.history_enable) {
 					for (let h = 0; h < this.households.length; h++) {
@@ -2541,6 +2743,7 @@ class Sureflap extends utils.Adapter {
 				this.getAdapterVersionFromAdapter()
 					.then(version => this.removeDeprecatedDataFromAdapter(version))
 					.then(() => this.removeDeletedAndRenamedPetsFromAdapter())
+					.then(() => this.removePetTypeOfUnassignedPetsFromAdapter())
 					.then(() => this.createHouseholdsAndHubsToAdapter())
 					.then(() => this.createDevicesToAdapter())
 					.then(() => this.createPetsToAdapter())
@@ -2742,7 +2945,7 @@ class Sureflap extends utils.Adapter {
 	createFlapDevicesToAdapter(hid, deviceIndex, objName, isCatFlap) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
-			this.setObjectNotExists(objName, this.buildDeviceObject('Device \'' + this.devices[hid][deviceIndex].name_org + '\' (' + this.devices[hid][deviceIndex].id + ')'), () => {
+			this.setObjectNotExists(objName, this.buildDeviceObject('device \'' + this.devices[hid][deviceIndex].name_org + '\' (' + this.devices[hid][deviceIndex].id + ')'), () => {
 				promiseArray.push(this.setObjectNotExistsPromise(objName + '.last_enabled_curfew', this.buildStateObject('last enabled curfew settings', 'json', 'string')));
 				promiseArray.push(this.setObjectNotExistsPromise(objName + '.curfew_active', this.buildStateObject('if curfew is enabled and currently active', 'indicator')));
 				promiseArray.push(this.createCommonStatusToAdapter(hid, deviceIndex, objName));
@@ -2755,30 +2958,21 @@ class Sureflap extends utils.Adapter {
 					})));
 					promiseArray.push(this.setObjectNotExistsPromise(objName + '.control' + '.curfew_enabled', this.buildStateObject('is curfew enabled', 'switch', 'boolean', false)));
 					promiseArray.push(this.setObjectNotExistsPromise(objName + '.control' + '.current_curfew', this.buildStateObject('current curfew settings', 'json', 'string', false)));
-					this.setObjectNotExists(objName + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
-						if ('tags' in this.devices[hid][deviceIndex]) {
-							for (let t = 0; t < this.devices[hid][deviceIndex].tags.length; t++) {
-								if (isCatFlap) {
-									promiseArray.push(this.createAssignedPetsTypeControl(hid, deviceIndex, t, objName));
-								} else {
-									const id = this.getPetIdForTagId(this.devices[hid][deviceIndex].tags[t].id);
-									const name = this.getPetNameForTagId(this.devices[hid][deviceIndex].tags[t].id);
-									const nameOrg = this.getPetNameOrgForTagId(this.devices[hid][deviceIndex].tags[t].id);
-									if (id !== undefined && name !== undefined && nameOrg !== undefined) {
-										promiseArray.push(this.setObjectNotExistsPromise(objName + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + nameOrg + '\' (\'' + id + '\')', 'text', 'string')));
-									} else {
-										this.log.warn(`could not find pet with pet tag id (${this.devices[hid][deviceIndex].tags[t].id})`);
-										this.log.debug(`pet flap '${this.devices[hid][deviceIndex].name}' has ${this.devices[hid][deviceIndex].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
-									}
-								}
-							}
+
+					for (let p = 0; p < this.pets.length; p++) {
+						promiseArray.push(this.createPetAssignedControl(hid, deviceIndex, this.pets[p], objName));
+					}
+					if (isCatFlap && 'tags' in this.devices[hid][deviceIndex]) {
+						for (let t = 0; t < this.devices[hid][deviceIndex].tags.length; t++) {
+							promiseArray.push(this.createAssignedPetsTypeControl(hid, deviceIndex, t, objName));
 						}
-						Promise.all(promiseArray).then(() => {
-							return resolve();
-						}).catch(error => {
-							this.log.warn(`could not create adapter flap device hierarchy (${error})`);
-							return reject();
-						});
+					}
+
+					Promise.all(promiseArray).then(() => {
+						return resolve();
+					}).catch(error => {
+						this.log.warn(`could not create adapter flap device hierarchy (${error})`);
+						return reject();
 					});
 				});
 			});
@@ -2796,7 +2990,7 @@ class Sureflap extends utils.Adapter {
 	createFeederDevicesToAdapter(hid, deviceIndex, objName) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
-			this.setObjectNotExists(objName, this.buildDeviceObject('Device \'' + this.devices[hid][deviceIndex].name_org + '\' (' + this.devices[hid][deviceIndex].id + ')'), () => {
+			this.setObjectNotExists(objName, this.buildDeviceObject('device \'' + this.devices[hid][deviceIndex].name_org + '\' (' + this.devices[hid][deviceIndex].id + ')'), () => {
 				promiseArray.push(this.createCommonStatusToAdapter(hid, deviceIndex, objName));
 
 				this.setObjectNotExists(objName + '.control', this.buildChannelObject('control switches'), () => {
@@ -2806,71 +3000,52 @@ class Sureflap extends utils.Adapter {
 						20: 'SLOW'
 					})));
 
-					this.setObjectNotExists(objName + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
-						if ('tags' in this.devices[hid][deviceIndex]) {
-							for (let t = 0; t < this.devices[hid][deviceIndex].tags.length; t++) {
-								const id = this.getPetIdForTagId(this.devices[hid][deviceIndex].tags[t].id);
-								const name = this.getPetNameForTagId(this.devices[hid][deviceIndex].tags[t].id);
-								const nameOrg = this.getPetNameOrgForTagId(this.devices[hid][deviceIndex].tags[t].id);
-								if (id !== undefined && name !== undefined && nameOrg !== undefined) {
-									promiseArray.push(this.setObjectNotExistsPromise(objName + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + nameOrg + '\' (' + id + ')', 'text', 'string')));
-								} else {
-									this.log.warn(`could not find pet with pet tag id (${this.devices[hid][deviceIndex].tags[t].id})`);
-									this.log.debug(`feeder '${this.devices[hid][deviceIndex].name}' has ${this.devices[hid][deviceIndex].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
-								}
-							}
+					for (let p = 0; p < this.pets.length; p++) {
+						promiseArray.push(this.createPetAssignedControl(hid, deviceIndex, this.pets[p], objName));
+					}
 
-							this.setObjectNotExists(objName + '.bowls', this.buildChannelObject('feeding bowls'), () => {
-								this.setObjectNotExists(objName + '.bowls.0', this.buildChannelObject('feeding bowl 0'), () => {
-									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.food_type', this.buildStateObject('type of food in bowl', 'value', 'number', true, {
+					this.setObjectNotExists(objName + '.bowls', this.buildChannelObject('feeding bowls'), () => {
+						this.setObjectNotExists(objName + '.bowls.0', this.buildChannelObject('feeding bowl 0'), () => {
+							promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.food_type', this.buildStateObject('type of food in bowl', 'value', 'number', true, {
+								1: 'WET',
+								2: 'DRY'
+							})));
+							promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.target', this.buildStateObject('target weight', 'value', 'number')));
+							promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.weight', this.buildStateObject('weight', 'value', 'number')));
+							promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
+							promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
+							promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.last_zeroed_at', this.buildStateObject('last zeroed at', 'date', 'string')));
+
+							if (this.objectContainsPath(this.devices[hid][deviceIndex], 'control.bowls.type') && this.devices[hid][deviceIndex].control.bowls.type === FEEDER_SINGLE_BOWL) {
+								// remove bowl 1 (e.g. after change from dual to single bowl)
+								promiseArray.push(this.deleteObjectFormAdapterIfExists(objName + '.bowls.1', true));
+								Promise.all(promiseArray).then(() => {
+									return resolve();
+								}).catch(error => {
+									this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
+									return reject();
+								});
+							} else {
+								this.setObjectNotExists(objName + '.bowls.1', this.buildChannelObject('feeding bowl 1'), () => {
+									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.food_type', this.buildStateObject('type of food in bowl', 'value', 'number', true, {
 										1: 'WET',
 										2: 'DRY'
 									})));
-									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.target', this.buildStateObject('target weight', 'value', 'number')));
-									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.weight', this.buildStateObject('weight', 'value', 'number')));
-									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
-									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
-									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.0.last_zeroed_at', this.buildStateObject('last zeroed at', 'date', 'string')));
+									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.target', this.buildStateObject('target weight', 'value', 'number')));
+									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.weight', this.buildStateObject('weight', 'value', 'number')));
+									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
+									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
+									promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.last_zeroed_at', this.buildStateObject('last zeroed at', 'date', 'string')));
 
-									if (this.objectContainsPath(this.devices[hid][deviceIndex], 'control.bowls.type') && this.devices[hid][deviceIndex].control.bowls.type === FEEDER_SINGLE_BOWL) {
-										// remove bowl 1 (e.g. after change from dual to single bowl)
-										promiseArray.push(this.deleteObjectFormAdapterIfExists(objName + '.bowls.1', true));
-										Promise.all(promiseArray).then(() => {
-											return resolve();
-										}).catch(error => {
-											this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
-											return reject();
-										});
-									} else {
-										this.setObjectNotExists(objName + '.bowls.1', this.buildChannelObject('feeding bowl 1'), () => {
-											promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.food_type', this.buildStateObject('type of food in bowl', 'value', 'number', true, {
-												1: 'WET',
-												2: 'DRY'
-											})));
-											promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.target', this.buildStateObject('target weight', 'value', 'number')));
-											promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.weight', this.buildStateObject('weight', 'value', 'number')));
-											promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
-											promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
-											promiseArray.push(this.setObjectNotExistsPromise(objName + '.bowls.1.last_zeroed_at', this.buildStateObject('last zeroed at', 'date', 'string')));
-
-											Promise.all(promiseArray).then(() => {
-												return resolve();
-											}).catch(error => {
-												this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
-												return reject();
-											});
-										});
-									}
+									Promise.all(promiseArray).then(() => {
+										return resolve();
+									}).catch(error => {
+										this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
+										return reject();
+									});
 								});
-							});
-						} else {
-							Promise.all(promiseArray).then(() => {
-								return resolve();
-							}).catch(error => {
-								this.log.warn(`could not create adapter feeder device hierarchy (${error})`);
-								return reject();
-							});
-						}
+							}
+						});
 					});
 				});
 			});
@@ -2888,33 +3063,22 @@ class Sureflap extends utils.Adapter {
 	createWaterDispenserDevicesToAdapter(hid, deviceIndex, objName) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
-			this.setObjectNotExists(objName, this.buildDeviceObject('Device \'' + this.devices[hid][deviceIndex].name_org + '\' (' + this.devices[hid][deviceIndex].id + ')'), () => {
+			this.setObjectNotExists(objName, this.buildDeviceObject('device \'' + this.devices[hid][deviceIndex].name_org + '\' (' + this.devices[hid][deviceIndex].id + ')'), () => {
 				promiseArray.push(this.createCommonStatusToAdapter(hid, deviceIndex, objName));
 
-				this.setObjectNotExists(objName + '.assigned_pets', this.buildChannelObject('assigned pets'), () => {
-					if ('tags' in this.devices[hid][deviceIndex]) {
-						for (let t = 0; t < this.devices[hid][deviceIndex].tags.length; t++) {
-							const id = this.getPetIdForTagId(this.devices[hid][deviceIndex].tags[t].id);
-							const name = this.getPetNameForTagId(this.devices[hid][deviceIndex].tags[t].id);
-							const nameOrg = this.getPetNameOrgForTagId(this.devices[hid][deviceIndex].tags[t].id);
-							if (id !== undefined && name !== undefined && nameOrg !== undefined) {
-								promiseArray.push(this.setObjectNotExistsPromise(objName + '.assigned_pets.' + name, this.buildStateObject('Pet \'' + nameOrg + '\' (' + id + ')', 'text', 'string')));
-							} else {
-								this.log.warn(`could not find pet with pet tag id (${this.devices[hid][deviceIndex].tags[t].id})`);
-								this.log.debug(`water dispenser '${this.devices[hid][deviceIndex].name}' has ${this.devices[hid][deviceIndex].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
-							}
-						}
-					}
-					this.setObjectNotExists(objName + '.water', this.buildChannelObject('remaining water'), () => {
-						promiseArray.push(this.setObjectNotExistsPromise(objName + '.water.weight', this.buildStateObject('weight', 'value', 'number')));
-						promiseArray.push(this.setObjectNotExistsPromise(objName + '.water.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
-						promiseArray.push(this.setObjectNotExistsPromise(objName + '.water.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
-						Promise.all(promiseArray).then(() => {
-							return resolve();
-						}).catch(error => {
-							this.log.warn(`could not create adapter water dispenser device hierarchy (${error})`);
-							return reject();
-						});
+				for (let p = 0; p < this.pets.length; p++) {
+					promiseArray.push(this.createPetAssignedControl(hid, deviceIndex, this.pets[p], objName));
+				}
+
+				this.setObjectNotExists(objName + '.water', this.buildChannelObject('remaining water'), () => {
+					promiseArray.push(this.setObjectNotExistsPromise(objName + '.water.weight', this.buildStateObject('weight', 'value', 'number')));
+					promiseArray.push(this.setObjectNotExistsPromise(objName + '.water.fill_percent', this.buildStateObject('fill percentage', 'value', 'number')));
+					promiseArray.push(this.setObjectNotExistsPromise(objName + '.water.last_filled_at', this.buildStateObject('last filled at', 'date', 'string')));
+					Promise.all(promiseArray).then(() => {
+						return resolve();
+					}).catch(error => {
+						this.log.warn(`could not create adapter water dispenser device hierarchy (${error})`);
+						return reject();
 					});
 				});
 			});
@@ -2922,7 +3086,7 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
-	 * creates assigned pets and their type control for sureflap adapter
+	 * creates an assigned pet and their type control for sureflap adapter
 	 *
 	 * @param {number} hid a household id
 	 * @param {number} deviceIndex
@@ -2936,22 +3100,60 @@ class Sureflap extends utils.Adapter {
 			const name = this.getPetNameForTagId(this.devices[hid][deviceIndex].tags[tag].id);
 			const nameOrg = this.getPetNameOrgForTagId(this.devices[hid][deviceIndex].tags[tag].id);
 			if (id !== undefined && name !== undefined && nameOrg !== undefined) {
-				this.setObjectNotExists(objName + '.assigned_pets.' + name, this.buildChannelObject('Pet \'' + nameOrg + '\' (' + id + ')'), () => {
-					this.setObjectNotExists(objName + '.assigned_pets.' + name + '.control', this.buildChannelObject('control switches'), () => {
-						this.setObjectNotExistsPromise(objName + '.assigned_pets.' + name + '.control' + '.type', this.buildStateObject('pet type', 'switch.mode.type', 'number', false, {
-							2: 'OUTDOOR PET',
-							3: 'INDOOR PET'
-						})).then(() => {
-							return resolve();
-						}).catch(error => {
-							this.log.warn(`could not create adapter flap device assigned pets hierarchy (${error})`);
-							return reject();
+				this.setObjectNotExists(objName + '.control', this.buildChannelObject('control switches'), () => {
+					this.setObjectNotExists(objName + '.control.pets', this.buildChannelObject('pets'), () => {
+						this.setObjectNotExists(objName + '.control.pets.' + name, this.buildChannelObject('pet \'' + nameOrg + '\' (' + id + ')'), () => {
+							this.setObjectNotExistsPromise(objName + '.control.pets.' + name + '.type', this.buildStateObject('pet type', 'switch.mode.type', 'number', false, {
+								2: 'OUTDOOR PET',
+								3: 'INDOOR PET'
+							})).then(() => {
+								return resolve();
+							}).catch(error => {
+								this.log.warn(`could not create adapter flap device assigned pets hierarchy (${error})`);
+								return reject();
+							});
 						});
 					});
 				});
 			} else {
 				this.log.warn(`could not find pet with pet tag id (${this.devices[hid][deviceIndex].tags[tag].id})`);
 				this.log.debug(`cat flap '${this.devices[hid][deviceIndex].name}' has ${this.devices[hid][deviceIndex].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
+				return reject();
+			}
+		}));
+	}
+
+	/**
+	 * creates a pet and their assigned control for sureflap adapter
+	 *
+	 * @param {number} hid a household id
+	 * @param {number} deviceIndex
+	 * @param {object} pet
+	 * @param {string} objName
+	 * @return {Promise}
+	 */
+	createPetAssignedControl(hid, deviceIndex, pet, objName) {
+		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
+			if (pet !== undefined && pet.id !== undefined && pet.name !== undefined && pet.name_org !== undefined) {
+				this.setObjectNotExists(objName + '.control', this.buildChannelObject('control switches'), () => {
+					this.setObjectNotExists(objName + '.control.pets', this.buildChannelObject('pets'), () => {
+						this.setObjectNotExists(objName + '.control.pets.' + pet.name, this.buildChannelObject('pet \'' + pet.name_org + '\' (' + pet.id + ')'), () => {
+							this.setObjectNotExistsPromise(objName + '.control.pets.' + pet.name + '.assigned', this.buildStateObject('is pet assigned to this device', 'switch.mode.assigned', 'boolean', false)).then(() => {
+								return resolve();
+							}).catch(error => {
+								this.log.warn(`could not create adapter flap device control pets hierarchy (${error})`);
+								return reject();
+							});
+						});
+					});
+				});
+			} else {
+				if (pet !== undefined) {
+					this.log.warn(`provided pet has missing data: pet id (${pet.id}), pet name (${pet.name}), pet original name (${pet.name_org})`);
+					this.log.debug(`device '${this.devices[hid][deviceIndex].name}' has ${this.devices[hid][deviceIndex].tags.length} pets assigned and household has ${this.pets.length} pets assigned.`);
+				} else {
+					this.log.warn(`provided pet is undefined.`);
+				}
 				return reject();
 			}
 		}));
@@ -3511,7 +3713,7 @@ class Sureflap extends utils.Adapter {
 			const hid = this.households[h].id;
 
 			for (let i = 0; i < this.devices[hid].length; i++) {
-				if (this.devices[hid][i].name === name && deviceTypes.includes(this.devices[hid][i].product_id)) {
+				if (this.devices[hid][i].name === name && (deviceTypes.length === 0 || deviceTypes.includes(this.devices[hid][i].product_id))) {
 					return this.devices[hid][i].id;
 				}
 			}
@@ -3531,7 +3733,7 @@ class Sureflap extends utils.Adapter {
 			const hid = this.households[h].id;
 
 			for (let d = 0; d < this.devices[hid].length; d++) {
-				if (this.devices[hid][d].name === name && deviceTypes.includes(this.devices[hid][d].product_id)) {
+				if (this.devices[hid][d].name === name && (deviceTypes.length === 0 || deviceTypes.includes(this.devices[hid][d].product_id))) {
 					const device = {};
 					device.index = d;
 					device.householdId = hid;
@@ -3579,6 +3781,24 @@ class Sureflap extends utils.Adapter {
 			}
 		}
 		return undefined;
+	}
+
+	/**
+	 * Returns whether the given tag array contains the given tag id.
+	 *
+	 * @param {Array} tags
+	 * @param {number} tag_id
+	 * @return {boolean}
+	 */
+	doesTagsArrayContainTagId(tags, tag_id) {
+		if (tags !== undefined && Array.isArray(tags) && tag_id !== undefined) {
+			for (let t = 0; t < tags.length; t++) {
+				if (tags[t].id === tag_id) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -3923,7 +4143,7 @@ class Sureflap extends utils.Adapter {
 	 * @returns true, if it is a device control id, false otherwise
 	 */
 	isDeviceControl(idArray) {
-		return idArray.length > 5 && idArray[idArray.length - 2] === 'control';
+		return idArray.length > 5 && (idArray[idArray.length - 2] === 'control' || (idArray[idArray.length - 4] === 'control' && idArray[idArray.length - 3] === 'pets'));
 	}
 
 	/**
@@ -3964,6 +4184,16 @@ class Sureflap extends utils.Adapter {
 	 */
 	isPetLocation(idArray) {
 		return idArray.length > 4 && idArray[idArray.length - 3] === 'pets' && idArray[idArray.length - 1] === 'inside';
+	}
+
+	/**
+	 * Returns whether the array of ids is a pet assigment
+	 *
+	 * @param {Array} idArray an array of ids
+	 * @returns true, if it is a pet assigment id, false otherwise
+	 */
+	isPetAssigment(idArray) {
+		return idArray.length > 7 && idArray[idArray.length - 4] === 'control' && idArray[idArray.length - 3] === 'pets' && idArray[idArray.length - 1] === 'assigned';
 	}
 
 	/**
