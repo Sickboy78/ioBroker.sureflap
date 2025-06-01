@@ -92,9 +92,9 @@ adapter<br>
 │ │ │ │ ├ last_filled_at<br>
 │ │ │ │ └ weight<br>
 │ │ │ └ control<br>
-│ │ │ &nbsp;&nbsp;&nbsp; ├ pets<br>
-│ │ │ &nbsp;&nbsp;&nbsp; │ └ PET_NAME<br>
-│ │ │ &nbsp;&nbsp;&nbsp; │ &nbsp;&nbsp;&nbsp; └ assigned<br>
+│ │ │ &nbsp;&nbsp;&nbsp; └ pets<br>
+│ │ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ PET_NAME<br>
+│ │ │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └ assigned<br>
 │ │ ├ FEEDER_NAME<br>
 │ │ │ ├ battery<br>
 │ │ │ ├ battery_percentage<br>
