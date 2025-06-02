@@ -41,7 +41,7 @@ It also shows the location of your pets and their food and water consumption (wi
 
 It lets you control the lockmode and curfew of your flap and set the location of your pets.
 
-The adapter requires Node 18 or newer.
+The adapter requires Node 20 or newer.
 
 ### Changeable Values
 
