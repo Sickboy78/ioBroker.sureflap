@@ -26,7 +26,7 @@
     "url": "https://github.com/Sickboy78/ioBroker.sureflap"
   },
   "engines": {
-    "node": ">= 18"
+    "node": ">= 20"
   },
   "dependencies": {
     "@iobroker/adapter-core": "^3.2.3"
