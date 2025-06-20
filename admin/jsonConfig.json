@@ -167,6 +167,15 @@
           "md": 6,
           "lg": 6,
           "xl": 6
+        },
+        "unknown_movement_enable": {
+          "type": "checkbox",
+          "label": "enable last movement for unknown pet",
+          "xs": 12,
+          "sm": 12,
+          "md": 6,
+          "lg": 6,
+          "xl": 6
         }
       }
     },

@@ -19,7 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const util = require('util');
 const SurepetApi = require('./lib/surepet-api');
 
-const ADAPTER_VERSION = '3.2.0';
+const ADAPTER_VERSION = '3.2.1';
 
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
@@ -731,6 +731,9 @@ class Sureflap extends utils.Adapter {
 						this.warnings[PET_NAME_MISSING][p] = true;
 					}
 				}
+			}
+			if (this.config.unknown_movement_enable && this.updateHistory) {
+				this.setUnknownPetLastMovementToAdapter();
 			}
 			return resolve();
 		}));
@@ -1930,6 +1933,29 @@ class Sureflap extends utils.Adapter {
 	}
 
 	/**
+	 * sets unknown pet last movement to the adapter
+	 */
+	setUnknownPetLastMovementToAdapter() {
+		for (let h = 0; h < this.households.length; h++) {
+			const hid = this.households[h].id;
+			const prefix = this.households[h].name + '.pets.unknown.movement';
+
+			if (this.historyPrev[hid] === undefined || JSON.stringify(this.history[hid]) !== JSON.stringify(this.historyPrev[hid])) {
+				const movement = this.calculateLastMovementForUnknownPet(hid);
+				if (movement !== undefined && 'last_direction' in movement && 'last_flap' in movement && 'last_flap_id' in movement && 'last_time' in movement) {
+					this.log.silly(`updating last movement for unknown pet with '${JSON.stringify(movement)}'`);
+					this.setState(prefix + '.last_time', movement.last_time, true);
+					this.setState(prefix + '.last_direction', movement.last_direction, true);
+					this.setState(prefix + '.last_flap', movement.last_flap, true);
+					this.setState(prefix + '.last_flap_id', movement.last_flap_id, true);
+				} else {
+					this.log.silly(`history does not contain flap movement for unknown pet`);
+				}
+			}
+		}
+	}
+
+	/**
 	 * sets history event to the adapter
 	 *
 	 * @param {string} prefix
@@ -2667,6 +2693,12 @@ class Sureflap extends utils.Adapter {
 				for (let j = this.config.history_json_entries; j < 25; j++) {
 					deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(this.name + '.' + this.instance + '.' + prefix + '.history.json.' + j, false));
 				}
+
+				// delete unknown pet if unknown pet movement is disabled
+				if (!this.config.unknown_movement_enable) {
+					this.log.silly(`checking for unknown pet movement.`);
+					deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(this.name + '.' + this.instance + '.' + prefix + '.pets.unknown', true));
+				}
 			}
 			Promise.all(deletePromiseArray).then(() => {
 				this.log.debug(`searching and removing of obsolete objects complete`);
@@ -3184,12 +3216,49 @@ class Sureflap extends utils.Adapter {
 					}
 				}
 			}
+			if (this.config.unknown_movement_enable) {
+				for (let h = 0; h < this.households.length; h++) {
+					this.createUnknownPetsToAdapter(this.households[h].id);
+				}
+			} else {
+				Promise.all(promiseArray).then(() => {
+					return resolve();
+				}).catch(() => {
+					this.log.error(`creating pets hierarchy failed.`);
+					return reject();
+				});
+			}
+		}));
+	}
 
-			Promise.all(promiseArray).then(() => {
-				return resolve();
-			}).catch(() => {
-				this.log.error(`creating pets hierarchy failed.`);
-				return reject();
+	/**
+	 * creates unknown pet hierarchy data structures in the adapter
+	 *
+	 * @param {string} hid
+	 * @return {Promise}
+	 */
+	createUnknownPetsToAdapter(hid) {
+		return /** @type {Promise<void>} */(new Promise((resolve) => {
+			const promiseArray = [];
+			const householdName = this.getHouseholdNameForId(hid);
+			const prefix = householdName + '.pets';
+
+			this.setObjectNotExists(prefix, this.buildDeviceObject('Pets in Household ' + householdName), () => {
+				this.setObjectNotExists(prefix + '.unknown', this.buildChannelObject('Unknown Pet (unknown)'), () => {
+					this.setObjectNotExists(prefix + '.unknown' + '.movement', this.buildFolderObject('movement'), () => {
+						promiseArray.push(this.setObjectNotExistsPromise(prefix + '.unknown' + '.movement' + '.last_time', this.buildStateObject('date and time of last movement', 'date', 'string')));
+						promiseArray.push(this.setObjectNotExistsPromise(prefix + '.unknown' + '.movement' + '.last_direction', this.buildStateObject('direction of last movement', 'value', 'number')));
+						promiseArray.push(this.setObjectNotExistsPromise(prefix + '.unknown' + '.movement' + '.last_flap', this.buildStateObject('name of last used flap', 'value', 'string')));
+						promiseArray.push(this.setObjectNotExistsPromise(prefix + '.unknown' + '.movement' + '.last_flap_id', this.buildStateObject('id of last used flap', 'value', 'number')));
+
+						Promise.all(promiseArray).then(() => {
+							return resolve();
+						}).catch(() => {
+							this.log.error(`creating unknown pets hierarchy failed.`);
+							return resolve();
+						});
+					});
+				});
 			});
 		}));
 	}
@@ -3198,21 +3267,21 @@ class Sureflap extends utils.Adapter {
 	 * creates hierarchy data structures for the given pet in the adapter
 	 *
 	 * @param {string} prefix
-	 * @param {string} household_name
-	 * @param {string} pet_name
-	 * @param {string} pet_name_org
-	 * @param {number} pet_id
+	 * @param {string} householdName
+	 * @param {string} petName
+	 * @param {string} petNameOrg
+	 * @param {number} petId
 	 * @return {Promise}
 	 */
-	createPetHierarchyToAdapter(prefix, household_name, pet_name, pet_name_org, pet_id) {
+	createPetHierarchyToAdapter(prefix, householdName, petName, petNameOrg, petId) {
 		return /** @type {Promise<void>} */(new Promise((resolve, reject) => {
 			const promiseArray = [];
-			const objName = prefix + '.' + pet_name;
-			this.setObjectNotExists(prefix, this.buildDeviceObject('Pets in Household ' + household_name), () => {
-				this.setObjectNotExists(objName, this.buildChannelObject('Pet \'' + pet_name_org + '\' (' + pet_id + ')'), () => {
-					promiseArray.push(this.setObjectNotExistsPromise(objName + '.name', this.buildStateObject(pet_name_org, 'text', 'string')));
+			const objName = prefix + '.' + petName;
+			this.setObjectNotExists(prefix, this.buildDeviceObject('Pets in Household ' + householdName), () => {
+				this.setObjectNotExists(objName, this.buildChannelObject('Pet \'' + petNameOrg + '\' (' + petId + ')'), () => {
+					promiseArray.push(this.setObjectNotExistsPromise(objName + '.name', this.buildStateObject(petNameOrg, 'text', 'string')));
 					if (this.hasFlap) {
-						promiseArray.push(this.setObjectNotExistsPromise(objName + '.inside', this.buildStateObject('is ' + pet_name + ' inside', 'indicator', 'boolean', false)));
+						promiseArray.push(this.setObjectNotExistsPromise(objName + '.inside', this.buildStateObject('is ' + petName + ' inside', 'indicator', 'boolean', false)));
 						promiseArray.push(this.setObjectNotExistsPromise(objName + '.since', this.buildStateObject('last location change', 'date', 'string')));
 						this.setObjectNotExists(objName + '.movement', this.buildFolderObject('movement'), () => {
 							promiseArray.push(this.setObjectNotExistsPromise(objName + '.movement' + '.last_time', this.buildStateObject('date and time of last movement', 'date', 'string')));
@@ -3417,6 +3486,46 @@ class Sureflap extends utils.Adapter {
 																data.last_time = datapoint.created_at;
 															}
 														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return data;
+	}
+
+	/**
+	 * calculates last movement for unknown pet
+	 *
+	 * @param {number} hid a household id
+	 * @returns {object} last used flap data object
+	 */
+	calculateLastMovementForUnknownPet(hid) {
+		const data = {};
+		if (Array.isArray(this.history[hid])) {
+			for (let i = 0; i < this.history[hid].length; i++) {
+				const datapoint = this.history[hid][i];
+				if ('type' in datapoint && datapoint.type === 0) {
+					if ('movements' in datapoint && Array.isArray(datapoint.movements) && datapoint.movements.length > 0) {
+						if (!('pets' in datapoint) && !('tag_id' in datapoint.movements && datapoint.movements.tag_id !== 0)) {
+							for (let m = 0; m < datapoint.movements.length; m++) {
+								if ('direction' in datapoint.movements[m] && datapoint.movements[m].direction !== 0) {
+									if ('created_at' in datapoint && 'devices' in datapoint && Array.isArray(datapoint.devices) && datapoint.devices.length > 0) {
+										for (let d = 0; d < datapoint.devices.length; d++) {
+											if ('product_id' in datapoint.devices[d] && (datapoint.devices[d].product_id === DEVICE_TYPE_CAT_FLAP || datapoint.devices[d].product_id === DEVICE_TYPE_PET_FLAP)) {
+												if ('name' in datapoint.devices[d] && 'id' in datapoint.devices[d]) {
+													if (!('last_time' in data) || new Date(datapoint.created_at) > new Date(data.last_time)) {
+														data.last_direction = datapoint.movements[m].direction;
+														data.last_flap = datapoint.devices[d].name;
+														data.last_flap_id = datapoint.devices[d].id;
+														data.last_time = datapoint.created_at;
 													}
 												}
 											}
@@ -4386,6 +4495,7 @@ class Sureflap extends utils.Adapter {
 		if (this.config.history_enable === true) {
 			this.log.info('number of history (deprecated) entries: ' + this.config.history_entries);
 		}
+		this.log.info('last movement for unknown pet enabled: ' + this.config.unknown_movement_enable);
 		if (configOk) {
 			this.log.info('adapter configuration ok');
 		} else {

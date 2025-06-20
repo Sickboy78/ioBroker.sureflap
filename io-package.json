@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "3.2.0",
+    "version": "3.2.1",
     "news": {
+      "3.2.1": {
+        "en": "added unknown pet movement",
+        "de": "Bewegung für unbekannte Tiere hinzugefügt",
+        "ru": "Слава Украины",
+        "pt": "adicionado movimento de animal de estimação desconhecido",
+        "nl": "beweging onbekend huisdier toegevoegd",
+        "fr": "ajout d'un mouvement d'animal inconnu",
+        "it": "aggiunto il movimento dell'animale domestico sconosciuto",
+        "es": "añadido movimiento mascota desconocida",
+        "pl": "dodano nieznany ruch zwierzaka",
+        "uk": "додано невідомий рух вихованця",
+        "zh-cn": "添加未知宠物移动"
+      },
       "3.2.0": {
         "en": "made pet assignment controllable",
         "de": "Haustiere können zu Geräten zugeordnet oder von diesen entfernt werden",
@@ -67,19 +80,6 @@
         "pl": "adaptacje i refaktoryzacja dla najnowszej wersji API",
         "uk": "адаптація та рефакторинг для останньої версії API",
         "zh-cn": "针对最新的应用程序接口版本进行调整和重构"
-      },
-      "2.3.2": {
-        "en": "quick fix for api changes",
-        "de": "schneller Fix für API Änderungen",
-        "ru": "Слава Украины",
-        "pt": "correção rápida para alterações da API",
-        "nl": "snelle oplossing voor api-wijzigingen",
-        "fr": "correction rapide des changements d'api",
-        "it": "soluzione rapida per le modifiche all'API",
-        "es": "solución rápida para los cambios de api",
-        "pl": "Szybka poprawka dla zmian api",
-        "uk": "швидке виправлення змін в api",
-        "zh-cn": "快速更改 api"
       }
     },
     "titleLang": {
@@ -209,7 +209,8 @@
     "history_enable": false,
     "history_entries": 10,
     "history_json_enable": true,
-    "history_json_entries": 10
+    "history_json_entries": 10,
+    "unknown_movement_enable": false
   },
   "encryptedNative": [
     "password"
