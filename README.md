@@ -182,6 +182,10 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
+### 3.2.2 (2025-06-20)
+
+* (Sickboy78) fixed bug with unknown pet movement
+
 ### 3.2.1 (2025-06-20)
 
 * (Sickboy78) added unknown pet movement
