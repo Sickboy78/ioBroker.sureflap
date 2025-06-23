@@ -3218,16 +3218,15 @@ class Sureflap extends utils.Adapter {
 			}
 			if (this.config.unknown_movement_enable) {
 				for (let h = 0; h < this.households.length; h++) {
-					this.createUnknownPetsToAdapter(this.households[h].id);
+					promiseArray.push(this.createUnknownPetsToAdapter(this.households[h].id));
 				}
-			} else {
-				Promise.all(promiseArray).then(() => {
-					return resolve();
-				}).catch(() => {
-					this.log.error(`creating pets hierarchy failed.`);
-					return reject();
-				});
 			}
+			Promise.all(promiseArray).then(() => {
+				return resolve();
+			}).catch(() => {
+				this.log.error(`creating pets hierarchy failed.`);
+				return reject();
+			});
 		}));
 	}
 
