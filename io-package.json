@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "3.2.2",
+    "version": "3.2.3",
     "news": {
-      "3.2.2": {
+      "3.2.3": {
         "en": "added unknown pet movement",
         "de": "Bewegung für unbekannte Tiere hinzugefügt",
         "ru": "Слава Украины",

@@ -19,7 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const util = require('util');
 const SurepetApi = require('./lib/surepet-api');
 
-const ADAPTER_VERSION = '3.2.2';
+const ADAPTER_VERSION = '3.2.3';
 
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
@@ -3511,7 +3511,7 @@ class Sureflap extends utils.Adapter {
 		if (Array.isArray(this.history[hid])) {
 			for (let i = 0; i < this.history[hid].length; i++) {
 				const datapoint = this.history[hid][i];
-				if ('type' in datapoint && datapoint.type === 0) {
+				if ('type' in datapoint && datapoint.type === 7) {
 					if ('movements' in datapoint && Array.isArray(datapoint.movements) && datapoint.movements.length > 0) {
 						if (!('pets' in datapoint) && !('tag_id' in datapoint.movements && datapoint.movements.tag_id !== 0)) {
 							for (let m = 0; m < datapoint.movements.length; m++) {
