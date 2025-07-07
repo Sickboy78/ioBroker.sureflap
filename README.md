@@ -182,6 +182,10 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
+### 3.2.4 (2025-07-07)
+
+* (Sickboy78) fixed unknown pet getting deleted at adapter startup
+
 ### 3.2.3 (2025-06-28)
 
 * (Sickboy78) fixed bug with unknown pet movement

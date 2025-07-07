@@ -19,7 +19,7 @@ const utils = require('@iobroker/adapter-core');
 const util = require('util');
 const SurepetApi = require('./lib/surepet-api');
 
-const ADAPTER_VERSION = '3.2.3';
+const ADAPTER_VERSION = '3.2.4';
 
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
@@ -2452,6 +2452,9 @@ class Sureflap extends utils.Adapter {
 				const nameOrg = this.pets[p].name_org;
 				const petId = this.pets[p].id;
 				petsChannelNames.push('Pet \'' + nameOrg + '\' (' + petId + ')');
+			}
+			if (this.config.unknown_movement_enable) {
+				petsChannelNames.push('Unknown Pet (unknown)');
 			}
 
 			for (let h = 0; h < this.households.length; h++) {
