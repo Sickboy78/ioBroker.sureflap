@@ -12,5 +12,6 @@
     "event history": "Historique des événements",
     "enable JSON event history": "activer l'historique des événements JSON",
     "enable event history as data points (deprecated)": "activer l'historique des événements en tant que points de données (obsolète)",
-    "number of items": "nombre d'éléments"
+    "number of items": "nombre d'éléments",
+    "enable last movement for unknown pet": "activer le dernier mouvement pour les animaux domestiques inconnus"
 }

@@ -12,5 +12,6 @@
     "event history": "事件历史",
     "enable JSON event history": "启用 JSON 事件历史记录",
     "enable event history as data points (deprecated)": "启用事件历史作为数据点（已弃用）",
-    "number of items": "项目数"
+    "number of items": "项目数",
+    "enable last movement for unknown pet": "启用未知宠物的最后移动"
 }

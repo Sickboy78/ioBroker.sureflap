@@ -12,5 +12,6 @@
     "event history": "Historia zdarzeń",
     "enable JSON event history": "włączenie historii zdarzeń JSON",
     "enable event history as data points (deprecated)": "włączenie historii zdarzeń jako punktów danych (przestarzałe)",
-    "number of items": "liczba elementów"
+    "number of items": "liczba elementów",
+    "enable last movement for unknown pet": "włączenie ostatniego ruchu dla nieznanych zwierząt"
 }

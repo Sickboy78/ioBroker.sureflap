@@ -12,5 +12,6 @@
     "event history": "История событий",
     "enable JSON event history": "включить историю событий в формате JSON",
     "enable event history as data points (deprecated)": "включить историю событий в виде точек данных (устарело)",
-    "number of items": "количество элементов"
+    "number of items": "количество элементов",
+    "enable last movement for unknown pet": "включить последнее движение для неизвестных домашних животных"
 }

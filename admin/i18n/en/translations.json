@@ -12,5 +12,6 @@
     "event history": "event history",
     "enable JSON event history": "enable JSON event history",
     "enable event history as data points (deprecated)": "enable event history as data points (deprecated)",
-    "number of items": "number of items"
+    "number of items": "number of items",
+    "enable last movement for unknown pet": "enable last movement for unknown pets"
 }

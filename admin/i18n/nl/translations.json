@@ -12,5 +12,6 @@
     "event history": "Gebeurtenisgeschiedenis",
     "enable JSON event history": "JSON-gebeurtenisgeschiedenis inschakelen",
     "enable event history as data points (deprecated)": "gebeurtenishistorie inschakelen als gegevenspunten (verouderd)",
-    "number of items": "aantal items"
+    "number of items": "aantal items",
+    "enable last movement for unknown pet": "Laatste beweging inschakelen voor onbekende huisdieren"
 }
