@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "3.3.0",
+    "version": "3.4.0",
     "news": {
+      "3.4.0": {
+        "en": "removed deprecated util.promisify",
+        "de": "veraltete Funktion util.promisify entfernt",
+        "ru": "Слава Украины",
+        "pt": "removido util.promisify obsoleto",
+        "nl": "verouderde util.promisify verwijderd",
+        "fr": "Suppression de la fonction obsolète util.promisify",
+        "it": "Rimosso util.promisify deprecato",
+        "es": "Se ha eliminado util.promisify, que estaba en desuso",
+        "pl": "usunięto przestarzałą funkcję util.promisify",
+        "uk": "вилучено застаріле util.promisify",
+        "zh-cn": "已移除已废弃的 util.promisify 函数。"
+      },
       "3.3.0": {
         "en": "added unknown pet movement",
         "de": "Bewegung für unbekannte Tiere hinzugefügt",
@@ -54,19 +67,6 @@
         "pl": "ulepszona obsługa danych",
         "uk": "покращена обробка даних",
         "zh-cn": "改进数据处理"
-      },
-      "3.0.1": {
-        "en": "minor bugfix",
-        "de": "kleinere Fehlerbehebung",
-        "ru": "Слава Украины",
-        "pt": "pequena correção de erros",
-        "nl": "kleine bugfix",
-        "fr": "correction d'un bug mineur",
-        "it": "correzione di un bug minore",
-        "es": "corrección de errores menores",
-        "pl": "drobna poprawka błędu",
-        "uk": "незначне виправлення",
-        "zh-cn": "小故障修复"
       },
       "3.0.0": {
         "en": "adaptions and refactoring for latest API version",

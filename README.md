@@ -182,6 +182,10 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
+### 3.4.0 (2025-08-11)
+
+* (Sickboy78) removed deprecated util.promisify
+
 ### 3.3.0 (2025-07-13)
 
 * (Sickboy78) added translations for unknown pet setting

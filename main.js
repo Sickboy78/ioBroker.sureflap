@@ -16,10 +16,9 @@ const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
-const util = require('util');
 const SurepetApi = require('./lib/surepet-api');
 
-const ADAPTER_VERSION = '3.3.0';
+const ADAPTER_VERSION = '3.4.0';
 
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
@@ -169,9 +168,6 @@ class Sureflap extends utils.Adapter {
         this.warnings[PET_NAME_MISSING] = [];
         this.lastError = undefined;
         this.lastLoginError = undefined;
-
-        // promisify setObjectNotExists
-        this.setObjectNotExistsPromise = util.promisify(this.setObjectNotExists);
 
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
@@ -3518,7 +3514,7 @@ class Sureflap extends utils.Adapter {
                                             const objName = `${this.households[h].name}.history.json.`;
                                             for (let j = 0; j < this.config.history_json_entries; j++) {
                                                 promiseArray.push(
-                                                    this.setObjectNotExistsPromise(
+                                                    this.setObjectNotExistsAsync(
                                                         objName + j,
                                                         this.buildStateObject(`history event ${j}`, 'json', 'string'),
                                                     ),
@@ -3542,7 +3538,7 @@ class Sureflap extends utils.Adapter {
                                                     ),
                                                     () => {
                                                         promiseArray.push(
-                                                            this.setObjectNotExistsPromise(
+                                                            this.setObjectNotExistsAsync(
                                                                 `${objName}.online`,
                                                                 this.buildStateObject(
                                                                     'if device is online',
@@ -3551,7 +3547,7 @@ class Sureflap extends utils.Adapter {
                                                             ),
                                                         );
                                                         promiseArray.push(
-                                                            this.setObjectNotExistsPromise(
+                                                            this.setObjectNotExistsAsync(
                                                                 `${objName}.serial_number`,
                                                                 this.buildStateObject(
                                                                     'serial number of device',
@@ -3561,7 +3557,7 @@ class Sureflap extends utils.Adapter {
                                                             ),
                                                         );
                                                         promiseArray.push(
-                                                            this.setObjectNotExistsPromise(
+                                                            this.setObjectNotExistsAsync(
                                                                 `${objName}.control`,
                                                                 this.buildChannelObject('control switches'),
                                                             ),
@@ -3690,38 +3686,38 @@ class Sureflap extends utils.Adapter {
         return new Promise((resolve, reject) => {
             const promiseArray = [];
             promiseArray.push(
-                this.setObjectNotExistsPromise(
+                this.setObjectNotExistsAsync(
                     `${objName}.online`,
                     this.buildStateObject('if device is online', 'indicator.reachable'),
                 ),
             );
             promiseArray.push(
-                this.setObjectNotExistsPromise(
+                this.setObjectNotExistsAsync(
                     `${objName}.battery`,
                     this.buildStateObject('battery', 'value.voltage', 'number'),
                 ),
             );
             promiseArray.push(
-                this.setObjectNotExistsPromise(
+                this.setObjectNotExistsAsync(
                     `${objName}.battery_percentage`,
                     this.buildStateObject('battery percentage', 'value.battery', 'number'),
                 ),
             );
             promiseArray.push(
-                this.setObjectNotExistsPromise(
+                this.setObjectNotExistsAsync(
                     `${objName}.serial_number`,
                     this.buildStateObject('serial number of device', 'text', 'string'),
                 ),
             );
             this.setObjectNotExists(`${objName}.signal`, this.buildChannelObject('signal strength'), () => {
                 promiseArray.push(
-                    this.setObjectNotExistsPromise(
+                    this.setObjectNotExistsAsync(
                         `${objName}.signal` + `.device_rssi`,
                         this.buildStateObject('device rssi', 'value.signal.rssi', 'number'),
                     ),
                 );
                 promiseArray.push(
-                    this.setObjectNotExistsPromise(
+                    this.setObjectNotExistsAsync(
                         `${objName}.signal` + `.hub_rssi`,
                         this.buildStateObject('hub rssi', 'value.signal.rssi', 'number'),
                     ),
@@ -3757,13 +3753,13 @@ class Sureflap extends utils.Adapter {
             const promiseArray = [];
             this.setObjectNotExists(`${objName}.version`, this.buildChannelObject('version'), () => {
                 promiseArray.push(
-                    this.setObjectNotExistsPromise(
+                    this.setObjectNotExistsAsync(
                         `${objName}.version` + `.hardware`,
                         this.buildStateObject('hardware version', 'info.hardware', 'string'),
                     ),
                 );
                 promiseArray.push(
-                    this.setObjectNotExistsPromise(
+                    this.setObjectNotExistsAsync(
                         `${objName}.version` + `.firmware`,
                         this.buildStateObject('firmware version', 'info.firmware', 'string'),
                     ),
@@ -3804,13 +3800,13 @@ class Sureflap extends utils.Adapter {
                 ),
                 () => {
                     promiseArray.push(
-                        this.setObjectNotExistsPromise(
+                        this.setObjectNotExistsAsync(
                             `${objName}.last_enabled_curfew`,
                             this.buildStateObject('last enabled curfew settings', 'json', 'string'),
                         ),
                     );
                     promiseArray.push(
-                        this.setObjectNotExistsPromise(
+                        this.setObjectNotExistsAsync(
                             `${objName}.curfew_active`,
                             this.buildStateObject('if curfew is enabled and currently active', 'indicator'),
                         ),
@@ -3818,7 +3814,7 @@ class Sureflap extends utils.Adapter {
                     promiseArray.push(this.createCommonStatusToAdapter(hid, deviceIndex, objName));
                     this.setObjectNotExists(`${objName}.control`, this.buildChannelObject('control switches'), () => {
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.control` + `.lockmode`,
                                 this.buildStateObject('lockmode', 'switch.mode.lock', 'number', false, {
                                     0: 'OPEN',
@@ -3829,13 +3825,13 @@ class Sureflap extends utils.Adapter {
                             ),
                         );
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.control` + `.curfew_enabled`,
                                 this.buildStateObject('is curfew enabled', 'switch', 'boolean', false),
                             ),
                         );
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.control` + `.current_curfew`,
                                 this.buildStateObject('current curfew settings', 'json', 'string', false),
                             ),
@@ -3885,7 +3881,7 @@ class Sureflap extends utils.Adapter {
 
                     this.setObjectNotExists(`${objName}.control`, this.buildChannelObject('control switches'), () => {
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.control` + `.close_delay`,
                                 this.buildStateObject('closing delay of lid', 'switch.mode.delay', 'number', false, {
                                     0: 'FAST',
@@ -3905,7 +3901,7 @@ class Sureflap extends utils.Adapter {
                                 this.buildChannelObject('feeding bowl 0'),
                                 () => {
                                     promiseArray.push(
-                                        this.setObjectNotExistsPromise(
+                                        this.setObjectNotExistsAsync(
                                             `${objName}.bowls.0.food_type`,
                                             this.buildStateObject('type of food in bowl', 'value', 'number', true, {
                                                 1: 'WET',
@@ -3914,31 +3910,31 @@ class Sureflap extends utils.Adapter {
                                         ),
                                     );
                                     promiseArray.push(
-                                        this.setObjectNotExistsPromise(
+                                        this.setObjectNotExistsAsync(
                                             `${objName}.bowls.0.target`,
                                             this.buildStateObject('target weight', 'value', 'number'),
                                         ),
                                     );
                                     promiseArray.push(
-                                        this.setObjectNotExistsPromise(
+                                        this.setObjectNotExistsAsync(
                                             `${objName}.bowls.0.weight`,
                                             this.buildStateObject('weight', 'value', 'number'),
                                         ),
                                     );
                                     promiseArray.push(
-                                        this.setObjectNotExistsPromise(
+                                        this.setObjectNotExistsAsync(
                                             `${objName}.bowls.0.fill_percent`,
                                             this.buildStateObject('fill percentage', 'value', 'number'),
                                         ),
                                     );
                                     promiseArray.push(
-                                        this.setObjectNotExistsPromise(
+                                        this.setObjectNotExistsAsync(
                                             `${objName}.bowls.0.last_filled_at`,
                                             this.buildStateObject('last filled at', 'date', 'string'),
                                         ),
                                     );
                                     promiseArray.push(
-                                        this.setObjectNotExistsPromise(
+                                        this.setObjectNotExistsAsync(
                                             `${objName}.bowls.0.last_zeroed_at`,
                                             this.buildStateObject('last zeroed at', 'date', 'string'),
                                         ),
@@ -3968,7 +3964,7 @@ class Sureflap extends utils.Adapter {
                                             this.buildChannelObject('feeding bowl 1'),
                                             () => {
                                                 promiseArray.push(
-                                                    this.setObjectNotExistsPromise(
+                                                    this.setObjectNotExistsAsync(
                                                         `${objName}.bowls.1.food_type`,
                                                         this.buildStateObject(
                                                             'type of food in bowl',
@@ -3983,31 +3979,31 @@ class Sureflap extends utils.Adapter {
                                                     ),
                                                 );
                                                 promiseArray.push(
-                                                    this.setObjectNotExistsPromise(
+                                                    this.setObjectNotExistsAsync(
                                                         `${objName}.bowls.1.target`,
                                                         this.buildStateObject('target weight', 'value', 'number'),
                                                     ),
                                                 );
                                                 promiseArray.push(
-                                                    this.setObjectNotExistsPromise(
+                                                    this.setObjectNotExistsAsync(
                                                         `${objName}.bowls.1.weight`,
                                                         this.buildStateObject('weight', 'value', 'number'),
                                                     ),
                                                 );
                                                 promiseArray.push(
-                                                    this.setObjectNotExistsPromise(
+                                                    this.setObjectNotExistsAsync(
                                                         `${objName}.bowls.1.fill_percent`,
                                                         this.buildStateObject('fill percentage', 'value', 'number'),
                                                     ),
                                                 );
                                                 promiseArray.push(
-                                                    this.setObjectNotExistsPromise(
+                                                    this.setObjectNotExistsAsync(
                                                         `${objName}.bowls.1.last_filled_at`,
                                                         this.buildStateObject('last filled at', 'date', 'string'),
                                                     ),
                                                 );
                                                 promiseArray.push(
-                                                    this.setObjectNotExistsPromise(
+                                                    this.setObjectNotExistsAsync(
                                                         `${objName}.bowls.1.last_zeroed_at`,
                                                         this.buildStateObject('last zeroed at', 'date', 'string'),
                                                     ),
@@ -4060,19 +4056,19 @@ class Sureflap extends utils.Adapter {
 
                     this.setObjectNotExists(`${objName}.water`, this.buildChannelObject('remaining water'), () => {
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.water.weight`,
                                 this.buildStateObject('weight', 'value', 'number'),
                             ),
                         );
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.water.fill_percent`,
                                 this.buildStateObject('fill percentage', 'value', 'number'),
                             ),
                         );
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.water.last_filled_at`,
                                 this.buildStateObject('last filled at', 'date', 'string'),
                             ),
@@ -4112,7 +4108,7 @@ class Sureflap extends utils.Adapter {
                             `${objName}.control.pets.${name}`,
                             this.buildChannelObject(`pet '${nameOrg}' (${id})`),
                             () => {
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.control.pets.${name}.type`,
                                     this.buildStateObject('pet type', 'switch.mode.type', 'number', false, {
                                         2: 'OUTDOOR PET',
@@ -4160,7 +4156,7 @@ class Sureflap extends utils.Adapter {
                             `${objName}.control.pets.${pet.name}`,
                             this.buildChannelObject(`pet '${pet.name_org}' (${pet.id})`),
                             () => {
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.control.pets.${pet.name}.assigned`,
                                     this.buildStateObject(
                                         'is pet assigned to this device',
@@ -4260,25 +4256,25 @@ class Sureflap extends utils.Adapter {
                         this.buildFolderObject('movement'),
                         () => {
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${prefix}.unknown` + `.movement` + `.last_time`,
                                     this.buildStateObject('date and time of last movement', 'date', 'string'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${prefix}.unknown` + `.movement` + `.last_direction`,
                                     this.buildStateObject('direction of last movement', 'value', 'number'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${prefix}.unknown` + `.movement` + `.last_flap`,
                                     this.buildStateObject('name of last used flap', 'value', 'string'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${prefix}.unknown` + `.movement` + `.last_flap_id`,
                                     this.buildStateObject('id of last used flap', 'value', 'number'),
                                 ),
@@ -4316,57 +4312,57 @@ class Sureflap extends utils.Adapter {
             this.setObjectNotExists(prefix, this.buildDeviceObject(`Pets in Household ${householdName}`), () => {
                 this.setObjectNotExists(objName, this.buildChannelObject(`Pet '${petNameOrg}' (${petId})`), () => {
                     promiseArray.push(
-                        this.setObjectNotExistsPromise(
+                        this.setObjectNotExistsAsync(
                             `${objName}.name`,
                             this.buildStateObject(petNameOrg, 'text', 'string'),
                         ),
                     );
                     if (this.hasFlap) {
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.inside`,
                                 this.buildStateObject(`is ${petName} inside`, 'indicator', 'boolean', false),
                             ),
                         );
                         promiseArray.push(
-                            this.setObjectNotExistsPromise(
+                            this.setObjectNotExistsAsync(
                                 `${objName}.since`,
                                 this.buildStateObject('last location change', 'date', 'string'),
                             ),
                         );
                         this.setObjectNotExists(`${objName}.movement`, this.buildFolderObject('movement'), () => {
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.movement` + `.last_time`,
                                     this.buildStateObject('date and time of last movement', 'date', 'string'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.movement` + `.last_direction`,
                                     this.buildStateObject('direction of last movement', 'value', 'number'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.movement` + `.last_flap`,
                                     this.buildStateObject('name of last used flap', 'value', 'string'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.movement` + `.last_flap_id`,
                                     this.buildStateObject('id of last used flap', 'value', 'number'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.movement` + `.times_outside`,
                                     this.buildStateObject('number of times outside today', 'value', 'number'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.movement` + `.time_spent_outside`,
                                     this.buildStateObject('time spent in seconds outside today', 'value', 'number'),
                                 ),
@@ -4376,19 +4372,19 @@ class Sureflap extends utils.Adapter {
                     if (this.hasFeeder) {
                         this.setObjectNotExists(`${objName}.food`, this.buildFolderObject('food'), () => {
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.food` + `.last_time_eaten`,
                                     this.buildStateObject('last time food consumed', 'date', 'string'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.food` + `.times_eaten`,
                                     this.buildStateObject('number of times food consumed today', 'value', 'number'),
                                 ),
                             );
                             promiseArray.push(
-                                this.setObjectNotExistsPromise(
+                                this.setObjectNotExistsAsync(
                                     `${objName}.food` + `.time_spent`,
                                     this.buildStateObject('time spent in seconds at feeder today', 'value', 'number'),
                                 ),
@@ -4399,7 +4395,7 @@ class Sureflap extends utils.Adapter {
                                 this.buildFolderObject('wet food (1)'),
                                 () => {
                                     promiseArray.push(
-                                        this.setObjectNotExistsPromise(
+                                        this.setObjectNotExistsAsync(
                                             `${objName}.food.wet` + `.weight`,
                                             this.buildStateObject('wet food consumed today', 'value', 'number'),
                                         ),
@@ -4410,7 +4406,7 @@ class Sureflap extends utils.Adapter {
                                         this.buildFolderObject('dry food (2)'),
                                         () => {
                                             promiseArray.push(
-                                                this.setObjectNotExistsPromise(
+                                                this.setObjectNotExistsAsync(
                                                     `${objName}.food.dry` + `.weight`,
                                                     this.buildStateObject('dry food consumed today', 'value', 'number'),
                                                 ),
@@ -4422,7 +4418,7 @@ class Sureflap extends utils.Adapter {
                                                     this.buildFolderObject('water'),
                                                     () => {
                                                         promiseArray.push(
-                                                            this.setObjectNotExistsPromise(
+                                                            this.setObjectNotExistsAsync(
                                                                 `${objName}.water` + `.last_time_drunk`,
                                                                 this.buildStateObject(
                                                                     'last time water consumed',
@@ -4432,7 +4428,7 @@ class Sureflap extends utils.Adapter {
                                                             ),
                                                         );
                                                         promiseArray.push(
-                                                            this.setObjectNotExistsPromise(
+                                                            this.setObjectNotExistsAsync(
                                                                 `${objName}.water` + `.times_drunk`,
                                                                 this.buildStateObject(
                                                                     'number of times water consumed today',
@@ -4442,7 +4438,7 @@ class Sureflap extends utils.Adapter {
                                                             ),
                                                         );
                                                         promiseArray.push(
-                                                            this.setObjectNotExistsPromise(
+                                                            this.setObjectNotExistsAsync(
                                                                 `${objName}.water` + `.time_spent`,
                                                                 this.buildStateObject(
                                                                     'time spent in seconds at water dispenser today',
@@ -4452,7 +4448,7 @@ class Sureflap extends utils.Adapter {
                                                             ),
                                                         );
                                                         promiseArray.push(
-                                                            this.setObjectNotExistsPromise(
+                                                            this.setObjectNotExistsAsync(
                                                                 `${objName}.water` + `.weight`,
                                                                 this.buildStateObject(
                                                                     'water consumed today',
@@ -4495,13 +4491,13 @@ class Sureflap extends utils.Adapter {
                         if (this.hasDispenser) {
                             this.setObjectNotExists(`${objName}.water`, this.buildFolderObject('water'), () => {
                                 promiseArray.push(
-                                    this.setObjectNotExistsPromise(
+                                    this.setObjectNotExistsAsync(
                                         `${objName}.water` + `.last_time_drunk`,
                                         this.buildStateObject('last time water consumed', 'date', 'string'),
                                     ),
                                 );
                                 promiseArray.push(
-                                    this.setObjectNotExistsPromise(
+                                    this.setObjectNotExistsAsync(
                                         `${objName}.water` + `.times_drunk`,
                                         this.buildStateObject(
                                             'number of times water consumed today',
@@ -4511,7 +4507,7 @@ class Sureflap extends utils.Adapter {
                                     ),
                                 );
                                 promiseArray.push(
-                                    this.setObjectNotExistsPromise(
+                                    this.setObjectNotExistsAsync(
                                         `${objName}.water` + `.time_spent`,
                                         this.buildStateObject(
                                             'time spent in seconds at water dispenser today',
@@ -4521,7 +4517,7 @@ class Sureflap extends utils.Adapter {
                                     ),
                                 );
                                 promiseArray.push(
-                                    this.setObjectNotExistsPromise(
+                                    this.setObjectNotExistsAsync(
                                         `${objName}.water` + `.weight`,
                                         this.buildStateObject('water consumed today', 'value', 'number'),
                                     ),
