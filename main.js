@@ -4553,7 +4553,7 @@ class Sureflap extends utils.Adapter {
      ******************/
 
     /**
-     * compares to version strings in format patch.major.minor
+     * compares two version strings in format patch.major.minor
      *
      * @param version a version string
      * @param lessThan a version string
