@@ -18,7 +18,7 @@ const utils = require('@iobroker/adapter-core');
 // const fs = require("fs");
 const SurepetApi = require('./lib/surepet-api');
 
-const ADAPTER_VERSION = '3.4.0';
+const ADAPTER_VERSION = '3.4.1';
 
 // Constants - data update frequency
 const RETRY_FREQUENCY_LOGIN = 60;
