@@ -182,6 +182,16 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 ## Changelog
 
+<!--
+  Placeholder for the next version (at the beginning of the line):
+  ### **WORK IN PROGRESS**
+-->
+
+### **WORK IN PROGRESS**
+
+* (Sickboy78) dependency updates
+* (Sickboy78) add AlCalzone's Release Script
+
 ### 3.4.1 (2025-10-22)
 
 * (Sickboy78) dependency updates
