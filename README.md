@@ -186,8 +186,7 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
   Placeholder for the next version (at the beginning of the line):
   ### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 3.4.2 (2026-01-09)
 
 * (Sickboy78) dependency updates
 * (Sickboy78) add AlCalzone's Release Script

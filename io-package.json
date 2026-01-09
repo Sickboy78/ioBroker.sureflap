@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "3.4.1",
+    "version": "3.4.2",
     "news": {
+      "3.4.2": {
+        "en": "dependency updates",
+        "de": "Aktualisierungen von Abhängigkeiten",
+        "ru": "Слава Украины",
+        "pt": "atualizações de dependência",
+        "nl": "afhankelijkheidsupdates",
+        "fr": "mises à jour des dépendances",
+        "it": "aggiornamenti di dipendenza",
+        "es": "actualizaciones de la dependencia",
+        "pl": "aktualizacje zależności",
+        "uk": "оновлення залежності",
+        "zh-cn": "依赖性更新"
+      },
       "3.4.1": {
         "en": "dependency updates",
         "de": "Aktualisierungen von Abhängigkeiten",
