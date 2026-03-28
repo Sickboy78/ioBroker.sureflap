@@ -351,7 +351,7 @@ class Sureflap extends utils.Adapter {
                         this.changeCurrentCurfew(hierarchy, deviceName, state.val);
                     } else if (control === 'type' && typeof state.val === 'number') {
                         const petName = l[l.length - 2];
-                        const petTagId = this.getPetTagId(petName);
+                        const petTagId = this.getPetTagIdByName(petName);
                         this.changeFlapPetType(hierarchy, deviceName, petName, petTagId, state.val);
                     }
                 } else if (this.isFeederControl(l)) {
@@ -749,7 +749,7 @@ class Sureflap extends utils.Adapter {
             for (let p = 0; p < numPets; p++) {
                 if (this.pets[p].name !== undefined) {
                     const petName = this.pets[p].name;
-                    const householdName = this.getHouseholdNameForId(this.pets[p].household_id);
+                    const householdName = this.getHouseholdNameById(this.pets[p].household_id);
                     if (householdName !== undefined) {
                         const prefix = `${householdName}.pets`;
                         if (this.hasFlap) {
@@ -874,7 +874,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} value the LED mode to set
      */
     changeHubLedMode(hierarchy, hubName, value) {
-        const deviceId = this.getDeviceId(hubName, [DEVICE_TYPE_HUB]);
+        const deviceId = this.getDeviceIdByName(hubName, [DEVICE_TYPE_HUB]);
         if (deviceId === -1) {
             this.log.warn(`could not find device Id for hub: '${hubName}'`);
             this.resetHubLedModeToAdapter(hierarchy, hubName);
@@ -906,7 +906,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} value the delay to set
      */
     changeFeederCloseDelay(hierarchy, feederName, value) {
-        const deviceId = this.getDeviceId(feederName, [DEVICE_TYPE_FEEDER]);
+        const deviceId = this.getDeviceIdByName(feederName, [DEVICE_TYPE_FEEDER]);
         if (deviceId === -1) {
             this.log.warn(`could not find device Id for feeder: '${feederName}'`);
             this.resetFeederCloseDelayToAdapter(hierarchy, feederName);
@@ -940,7 +940,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} value the pet type to set
      */
     changeFlapPetType(hierarchy, flapName, petName, petTagId, value) {
-        const deviceId = this.getDeviceId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const deviceId = this.getDeviceIdByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
         if (deviceId === -1) {
             this.log.warn(`could not find device Id for flap: '${flapName}'`);
             this.resetFlapPetTypeToAdapter(hierarchy, flapName, petName, petTagId);
@@ -974,7 +974,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} value the lock mode to set
      */
     changeFlapLockMode(hierarchy, flapName, value) {
-        const deviceId = this.getDeviceId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const deviceId = this.getDeviceIdByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
         if (deviceId === -1) {
             this.log.warn(`could not find device Id for flap: '${flapName}'`);
             this.resetFlapLockModeToAdapter(hierarchy, flapName);
@@ -1006,7 +1006,7 @@ class Sureflap extends utils.Adapter {
      * @param {boolean} value the location to set
      */
     changePetLocation(hierarchy, petName, value) {
-        const petId = this.getPetId(petName);
+        const petId = this.getPetIdByName(petName);
         if (petId === -1) {
             this.log.warn(`could not find pet Id for pet: '${petName}'`);
             this.resetPetLocationToAdapter(hierarchy, petName);
@@ -1036,8 +1036,8 @@ class Sureflap extends utils.Adapter {
      * @param {boolean} value assign or remove the pet
      */
     changePetAssigment(hierarchy, deviceName, petName, value) {
-        const petTagId = this.getPetTagId(petName);
-        const deviceId = this.getDeviceId(deviceName, []);
+        const petTagId = this.getPetTagIdByName(petName);
+        const deviceId = this.getDeviceIdByName(deviceName, []);
         if (petTagId === -1) {
             this.log.warn(`could not find pet tag Id for pet: '${petName}'`);
             this.resetPetAssigmentToAdapter(hierarchy, deviceName, petName);
@@ -1076,8 +1076,8 @@ class Sureflap extends utils.Adapter {
     changeCurfewEnabled(hierarchy, flapName, value) {
         let currentState = false;
         const objNameCurrentCurfew = `${hierarchy}.control` + `.current_curfew`;
-        const deviceType = this.getDeviceTypeByDeviceName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
-        const deviceId = this.getDeviceId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const deviceType = this.getDeviceTypeByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const deviceId = this.getDeviceIdByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
         if (deviceId === -1) {
             this.log.warn(`could not find device Id for flap: '${flapName}'`);
             this.resetFlapCurfewEnabledToAdapter(hierarchy, flapName);
@@ -1165,8 +1165,8 @@ class Sureflap extends utils.Adapter {
      * @param {string} value the curfew to set
      */
     changeCurrentCurfew(hierarchy, flapName, value) {
-        const deviceType = this.getDeviceTypeByDeviceName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
-        const deviceId = this.getDeviceId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const deviceType = this.getDeviceTypeByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const deviceId = this.getDeviceIdByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
         if (deviceId === -1) {
             this.log.warn(`could not find device Id for flap: '${flapName}'`);
             this.resetFlapCurfewEnabledToAdapter(hierarchy, flapName);
@@ -1380,7 +1380,7 @@ class Sureflap extends utils.Adapter {
             ) {
                 // update type for all assigned pets
                 for (let t = 0; t < this.devices[hid][deviceIndex].tags.length; t++) {
-                    const name = this.getPetNameForTagId(this.devices[hid][deviceIndex].tags[t].id);
+                    const name = this.getPetNameByTagId(this.devices[hid][deviceIndex].tags[t].id);
                     if (name !== undefined) {
                         const objName = `${prefix + hierarchy}.${this.devices[hid][deviceIndex].name}.control.pets.${
                             name
@@ -1435,7 +1435,7 @@ class Sureflap extends utils.Adapter {
                         const objName = `${prefix + hierarchy}.${this.devices[hid][deviceIndex].name}.control.pets.${
                             this.pets[p].name
                         }.type`;
-                        this.deleteObjectFormAdapterIfExists(objName, false);
+                        this.deleteObjectIfExists(objName, false);
                     }
                 }
 
@@ -2521,7 +2521,7 @@ class Sureflap extends utils.Adapter {
      * @param {string} hubName a hub device name
      */
     resetHubLedModeToAdapter(hierarchy, hubName) {
-        const device = this.getDeviceIndexAndHouseholdId(hubName, [DEVICE_TYPE_HUB]);
+        const device = this.getDeviceIndexAndHouseholdIdByName(hubName, [DEVICE_TYPE_HUB]);
         if (device !== undefined) {
             const hubIndex = device.index;
             const hid = device.householdId;
@@ -2550,7 +2550,7 @@ class Sureflap extends utils.Adapter {
      * @param {string} feederName a feeder device name
      */
     resetFeederCloseDelayToAdapter(hierarchy, feederName) {
-        const device = this.getDeviceIndexAndHouseholdId(feederName, [DEVICE_TYPE_FEEDER]);
+        const device = this.getDeviceIndexAndHouseholdIdByName(feederName, [DEVICE_TYPE_FEEDER]);
         if (device !== undefined) {
             const deviceIndex = device.index;
             const hid = device.householdId;
@@ -2583,7 +2583,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} petTag a pet tag ID
      */
     resetFlapPetTypeToAdapter(hierarchy, flapName, petName, petTag) {
-        const device = this.getDeviceIndexAndHouseholdId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const device = this.getDeviceIndexAndHouseholdIdByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
 
         if (device !== undefined) {
             const deviceIndex = device.index;
@@ -2613,7 +2613,7 @@ class Sureflap extends utils.Adapter {
      * @param {string} flapName a flap device name
      */
     resetFlapLockModeToAdapter(hierarchy, flapName) {
-        const device = this.getDeviceIndexAndHouseholdId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const device = this.getDeviceIndexAndHouseholdIdByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
         if (device !== undefined) {
             const deviceIndex = device.index;
             const hid = device.householdId;
@@ -2644,7 +2644,7 @@ class Sureflap extends utils.Adapter {
      * @param {string} petName a pet name
      */
     resetPetLocationToAdapter(hierarchy, petName) {
-        const petIndex = this.getPetIndex(petName);
+        const petIndex = this.getPetIndexByName(petName);
         if (Array.isArray(this.pets) && this.objectContainsPath(this.pets[petIndex], 'position.where')) {
             const value = this.pets[petIndex].position.where;
             this.log.debug(`resetting pet inside for ${petName} to: ${value}`);
@@ -2662,8 +2662,8 @@ class Sureflap extends utils.Adapter {
      * @param {string} petName a pet name
      */
     resetPetAssigmentToAdapter(hierarchy, deviceName, petName) {
-        const device = this.getDeviceIndexAndHouseholdId(deviceName, []);
-        const petTagId = this.getPetTagId(petName);
+        const device = this.getDeviceIndexAndHouseholdIdByName(deviceName, []);
+        const petTagId = this.getPetTagIdByName(petName);
         if (
             device &&
             petTagId !== -1 &&
@@ -2690,7 +2690,7 @@ class Sureflap extends utils.Adapter {
      * @param {string} flapName a flap device name
      */
     resetFlapCurfewEnabledToAdapter(hierarchy, flapName) {
-        const device = this.getDeviceIndexAndHouseholdId(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const device = this.getDeviceIndexAndHouseholdIdByName(flapName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
         if (device !== undefined) {
             const deviceIndex = device.index;
             const hid = device.householdId;
@@ -2721,7 +2721,10 @@ class Sureflap extends utils.Adapter {
      * @param {string} deviceName a device name
      */
     resetControlCurrentCurfewToAdapter(hierarchy, deviceName) {
-        const device = this.getDeviceIndexAndHouseholdId(deviceName, [DEVICE_TYPE_CAT_FLAP, DEVICE_TYPE_PET_FLAP]);
+        const device = this.getDeviceIndexAndHouseholdIdByName(deviceName, [
+            DEVICE_TYPE_CAT_FLAP,
+            DEVICE_TYPE_PET_FLAP,
+        ]);
         if (device !== undefined) {
             const deviceIndex = device.index;
             const hid = device.householdId;
@@ -2840,26 +2843,38 @@ class Sureflap extends utils.Adapter {
      *********************************************/
 
     /**
-     * deletes an object from the adapter if it exists
+     * Deletes an object if it exists and the optional condition returns true.
      *
      * @param {string} objName an object name
-     * @param {boolean} recursive whether to delete objects recursive
+     * @param {boolean} recursive whether to delete recursively
+     * @param {function(object): boolean} [condition] optional condition; defaults to always true
+     * @param {function(object): string} [conditionFailMessage] optional condition fail message; defaults to "condition not met."
      * @returns {Promise} a promise
      */
-    deleteObjectFormAdapterIfExists(objName, recursive) {
+    _deleteObjectIfExists(
+        objName,
+        recursive,
+        condition = () => true,
+        conditionFailMessage = () => 'condition not met.',
+    ) {
         return new Promise((resolve, reject) => {
-            this.log.silly(`deleting object '${objName}'`);
             this.getObject(objName, (err, obj) => {
+                this.log.silly(`deleting object '${objName}'`);
                 if (!err && obj) {
-                    this.log.silly(`found object '${objName}'. trying to delete ...`);
-                    this.delObject(obj._id, { recursive: recursive }, err => {
-                        if (err) {
-                            this.log.error(`could not delete object '${objName}' (${err})`);
-                            return reject();
-                        }
-                        this.log.silly(`deleted object '${objName}'`);
+                    if (condition(obj)) {
+                        this.log.debug(`deleting object '${objName}'`);
+                        this.delObject(obj._id, { recursive }, err => {
+                            if (err) {
+                                this.log.error(`could not delete object '${objName}' (${err})`);
+                                return reject();
+                            }
+                            this.log.debug(`deleted object '${objName}'`);
+                            return resolve();
+                        });
+                    } else {
+                        this.log.silly(`object '${objName}' found, but skipping because ${conditionFailMessage(obj)}`);
                         return resolve();
-                    });
+                    }
                 } else {
                     this.log.silly(`object '${objName}' not found`);
                     return resolve();
@@ -2869,108 +2884,49 @@ class Sureflap extends utils.Adapter {
     }
 
     /**
-     * deletes an obsolete object if it exists
+     * deletes an object from the adapter if it exists
      *
-     * @param {string} objName the device name
-     * @param {boolean} recursive whether to delete objects recursive
+     * @param {string} objName an object name
+     * @param {boolean} recursive whether to delete objects recursively
      * @returns {Promise} a promise
      */
-    deleteObsoleteObjectIfExists(objName, recursive) {
-        return new Promise((resolve, reject) => {
-            this.log.silly(`deleting obsolete object '${objName}'`);
-            this.getObject(objName, (err, obj) => {
-                if (!err && obj) {
-                    this.log.debug(`obsolete object ${objName} found. trying to delete ...`);
-                    this.delObject(obj._id, { recursive: recursive }, err => {
-                        if (err) {
-                            this.log.error(`can not delete obsolete object ${objName} because: ${err}`);
-                            return reject();
-                        }
-                        this.log.debug(`obsolete object '${objName}' deleted`);
-                        return resolve();
-                    });
-                } else {
-                    this.log.silly(`obsolete object '${objName}' not found`);
-                    return resolve();
-                }
-            });
-        });
+    deleteObjectIfExists(objName, recursive) {
+        return this._deleteObjectIfExists(objName, recursive);
     }
 
     /**
-     * deletes an obsolete object if it exists and has given type
+     * deletes an object from the adapter if it exists and has given type
      *
      * @param {string} objName the device name
      * @param {string} type a object type
-     * @param {boolean} recursive whether to delete objects recursive
+     * @param {boolean} recursive whether to delete objects recursively
      * @returns {Promise} a promise
      */
-    deleteObsoleteObjectIfExistsAndHasType(objName, type, recursive) {
-        return new Promise((resolve, reject) => {
-            this.log.silly(`deleting obsolete object '${objName}'`);
-            this.getObject(objName, (err, obj) => {
-                if (!err && obj) {
-                    if (obj.type === type) {
-                        this.log.debug(`obsolete object ${objName} found. trying to delete ...`);
-                        this.delObject(obj._id, { recursive: recursive }, err => {
-                            if (err) {
-                                this.log.error(`can not delete obsolete object ${objName} because: ${err}`);
-                                return reject();
-                            }
-                            this.log.debug(`obsolete object '${objName}' deleted`);
-                            return resolve();
-                        });
-                    } else {
-                        this.log.silly(`obsolete object '${objName}' found but was not of type '${type}'`);
-                        return resolve();
-                    }
-                } else {
-                    this.log.silly(`obsolete object '${objName}' not found`);
-                    return resolve();
-                }
-            });
-        });
+    deleteObjectIfExistsAndHasType(objName, type, recursive) {
+        return this._deleteObjectIfExists(
+            objName,
+            recursive,
+            obj => obj.type === type,
+            _obj => `it was not of type '${type}'.`,
+        );
     }
 
     /**
-     * deletes an obsolete object if it exists and has the device_id in its name
+     * deletes an object from the adapter if it exists and has the device_id in its name
      *
      * @param {string} objName the device name
      * @param {string} device_id the device id
-     * @param {boolean} recursive whether to get objects recursive
+     * @param {boolean} recursive whether to get objects recursively
      * @returns {Promise} a promise
      */
-    deleteObsoleteObjectWithDeviceIdIfExists(objName, device_id, recursive) {
-        return new Promise((resolve, reject) => {
-            this.log.silly(`deleting obsolete object '${objName}'`);
-            this.getObject(objName, (err, obj) => {
-                if (!err && obj) {
-                    if (
-                        obj.common !== undefined &&
-                        obj.common.name !== undefined &&
-                        obj.common.name.toString().includes(device_id)
-                    ) {
-                        this.log.debug(`obsolete object ${objName} found. trying to delete ...`);
-                        this.delObject(obj._id, { recursive: recursive }, err => {
-                            if (err) {
-                                this.log.error(`can not delete obsolete object ${objName} because: ${err}`);
-                                return reject();
-                            }
-                            this.log.debug(`obsolete object '${objName}' deleted`);
-                            return resolve();
-                        });
-                    } else {
-                        this.log.silly(
-                            `obsolete object '${objName}' found, but name '${obj.common.name.toString()}' does not contain correct device id '${device_id}'.`,
-                        );
-                        return resolve();
-                    }
-                } else {
-                    this.log.silly(`obsolete object '${objName}' not found`);
-                    return resolve();
-                }
-            });
-        });
+    deleteObjectWithDeviceIdIfExists(objName, device_id, recursive) {
+        return this._deleteObjectIfExists(
+            objName,
+            recursive,
+            obj => obj.common?.name?.toString().includes(device_id) ?? false,
+            obj =>
+                `the common name '${obj.common?.name?.toString()}' does not contain the correct device id '${device_id}'.`,
+        );
     }
 
     /**
@@ -2989,7 +2945,7 @@ class Sureflap extends utils.Adapter {
 
             this.log.debug(`deleting event history from adapter`);
             for (let i = 0; i < numberToDelete; i++) {
-                promiseArray.push(this.deleteObjectFormAdapterIfExists(`${prefix}.history.${i}`, true));
+                promiseArray.push(this.deleteObjectIfExists(`${prefix}.history.${i}`, true));
             }
             Promise.all(promiseArray)
                 .then(() => {
@@ -3072,7 +3028,7 @@ class Sureflap extends utils.Adapter {
                                     this.log.debug(
                                         `deleted or renamed pet ${obj[key]._id} (${obj[key].common.name}) found. trying to delete (${obj[key].type})`,
                                     );
-                                    deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(obj[key]._id, true));
+                                    deletePromiseArray.push(this.deleteObjectIfExists(obj[key]._id, true));
                                 }
                             });
                         }
@@ -3135,7 +3091,7 @@ class Sureflap extends utils.Adapter {
                                             false,
                                         ),
                                     );
-                                    //deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(objName + '.control.pets.' + this.pets[p].name + '.type', false));
+                                    //deletePromiseArray.push(this.deleteObjectIfExists(objName + '.control.pets.' + this.pets[p].name + '.type', false));
                                 }
                             }
                         }
@@ -3153,7 +3109,7 @@ class Sureflap extends utils.Adapter {
                                 this.log.debug(
                                     `pet type for unassigned pet found (${obj[key]._id}). trying to delete (${obj[key].type})`,
                                 );
-                                deletePromiseArray.push(this.deleteObjectFormAdapterIfExists(obj[key]._id, false));
+                                deletePromiseArray.push(this.deleteObjectIfExists(obj[key]._id, false));
                             });
                         }
                     });
@@ -3222,11 +3178,7 @@ class Sureflap extends utils.Adapter {
 
                                 // remove non hub devices from top hierarchy
                                 deletePromiseArray.push(
-                                    this.deleteObsoleteObjectWithDeviceIdIfExists(
-                                        objName,
-                                        this.devices[hid][d].id,
-                                        true,
-                                    ),
+                                    this.deleteObjectWithDeviceIdIfExists(objName, this.devices[hid][d].id, true),
                                 );
                             }
 
@@ -3236,9 +3188,7 @@ class Sureflap extends utils.Adapter {
                                 this.log.silly(`checking for led_mode for hub '${objName}'.`);
 
                                 // made led_mode changeable and moved it to control.led_mode
-                                deletePromiseArray.push(
-                                    this.deleteObsoleteObjectIfExists(`${objName}.led_mode`, false),
-                                );
+                                deletePromiseArray.push(this.deleteObjectIfExists(`${objName}.led_mode`, false));
                             } else {
                                 // feeding bowl
                                 if (this.devices[hid][d].product_id === DEVICE_TYPE_FEEDER) {
@@ -3249,20 +3199,16 @@ class Sureflap extends utils.Adapter {
                                     this.log.silly(`checking for curfew states for feeder '${objName}'.`);
 
                                     // feeder had unnecessary attributes of flap
+                                    deletePromiseArray.push(this.deleteObjectIfExists(`${objName}.curfew`, true));
+                                    deletePromiseArray.push(this.deleteObjectIfExists(`${objName}.last_curfew`, true));
                                     deletePromiseArray.push(
-                                        this.deleteObsoleteObjectIfExists(`${objName}.curfew`, true),
+                                        this.deleteObjectIfExists(`${objName}.curfew_active`, false),
                                     );
                                     deletePromiseArray.push(
-                                        this.deleteObsoleteObjectIfExists(`${objName}.last_curfew`, true),
+                                        this.deleteObjectIfExists(`${objName}.control.lockmode`, false),
                                     );
                                     deletePromiseArray.push(
-                                        this.deleteObsoleteObjectIfExists(`${objName}.curfew_active`, false),
-                                    );
-                                    deletePromiseArray.push(
-                                        this.deleteObsoleteObjectIfExists(`${objName}.control.lockmode`, false),
-                                    );
-                                    deletePromiseArray.push(
-                                        this.deleteObsoleteObjectIfExists(`${objName}.control.curfew`, false),
+                                        this.deleteObjectIfExists(`${objName}.control.curfew`, false),
                                     );
                                 }
                                 // pet flap
@@ -3276,7 +3222,7 @@ class Sureflap extends utils.Adapter {
                                     // pet flap had pet type control which is an exclusive feature of cat flap
                                     if ('tags' in this.devices[hid][d]) {
                                         for (let t = 0; t < this.devices[hid][d].tags.length; t++) {
-                                            const name = this.getPetNameForTagId(this.devices[hid][d].tags[t].id);
+                                            const name = this.getPetNameByTagId(this.devices[hid][d].tags[t].id);
                                             if (name !== undefined) {
                                                 deletePromiseArray.push(
                                                     this.removeAssignedPetsFromPetFlap(
@@ -3305,21 +3251,13 @@ class Sureflap extends utils.Adapter {
                                         this.devices[hid][d].name
                                     }`;
                                     deletePromiseArray.push(
-                                        this.deleteObsoleteObjectIfExistsAndHasType(
-                                            `${objName}.curfew`,
-                                            'channel',
-                                            true,
-                                        ),
+                                        this.deleteObjectIfExistsAndHasType(`${objName}.curfew`, 'channel', true),
                                     );
                                     deletePromiseArray.push(
-                                        this.deleteObsoleteObjectIfExistsAndHasType(
-                                            `${objName}.last_curfew`,
-                                            'channel',
-                                            true,
-                                        ),
+                                        this.deleteObjectIfExistsAndHasType(`${objName}.last_curfew`, 'channel', true),
                                     );
                                     deletePromiseArray.push(
-                                        this.deleteObjectFormAdapterIfExists(`${objName}.control` + `.curfew`, false),
+                                        this.deleteObjectIfExists(`${objName}.control` + `.curfew`, false),
                                     );
                                 }
                             }
@@ -3338,9 +3276,7 @@ class Sureflap extends utils.Adapter {
                                     this.devices[hid][d].name
                                 }`;
                                 this.log.silly(`checking for .assigned_pets.* for device '${objName}'.`);
-                                deletePromiseArray.push(
-                                    this.deleteObsoleteObjectIfExists(`${objName}.assigned_pets`, true),
-                                );
+                                deletePromiseArray.push(this.deleteObjectIfExists(`${objName}.assigned_pets`, true));
                             }
                         }
                     }
@@ -3361,10 +3297,7 @@ class Sureflap extends utils.Adapter {
                 this.log.silly(`checking for surplus history events.`);
                 for (let j = this.config.history_json_entries; j < 25; j++) {
                     deletePromiseArray.push(
-                        this.deleteObjectFormAdapterIfExists(
-                            `${this.name}.${this.instance}.${prefix}.history.json.${j}`,
-                            false,
-                        ),
+                        this.deleteObjectIfExists(`${this.name}.${this.instance}.${prefix}.history.json.${j}`, false),
                     );
                 }
 
@@ -3372,10 +3305,7 @@ class Sureflap extends utils.Adapter {
                 if (!this.config.unknown_movement_enable) {
                     this.log.silly(`checking for unknown pet movement.`);
                     deletePromiseArray.push(
-                        this.deleteObjectFormAdapterIfExists(
-                            `${this.name}.${this.instance}.${prefix}.pets.unknown`,
-                            true,
-                        ),
+                        this.deleteObjectIfExists(`${this.name}.${this.instance}.${prefix}.pets.unknown`, true),
                     );
                 }
             }
@@ -3405,7 +3335,7 @@ class Sureflap extends utils.Adapter {
                 if (!err && obj && obj.common.type === 'number') {
                     this.log.silly(`obsolete number objects in ${objName}.version found. trying to delete recursively`);
 
-                    this.deleteObsoleteObjectIfExists(`${objName}.version`, true)
+                    this.deleteObjectIfExists(`${objName}.version`, true)
                         .then(() => {
                             return resolve();
                         })
@@ -3431,7 +3361,7 @@ class Sureflap extends utils.Adapter {
                 if (!err && obj && obj.type === 'channel') {
                     this.log.silly(`obsolete channel object ${objName} found. trying to delete recursively`);
 
-                    this.deleteObsoleteObjectIfExists(objName, true)
+                    this.deleteObjectIfExists(objName, true)
                         .then(() => {
                             this.log.info(
                                 `deleted assigned pets for pet flap ${objName} because of obsolete control for pet type. please restart adapter to show assigned pets again.`,
@@ -3945,9 +3875,7 @@ class Sureflap extends utils.Adapter {
                                         this.devices[hid][deviceIndex].control.bowls.type === FEEDER_SINGLE_BOWL
                                     ) {
                                         // remove bowl 1 (e.g. after change from dual to single bowl)
-                                        promiseArray.push(
-                                            this.deleteObjectFormAdapterIfExists(`${objName}.bowls.1`, true),
-                                        );
+                                        promiseArray.push(this.deleteObjectIfExists(`${objName}.bowls.1`, true));
                                         Promise.all(promiseArray)
                                             .then(() => {
                                                 return resolve();
@@ -4099,8 +4027,8 @@ class Sureflap extends utils.Adapter {
     createAssignedPetsTypeControl(hid, deviceIndex, tag, objName) {
         return new Promise((resolve, reject) => {
             const id = this.getPetIdForTagId(this.devices[hid][deviceIndex].tags[tag].id);
-            const name = this.getPetNameForTagId(this.devices[hid][deviceIndex].tags[tag].id);
-            const nameOrg = this.getPetNameOrgForTagId(this.devices[hid][deviceIndex].tags[tag].id);
+            const name = this.getPetNameByTagId(this.devices[hid][deviceIndex].tags[tag].id);
+            const nameOrg = this.getPetNameOrgByTagId(this.devices[hid][deviceIndex].tags[tag].id);
             if (id !== undefined && name !== undefined && nameOrg !== undefined) {
                 this.setObjectNotExists(`${objName}.control`, this.buildChannelObject('control switches'), () => {
                     this.setObjectNotExists(`${objName}.control.pets`, this.buildChannelObject('pets'), () => {
@@ -4208,7 +4136,7 @@ class Sureflap extends utils.Adapter {
                 const petName = this.pets[p].name;
                 const petNameOrg = this.pets[p].name_org;
                 const petId = this.pets[p].id;
-                const householdName = this.getHouseholdNameForId(this.pets[p].household_id);
+                const householdName = this.getHouseholdNameById(this.pets[p].household_id);
                 if (householdName !== undefined) {
                     const prefix = `${householdName}.pets`;
                     promiseArray.push(
@@ -4246,7 +4174,7 @@ class Sureflap extends utils.Adapter {
     createUnknownPetsToAdapter(hid) {
         return new Promise(resolve => {
             const promiseArray = [];
-            const householdName = this.getHouseholdNameForId(hid);
+            const householdName = this.getHouseholdNameById(hid);
             const prefix = `${householdName}.pets`;
 
             this.setObjectNotExists(prefix, this.buildDeviceObject(`Pets in Household ${householdName}`), () => {
@@ -5060,50 +4988,51 @@ class Sureflap extends utils.Adapter {
     }
 
     /**
+     * Finds a device by name across all households, optionally filtered by device types.
+     * Pass an empty array for deviceTypes to match any type.
+     *
+     * @param {string} name device name
+     * @param {Array} deviceTypes allowed product IDs (empty = all)
+     * @returns {{ device: object, householdId: number, index: number } | undefined} matched device, household id, and index
+     */
+    _findDeviceByName(name, deviceTypes) {
+        for (const household of this.households) {
+            const householdId = household.id;
+            const devices = this.devices[householdId];
+            for (let i = 0; i < devices.length; i++) {
+                if (
+                    devices[i].name === name &&
+                    (deviceTypes.length === 0 || deviceTypes.includes(devices[i].product_id))
+                ) {
+                    return { device: devices[i], householdId: householdId, index: i };
+                }
+            }
+        }
+        return undefined;
+    }
+
+    /**
      * returns the device id of the device
      *
      * @param {string} name name of the device
      * @param {Array} deviceTypes allowed device types
      * @returns {number} device id
      */
-    getDeviceId(name, deviceTypes) {
-        for (let h = 0; h < this.households.length; h++) {
-            const hid = this.households[h].id;
-
-            for (let i = 0; i < this.devices[hid].length; i++) {
-                if (
-                    this.devices[hid][i].name === name &&
-                    (deviceTypes.length === 0 || deviceTypes.includes(this.devices[hid][i].product_id))
-                ) {
-                    return this.devices[hid][i].id;
-                }
-            }
-        }
-        return -1;
+    getDeviceIdByName(name, deviceTypes) {
+        return this._findDeviceByName(name, deviceTypes)?.device.id ?? -1;
     }
 
     /**
-     * returns the device index
+     * returns the device index and household id
      *
      * @param {string} name a device name
      * @param {Array} deviceTypes allowed device types
-     * @returns {object | undefined} device index and household id
+     * @returns {{ index: number, householdId: number } | undefined} device index and household id
      */
-    getDeviceIndexAndHouseholdId(name, deviceTypes) {
-        for (let h = 0; h < this.households.length; h++) {
-            const hid = this.households[h].id;
-
-            for (let d = 0; d < this.devices[hid].length; d++) {
-                if (
-                    this.devices[hid][d].name === name &&
-                    (deviceTypes.length === 0 || deviceTypes.includes(this.devices[hid][d].product_id))
-                ) {
-                    const device = {};
-                    device.index = d;
-                    device.householdId = hid;
-                    return device;
-                }
-            }
+    getDeviceIndexAndHouseholdIdByName(name, deviceTypes) {
+        const result = this._findDeviceByName(name, deviceTypes);
+        if (result !== undefined) {
+            return { index: result.index, householdId: result.householdId };
         }
         return undefined;
     }
@@ -5115,15 +5044,10 @@ class Sureflap extends utils.Adapter {
      * @param {Array} deviceTypes allowed device types
      * @returns {number} device type
      */
-    getDeviceTypeByDeviceName(name, deviceTypes) {
-        for (let h = 0; h < this.households.length; h++) {
-            const hid = this.households[h].id;
-
-            for (let i = 0; i < this.devices[hid].length; i++) {
-                if (this.devices[hid][i].name === name && deviceTypes.includes(this.devices[hid][i].product_id)) {
-                    return this.devices[hid][i].product_id;
-                }
-            }
+    getDeviceTypeByName(name, deviceTypes) {
+        const result = this._findDeviceByName(name, deviceTypes);
+        if (result !== undefined) {
+            return result.device?.product_id;
         }
         return -1;
     }
@@ -5135,13 +5059,10 @@ class Sureflap extends utils.Adapter {
      * @returns {object|undefined} device
      */
     getDeviceById(id) {
-        for (let h = 0; h < this.households.length; h++) {
-            const hid = this.households[h].id;
-
-            for (let i = 0; i < this.devices[hid].length; i++) {
-                if (this.devices[hid][i].id === id) {
-                    return this.devices[hid][i];
-                }
+        for (const household of this.households) {
+            const device = this.devices[household.id].find(d => d.id === id);
+            if (device !== undefined) {
+                return device;
             }
         }
         return undefined;
@@ -5155,29 +5076,37 @@ class Sureflap extends utils.Adapter {
      * @returns {boolean} whether the tags contains the tag_id
      */
     doesTagsArrayContainTagId(tags, tag_id) {
-        if (tags !== undefined && Array.isArray(tags) && tag_id !== undefined) {
-            for (let t = 0; t < tags.length; t++) {
-                if (tags[t].id === tag_id) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return Array.isArray(tags) && tag_id !== undefined && tags.some(t => t.id === tag_id);
+    }
+
+    /**
+     * Finds a pet by name.
+     *
+     * @param {string} name a pet name
+     * @returns {object|undefined} the pet object or undefined
+     */
+    _getPetByName(name) {
+        return this.pets.find(p => p.name === name);
+    }
+
+    /**
+     * Finds a pet by tag ID.
+     *
+     * @param {number} tag_id a tag ID
+     * @returns {object|undefined} the pet object or undefined
+     */
+    _getPetByTagId(tag_id) {
+        return this.pets.find(p => p.tag_id === tag_id);
     }
 
     /**
      * returns the pet ID of the pet
      *
      * @param {string} name a pet name
-     * @returns {number} pet id a pet ID
+     * @returns {number} pet id
      */
-    getPetId(name) {
-        for (let i = 0; i < this.pets.length; i++) {
-            if (this.pets[i].name === name) {
-                return this.pets[i].id;
-            }
-        }
-        return -1;
+    getPetIdByName(name) {
+        return this._getPetByName(name)?.id ?? -1;
     }
 
     /**
@@ -5186,13 +5115,8 @@ class Sureflap extends utils.Adapter {
      * @param {string} name a pet name
      * @returns {number} a tag ID
      */
-    getPetTagId(name) {
-        for (let i = 0; i < this.pets.length; i++) {
-            if (this.pets[i].name === name) {
-                return this.pets[i].tag_id;
-            }
-        }
-        return -1;
+    getPetTagIdByName(name) {
+        return this._getPetByName(name)?.tag_id ?? -1;
     }
 
     /**
@@ -5201,13 +5125,8 @@ class Sureflap extends utils.Adapter {
      * @param {string} name a pet name
      * @returns {number} pet index
      */
-    getPetIndex(name) {
-        for (let i = 0; i < this.pets.length; i++) {
-            if (this.pets[i].name === name) {
-                return i;
-            }
-        }
-        return -1;
+    getPetIndexByName(name) {
+        return this.pets.findIndex(p => p.name === name);
     }
 
     /**
@@ -5217,12 +5136,7 @@ class Sureflap extends utils.Adapter {
      * @returns {string|undefined} pet id
      */
     getPetIdForTagId(tag_id) {
-        for (let i = 0; i < this.pets.length; i++) {
-            if (this.pets[i].tag_id === tag_id) {
-                return this.pets[i].id;
-            }
-        }
-        return undefined;
+        return this._getPetByTagId(tag_id)?.id;
     }
 
     /**
@@ -5231,13 +5145,8 @@ class Sureflap extends utils.Adapter {
      * @param {number} tag_id a tag ID
      * @returns {string|undefined} pet name
      */
-    getPetNameForTagId(tag_id) {
-        for (let i = 0; i < this.pets.length; i++) {
-            if (this.pets[i].tag_id === tag_id) {
-                return this.pets[i].name;
-            }
-        }
-        return undefined;
+    getPetNameByTagId(tag_id) {
+        return this._getPetByTagId(tag_id)?.name;
     }
 
     /**
@@ -5246,13 +5155,8 @@ class Sureflap extends utils.Adapter {
      * @param {number} tag_id a tag ID
      * @returns {string|undefined} original pet name
      */
-    getPetNameOrgForTagId(tag_id) {
-        for (let i = 0; i < this.pets.length; i++) {
-            if (this.pets[i].tag_id === tag_id) {
-                return this.pets[i].name_org;
-            }
-        }
-        return undefined;
+    getPetNameOrgByTagId(tag_id) {
+        return this._getPetByTagId(tag_id)?.name_org;
     }
 
     /**
@@ -5261,13 +5165,8 @@ class Sureflap extends utils.Adapter {
      * @param {string} id a household id
      * @returns {string|undefined} household name
      */
-    getHouseholdNameForId(id) {
-        for (let i = 0; i < this.households.length; i++) {
-            if (this.households[i].id === id) {
-                return this.households[i].name;
-            }
-        }
-        return undefined;
+    getHouseholdNameById(id) {
+        return this.households.find(h => h.id === id)?.name;
     }
 
     /**
