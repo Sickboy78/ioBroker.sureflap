@@ -15,7 +15,7 @@
 const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
-// const fs = require("fs");
+// const fs = require("node:fs");
 const SurepetApi = require('./lib/surepet-api');
 
 const ADAPTER_VERSION = '3.4.1';
