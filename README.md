@@ -188,6 +188,9 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 -->
 
 ### **WORK IN PROGRESS**
+- (copilot) Adapter requires node.js >= 22 now
+
+### **WORK IN PROGRESS**
 
 * (Sickboy78) code refactoring
 * (Sickboy78) added unit tests
