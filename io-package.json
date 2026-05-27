@@ -205,7 +205,7 @@
     ],
     "licenseInformation": {
       "license": "MIT",
-      "link": "https://github.com/Sickboy78/ioBroker.sureflap/blob/master/LICENSE",
+      "link": "https://opensource.org/license/mit",
       "type": "free"
     }
   },
@@ -271,7 +271,7 @@
       "_id": "info.offline_devices",
       "type": "state",
       "common": {
-        "role": "indicator.maintenance.unreach",
+        "role": "text",
         "name": "list of offline devices",
         "type": "string",
         "read": true,
