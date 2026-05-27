@@ -297,7 +297,7 @@
       "_id": "info.version",
       "type": "state",
       "common": {
-        "role": "info.version",
+        "role": "text",
         "name": "Adapter version",
         "type": "string",
         "read": true,
