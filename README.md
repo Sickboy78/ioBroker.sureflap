@@ -432,6 +432,8 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 
 * (Sickboy78) initial release
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 
 MIT License
