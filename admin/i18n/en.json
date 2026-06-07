@@ -1,0 +1,22 @@
+{
+    "Felaqua": "Felaqua",
+    "Surefeed": "Surefeed",
+    "Sureflap": "Sureflap",
+    "account settings": "account settings",
+    "api_host": "API hostname",
+    "battery voltage empty": "battery voltage empty",
+    "battery voltage full": "battery voltage full",
+    "battery voltages": "battery voltages",
+    "enable JSON event history": "enable JSON event history",
+    "enable event history as data points (deprecated)": "enable event history as data points (deprecated)",
+    "enable last movement for unknown pet": "enable last movement for unknown pets",
+    "event history": "event history",
+    "login": "Login",
+    "login result": "login result",
+    "number of items": "number of items",
+    "password": "password",
+    "result": "result",
+    "sure petcare account": "Sure Petcare Account",
+    "test login": "Test Login",
+    "username": "username"
+}

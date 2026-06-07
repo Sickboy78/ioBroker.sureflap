@@ -1,0 +1,22 @@
+{
+    "Felaqua": "Felaqua",
+    "Surefeed": "Surefeed",
+    "Sureflap": "Sureflap",
+    "account settings": "Настройки аккаунта",
+    "api_host": "имя хоста API",
+    "battery voltage empty": "напряжение батареи разряжено",
+    "battery voltage full": "напряжение батареи полное",
+    "battery voltages": "Напряжение батареи",
+    "enable JSON event history": "включить историю событий в формате JSON",
+    "enable event history as data points (deprecated)": "включить историю событий в виде точек данных (устарело)",
+    "enable last movement for unknown pet": "включить последнее движение для неизвестных домашних животных",
+    "event history": "История событий",
+    "login": "Авторизоваться",
+    "login result": "Результат входа",
+    "number of items": "количество элементов",
+    "password": "пароль",
+    "result": "результат",
+    "sure petcare account": "Счет Sure Petcare",
+    "test login": "Тестовый вход",
+    "username": "логин"
+}

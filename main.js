@@ -411,7 +411,7 @@ class Sureflap extends utils.Adapter {
                 this.log.info(`disconnected`);
                 if (!this.adapterUnloaded) {
                     this.log.info(`Restarting in ${RETRY_FREQUENCY_LOGIN} seconds`);
-                    this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
+                    this.timerId = this.setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
                 }
             });
     }
@@ -458,7 +458,7 @@ class Sureflap extends utils.Adapter {
                 this.log.info(`disconnected`);
                 if (!this.adapterUnloaded) {
                     this.log.info(`Restarting in ${RETRY_FREQUENCY_LOGIN} seconds`);
-                    this.timerId = setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
+                    this.timerId = this.setTimeout(this.startLoadingData.bind(this), RETRY_FREQUENCY_LOGIN * 1000);
                 }
             })
             .finally(() => {
@@ -474,7 +474,7 @@ class Sureflap extends utils.Adapter {
     setUpdateTimer() {
         return new Promise((resolve, reject) => {
             if (!this.adapterUnloaded) {
-                this.timerId = setTimeout(this.updateLoop.bind(this), UPDATE_FREQUENCY_DATA * 1000);
+                this.timerId = this.setTimeout(this.updateLoop.bind(this), UPDATE_FREQUENCY_DATA * 1000);
                 return resolve();
             }
             return reject(new Error(`cannot set timer. Adapter already unloaded.`));

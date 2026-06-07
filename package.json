@@ -69,8 +69,5 @@
   "bugs": {
     "url": "https://github.com/Sickboy78/ioBroker.sureflap/issues"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "readmeFilename": "README.md"
 }
