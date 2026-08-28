@@ -14,7 +14,14 @@
 		// this is necessary for the automatic typing of the adapter config
 		"resolveJsonModule": true,
 
-		// Set this to false if you want to disable the very strict rules (not recommended)
+        // The base config (@tsconfig/node22) restricts this to ["node"],
+        // which hides the globals of the test runner from the *.test.js files
+        "types": [
+            "node",
+            "mocha"
+        ],
+
+        // Set this to false if you want to disable the very strict rules (not recommended)
 		"strict": true,
 		// Or enable some of those features for more fine-grained control
 		// "strictNullChecks": true,
