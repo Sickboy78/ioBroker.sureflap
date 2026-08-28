@@ -83,7 +83,8 @@ class Sureflap extends utils.Adapter {
         // is first update loop
         this.firstLoop = true;
         // timer id
-        this.timerId = 0;
+        /** @type {ioBroker.Timeout | undefined} */
+        this.timerId = undefined;
         // adapter unloaded
         this.adapterUnloaded = false;
         // last history update timestamp
@@ -139,33 +140,34 @@ class Sureflap extends utils.Adapter {
 
         /* remember repeatable warnings to not spam iobroker log */
         // noinspection JSPrimitiveTypeWrapperUsage
+        /** @type {Record<string, boolean>[]} */
         this.warnings = [];
-        this.warnings[HUB_LED_MODE_MISSING] = [];
-        this.warnings[DEVICE_BATTERY_DATA_MISSING] = [];
-        this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING] = [];
-        this.warnings[DEVICE_SERIAL_NUMBER_MISSING] = [];
-        this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING] = [];
-        this.warnings[DEVICE_VERSION_NUMBER_MISSING] = [];
-        this.warnings[DEVICE_ONLINE_STATUS_MISSING] = [];
-        this.warnings[FLAP_LOCK_MODE_DATA_MISSING] = [];
-        this.warnings[FLAP_CURFEW_DATA_MISSING] = [];
-        this.warnings[FEEDER_CLOSE_DELAY_DATA_MISSING] = [];
-        this.warnings[FEEDER_BOWL_CONFIG_DATA_MISSING] = [];
-        this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING] = [];
-        this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING] = [];
-        this.warnings[FEEDER_BOWL_REMAINING_FOOD_DATA_MISSING] = [];
-        this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING] = [];
-        this.warnings[DISPENSER_WATER_STATUS_ADAPTER_OBJECT_MISSING] = [];
-        this.warnings[DISPENSER_WATER_REMAINING_DATA_MISSING] = [];
-        this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING] = [];
-        this.warnings[CAT_FLAP_PET_TYPE_DATA_MISSING] = [];
-        this.warnings[PET_POSITION_DATA_MISSING] = [];
-        this.warnings[PET_FEEDING_DATA_MISSING] = [];
-        this.warnings[PET_DRINKING_DATA_MISSING] = [];
-        this.warnings[PET_FLAP_STATUS_DATA_MISSING] = [];
-        this.warnings[PET_OUTSIDE_DATA_MISSING] = [];
-        this.warnings[PET_HOUSEHOLD_MISSING] = [];
-        this.warnings[PET_NAME_MISSING] = [];
+        this.warnings[HUB_LED_MODE_MISSING] = {};
+        this.warnings[DEVICE_BATTERY_DATA_MISSING] = {};
+        this.warnings[DEVICE_BATTERY_PERCENTAGE_DATA_MISSING] = {};
+        this.warnings[DEVICE_SERIAL_NUMBER_MISSING] = {};
+        this.warnings[DEVICE_SIGNAL_STRENGTH_MISSING] = {};
+        this.warnings[DEVICE_VERSION_NUMBER_MISSING] = {};
+        this.warnings[DEVICE_ONLINE_STATUS_MISSING] = {};
+        this.warnings[FLAP_LOCK_MODE_DATA_MISSING] = {};
+        this.warnings[FLAP_CURFEW_DATA_MISSING] = {};
+        this.warnings[FEEDER_CLOSE_DELAY_DATA_MISSING] = {};
+        this.warnings[FEEDER_BOWL_CONFIG_DATA_MISSING] = {};
+        this.warnings[FEEDER_BOWL_CONFIG_ADAPTER_OBJECT_MISSING] = {};
+        this.warnings[FEEDER_BOWL_STATUS_ADAPTER_OBJECT_MISSING] = {};
+        this.warnings[FEEDER_BOWL_REMAINING_FOOD_DATA_MISSING] = {};
+        this.warnings[FEEDER_BOWL_REMAINING_FOOD_ADAPTER_OBJECT_MISSING] = {};
+        this.warnings[DISPENSER_WATER_STATUS_ADAPTER_OBJECT_MISSING] = {};
+        this.warnings[DISPENSER_WATER_REMAINING_DATA_MISSING] = {};
+        this.warnings[DISPENSER_WATER_REMAINING_ADAPTER_OBJECT_MISSING] = {};
+        this.warnings[CAT_FLAP_PET_TYPE_DATA_MISSING] = {};
+        this.warnings[PET_POSITION_DATA_MISSING] = {};
+        this.warnings[PET_FEEDING_DATA_MISSING] = {};
+        this.warnings[PET_DRINKING_DATA_MISSING] = {};
+        this.warnings[PET_FLAP_STATUS_DATA_MISSING] = {};
+        this.warnings[PET_OUTSIDE_DATA_MISSING] = {};
+        this.warnings[PET_HOUSEHOLD_MISSING] = {};
+        this.warnings[PET_NAME_MISSING] = {};
         this.lastError = undefined;
         this.lastLoginError = undefined;
 
@@ -208,7 +210,7 @@ class Sureflap extends utils.Adapter {
     onUnload(callback) {
         try {
             this.adapterUnloaded = true;
-            clearTimeout(this.timerId);
+            this.clearTimeout(this.timerId);
             this.setConnectionStatusToAdapter(false);
             this.log.info(`everything cleaned up`);
         } catch (e) {
@@ -397,7 +399,7 @@ class Sureflap extends utils.Adapter {
      */
     startLoadingData() {
         this.log.debug(`starting SureFlap Adapter v${ADAPTER_VERSION}`);
-        clearTimeout(this.timerId);
+        this.clearTimeout(this.timerId);
         this.doAuthenticate()
             .then(() => this.getHouseholds())
             .then(() => this.startUpdateLoop())
@@ -419,7 +421,7 @@ class Sureflap extends utils.Adapter {
     /**
      * starts the update loop
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     startUpdateLoop() {
         return new Promise(resolve => {
@@ -436,7 +438,7 @@ class Sureflap extends utils.Adapter {
      * the update loop, refreshing the data every UPDATE_FREQUENCY_DATA seconds
      */
     updateLoop() {
-        clearTimeout(this.timerId);
+        this.clearTimeout(this.timerId);
         this.getDevices()
             .then(() => this.getPets())
             .then(() => this.getEventHistory())
@@ -469,7 +471,7 @@ class Sureflap extends utils.Adapter {
     /**
      * sets the update timer
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     setUpdateTimer() {
         return new Promise((resolve, reject) => {
@@ -488,7 +490,7 @@ class Sureflap extends utils.Adapter {
     /**
      * authenticate and store auth token
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     doAuthenticate() {
         return new Promise((resolve, reject) => {
@@ -514,7 +516,7 @@ class Sureflap extends utils.Adapter {
     /**
      * get households
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     getHouseholds() {
         return new Promise((resolve, reject) => {
@@ -535,7 +537,7 @@ class Sureflap extends utils.Adapter {
     /**
      * gets the data for devices
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     getDevices() {
         return new Promise((resolve, reject) => {
@@ -581,7 +583,7 @@ class Sureflap extends utils.Adapter {
     /**
      * gets the data for pets
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     getPets() {
         return new Promise((resolve, reject) => {
@@ -607,7 +609,7 @@ class Sureflap extends utils.Adapter {
     /**
      * gets the event history data
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     getEventHistory() {
         return new Promise((resolve, reject) => {
@@ -645,7 +647,7 @@ class Sureflap extends utils.Adapter {
     /**
      * gets the aggregated reports for all pets
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     getPetReports() {
         return new Promise((resolve, reject) => {
@@ -692,7 +694,7 @@ class Sureflap extends utils.Adapter {
     /**
      * update devices with the received data
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     updateDevices() {
         return new Promise(resolve => {
@@ -740,7 +742,7 @@ class Sureflap extends utils.Adapter {
     /**
      * update pets with received data
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     updatePets() {
         return new Promise(resolve => {
@@ -788,7 +790,7 @@ class Sureflap extends utils.Adapter {
     /**
      * updates event history with received data
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     updateEventHistory() {
         return new Promise(resolve => {
@@ -1195,7 +1197,7 @@ class Sureflap extends utils.Adapter {
     /**
      * updates the adapter version state on the first update loop
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     updateAdapterVersion() {
         return new Promise((resolve, reject) => {
@@ -1240,7 +1242,7 @@ class Sureflap extends utils.Adapter {
     setGlobalOnlineStatusToAdapter() {
         this.log.silly(`setting global online status to adapter`);
 
-        if (this.allDevicesOnline !== this.allDevicesOnlinePrev) {
+        if (this.allDevicesOnline !== undefined && this.allDevicesOnline !== this.allDevicesOnlinePrev) {
             const objName = 'info.all_devices_online';
             this.setState(objName, this.allDevicesOnline, true);
         }
@@ -2849,7 +2851,7 @@ class Sureflap extends utils.Adapter {
      * @param {boolean} recursive whether to delete recursively
      * @param {function(object): boolean} [condition] optional condition; defaults to always true
      * @param {function(object): string} [conditionFailMessage] optional condition fail message; defaults to "condition not met."
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     _deleteObjectIfExists(
         objName,
@@ -2935,7 +2937,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} householdIndex a household index
      * @param {number} hid a household id
      * @param {boolean} all whether to delete all history objects
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     deleteEventHistoryForHousehold(householdIndex, hid, all) {
         return new Promise((resolve, reject) => {
@@ -2960,7 +2962,7 @@ class Sureflap extends utils.Adapter {
     /**
      * removes deleted or renamed pets
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     removeDeletedAndRenamedPetsFromAdapter() {
         return new Promise(resolve => {
@@ -3053,7 +3055,7 @@ class Sureflap extends utils.Adapter {
     /**
      * removes type of unassigned pets
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     removePetTypeOfUnassignedPetsFromAdapter() {
         return new Promise(resolve => {
@@ -3136,7 +3138,7 @@ class Sureflap extends utils.Adapter {
      * When there are changes to the data structures obsolete entries go here.
      *
      * @param {string} version a version string in format patch.major.minor or 'unknown'
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     removeDeprecatedDataFromAdapter(version) {
         return new Promise(resolve => {
@@ -3327,7 +3329,7 @@ class Sureflap extends utils.Adapter {
      * removes firmware and hardware version from devices if they are of type number
      *
      * @param {string} objName the device name
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     removeVersionNumberFromDevices(objName) {
         return new Promise((resolve, reject) => {
@@ -3353,7 +3355,7 @@ class Sureflap extends utils.Adapter {
      * removes assigned pets from pet flap
      *
      * @param {string} objName the device name
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     removeAssignedPetsFromPetFlap(objName) {
         return new Promise((resolve, reject) => {
@@ -3385,7 +3387,7 @@ class Sureflap extends utils.Adapter {
     /**
      * creates the adapters object hierarchy
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createAdapterObjectHierarchy() {
         return new Promise((resolve, reject) => {
@@ -3415,7 +3417,7 @@ class Sureflap extends utils.Adapter {
     /**
      * creates household and hub data structures in the adapter
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createHouseholdsAndHubsToAdapter() {
         return new Promise((resolve, reject) => {
@@ -3538,7 +3540,7 @@ class Sureflap extends utils.Adapter {
     /**
      * creates device hierarchy data structures in the adapter
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createDevicesToAdapter() {
         return new Promise((resolve, reject) => {
@@ -3610,7 +3612,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} hid a household id
      * @param {number} deviceIndex a device index
      * @param {string} objName an object name
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createCommonStatusToAdapter(hid, deviceIndex, objName) {
         return new Promise((resolve, reject) => {
@@ -3676,7 +3678,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} hid a household id
      * @param {number} deviceIndex a device index
      * @param {string} objName an object name
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createVersionsToAdapter(hid, deviceIndex, objName) {
         return new Promise((resolve, reject) => {
@@ -3718,7 +3720,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} deviceIndex a device index
      * @param {string} objName an object name
      * @param {boolean} isCatFlap whether the flap is a cat flap
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createFlapDevicesToAdapter(hid, deviceIndex, objName, isCatFlap) {
         return new Promise((resolve, reject) => {
@@ -3796,7 +3798,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} hid a household ID
      * @param {number} deviceIndex a device index
      * @param {string} objName an object name
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createFeederDevicesToAdapter(hid, deviceIndex, objName) {
         return new Promise((resolve, reject) => {
@@ -3965,7 +3967,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} hid a household id
      * @param {number} deviceIndex a device index
      * @param {string} objName an object name
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createWaterDispenserDevicesToAdapter(hid, deviceIndex, objName) {
         return new Promise((resolve, reject) => {
@@ -4022,7 +4024,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} deviceIndex a device index
      * @param {number} tag a pet tag ID
      * @param {string} objName an object name
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createAssignedPetsTypeControl(hid, deviceIndex, tag, objName) {
         return new Promise((resolve, reject) => {
@@ -4073,7 +4075,7 @@ class Sureflap extends utils.Adapter {
      * @param {number} deviceIndex a device index
      * @param {object} pet a pet tag ID
      * @param {string} objName an object name
-     * @returns {Promise}  a promise
+     * @returns {Promise<void>}  a promise
      */
     createPetAssignedControl(hid, deviceIndex, pet, objName) {
         return new Promise((resolve, reject) => {
@@ -4125,7 +4127,7 @@ class Sureflap extends utils.Adapter {
     /**
      * creates pet hierarchy data structures in the adapter
      *
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createPetsToAdapter() {
         return new Promise((resolve, reject) => {
@@ -4166,7 +4168,7 @@ class Sureflap extends utils.Adapter {
      * creates unknown pet hierarchy data structures in the adapter
      *
      * @param {string} hid a household ID
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createUnknownPetsToAdapter(hid) {
         return new Promise(resolve => {
@@ -4228,7 +4230,7 @@ class Sureflap extends utils.Adapter {
      * @param {string} petName a pet name
      * @param {string} petNameOrg a original pet name
      * @param {number} petId a pet ID
-     * @returns {Promise} a promise
+     * @returns {Promise<void>} a promise
      */
     createPetHierarchyToAdapter(prefix, householdName, petName, petNameOrg, petId) {
         return new Promise((resolve, reject) => {
@@ -5706,7 +5708,7 @@ class Sureflap extends utils.Adapter {
     }
 }
 
-if (module.parent) {
+if (require.main !== module) {
     // Export the constructor in compact mode
     /**
      * @param {Partial<utils.AdapterOptions>} [options] adapter options

@@ -9,6 +9,8 @@
 	"exclude": [
 		"**/build",
 		"node_modules/",
-		"widgets/"
+		"widgets/",
+		// test files are type-checked via test/tsconfig.json; they rely on mocha globals
+		"**/*.test.js"
 	]
 }
