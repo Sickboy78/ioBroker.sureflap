@@ -10,10 +10,6 @@
 		"allowJs": true,
 		"checkJs": true,
 
-		"module": "commonjs",
-		"moduleResolution": "node",
-		// 'node' (node10) resolution is deprecated in TS 6.0; silence until we migrate off CommonJS
-		"ignoreDeprecations": "6.0",
 		"esModuleInterop": true,
 		// this is necessary for the automatic typing of the adapter config
 		"resolveJsonModule": true,
