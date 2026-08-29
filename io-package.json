@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "sureflap",
-    "version": "3.4.2",
+      "version": "3.4.3",
     "news": {
+        "3.4.3": {
+            "en": "dependency updates",
+            "de": "Aktualisierungen der Abhängigkeiten",
+            "ru": "Слава Украины",
+            "pt": "atualizações de dependência",
+            "nl": "afhankelijkheidsupdates",
+            "fr": "mises à jour des dépendances",
+            "it": "aggiornamenti delle dipendenze",
+            "es": "actualizaciones de dependencias",
+            "pl": "aktualizacje zależności",
+            "uk": "оновлення залежностей",
+            "zh-cn": "依赖关系更新"
+        },
       "3.4.2": {
         "en": "dependency updates",
         "de": "Aktualisierungen von Abhängigkeiten",
@@ -80,19 +93,6 @@
         "pl": "ulepszona obsługa danych",
         "uk": "покращена обробка даних",
         "zh-cn": "改进数据处理"
-      },
-      "3.0.0": {
-        "en": "adaptions and refactoring for latest API version",
-        "de": "Anpassungen und Refactoring für die neueste API-Version",
-        "ru": "Слава Украины",
-        "pt": "adaptações e refacções para a versão mais recente da API",
-        "nl": "aanpassingen en refactoring voor de nieuwste API-versie",
-        "fr": "adaptations et remaniements pour la dernière version de l'API",
-        "it": "adattamenti e refactoring per l'ultima versione dell'API",
-        "es": "adaptaciones y refactorizaciones para la última versión de la API",
-        "pl": "adaptacje i refaktoryzacja dla najnowszej wersji API",
-        "uk": "адаптація та рефакторинг для останньої версії API",
-        "zh-cn": "针对最新的应用程序接口版本进行调整和重构"
       }
     },
     "titleLang": {
