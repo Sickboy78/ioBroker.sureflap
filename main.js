@@ -5596,26 +5596,26 @@ class Sureflap extends utils.Adapter {
             this.config.history_entries = 10;
             configOk = false;
         }
-        this.log.info(`API host: ${this.config.api_host}`);
-        this.log.info(`sureflap battery voltage full: ${this.config.sureflap_battery_full}`);
-        this.log.info(`sureflap battery voltage empty: ${this.config.sureflap_battery_empty}`);
-        this.log.info(`surefeed battery voltage full: ${this.config.surefeed_battery_full}`);
-        this.log.info(`surefeed battery voltage empty: ${this.config.surefeed_battery_empty}`);
-        this.log.info(`felaqua battery voltage full: ${this.config.felaqua_battery_full}`);
-        this.log.info(`felaqua battery voltage empty: ${this.config.felaqua_battery_empty}`);
-        this.log.info(`json history enabled: ${this.config.history_json_enable}`);
+        this.log.debug(`API host: ${this.config.api_host}`);
+        this.log.debug(`sureflap battery voltage full: ${this.config.sureflap_battery_full}`);
+        this.log.debug(`sureflap battery voltage empty: ${this.config.sureflap_battery_empty}`);
+        this.log.debug(`surefeed battery voltage full: ${this.config.surefeed_battery_full}`);
+        this.log.debug(`surefeed battery voltage empty: ${this.config.surefeed_battery_empty}`);
+        this.log.debug(`felaqua battery voltage full: ${this.config.felaqua_battery_full}`);
+        this.log.debug(`felaqua battery voltage empty: ${this.config.felaqua_battery_empty}`);
+        this.log.debug(`json history enabled: ${this.config.history_json_enable}`);
         if (this.config.history_json_enable === true) {
-            this.log.info(`number of json history entries: ${this.config.history_json_entries}`);
+            this.log.debug(`number of json history entries: ${this.config.history_json_entries}`);
         }
-        this.log.info(`history (deprecated) enabled: ${this.config.history_enable}`);
+        this.log.debug(`history (deprecated) enabled: ${this.config.history_enable}`);
         if (this.config.history_enable === true) {
-            this.log.info(`number of history (deprecated) entries: ${this.config.history_entries}`);
+            this.log.debug(`number of history (deprecated) entries: ${this.config.history_entries}`);
         }
-        this.log.info(`last movement for unknown pet enabled: ${this.config.unknown_movement_enable}`);
+        this.log.debug(`last movement for unknown pet enabled: ${this.config.unknown_movement_enable}`);
         if (configOk) {
             this.log.info('adapter configuration ok');
         } else {
-            this.log.info('adapter configuration contains errors');
+            this.log.warn('adapter configuration contains errors');
         }
     }
 
