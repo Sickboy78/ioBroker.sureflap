@@ -83,6 +83,7 @@ class Sureflap extends utils.Adapter {
         // is first update loop
         this.firstLoop = true;
         // timer id
+        // eslint-disable-next-line jsdoc/check-tag-names -- @type is required here, this is plain JS checked by tsc
         /** @type {ioBroker.Timeout | undefined} */
         this.timerId = undefined;
         // adapter unloaded
@@ -140,6 +141,7 @@ class Sureflap extends utils.Adapter {
 
         /* remember repeatable warnings to not spam iobroker log */
         // noinspection JSPrimitiveTypeWrapperUsage
+        // eslint-disable-next-line jsdoc/check-tag-names -- @type is required here, this is plain JS checked by tsc
         /** @type {Record<string, boolean>[]} */
         this.warnings = [];
         this.warnings[HUB_LED_MODE_MISSING] = {};
@@ -1096,12 +1098,15 @@ class Sureflap extends utils.Adapter {
                                     this.log.debug(`setting curfew to: '${JSON.stringify(curfew)}' ...`);
                                     curfew = this.convertCurfewLocalTimesToUtcTimes(curfew);
                                     if (DEVICE_TYPE_PET_FLAP === deviceType) {
-                                        // pet flap takes single object instead of array
-                                        curfew = curfew[0];
-                                        curfew.enabled = true;
+                                        // pet flap takes single object instead of array, enable it
+                                        curfew[0].enabled = true;
                                     }
                                     this.api
-                                        .setCurfewForFlap(this.authToken, deviceId, curfew)
+                                        .setCurfewForFlap(
+                                            this.authToken,
+                                            deviceId,
+                                            DEVICE_TYPE_PET_FLAP === deviceType ? curfew[0] : curfew,
+                                        )
                                         .then(() => {
                                             this.log.info(`curfew successfully enabled`);
                                         })
@@ -1128,12 +1133,13 @@ class Sureflap extends utils.Adapter {
                                 curfew.forEach(entry => (entry.enabled = false));
                                 this.log.debug(`setting curfew to: ${JSON.stringify(curfew)}`);
                                 curfew = this.convertCurfewLocalTimesToUtcTimes(curfew);
-                                if (DEVICE_TYPE_PET_FLAP === deviceType) {
-                                    // pet flap takes single object instead of array
-                                    curfew = curfew[0];
-                                }
+                                // pet flap takes single object instead of array
                                 this.api
-                                    .setCurfewForFlap(this.authToken, deviceId, curfew)
+                                    .setCurfewForFlap(
+                                        this.authToken,
+                                        deviceId,
+                                        DEVICE_TYPE_PET_FLAP === deviceType ? curfew[0] : curfew,
+                                    )
                                     .then(() => {
                                         this.log.info(`curfew successfully disabled`);
                                     })
@@ -1174,12 +1180,9 @@ class Sureflap extends utils.Adapter {
         } else {
             this.log.debug(`changing curfew to: '${JSON.stringify(curfew)}' ...`);
             curfew = this.convertCurfewLocalTimesToUtcTimes(curfew);
-            if (DEVICE_TYPE_PET_FLAP === deviceType) {
-                // pet flap takes single object instead of array
-                curfew = curfew[0];
-            }
+            // pet flap takes single object instead of array
             this.api
-                .setCurfewForFlap(this.authToken, deviceId, curfew)
+                .setCurfewForFlap(this.authToken, deviceId, DEVICE_TYPE_PET_FLAP === deviceType ? curfew[0] : curfew)
                 .then(() => {
                     this.log.info(`curfew successfully updated`);
                 })
@@ -4768,7 +4771,7 @@ class Sureflap extends utils.Adapter {
      *
      * @param {string} jsonString a json string containing an array of curfew times
      * @param {number} device_type contains the type of flap
-     * @returns {*[]|undefined} a curfew object if parsing and validation was successful, undefined otherwise
+     * @returns {{enabled: boolean, lock_time: string, unlock_time: string}[]|undefined} a curfew object if parsing and validation was successful, undefined otherwise
      */
     validateAndGetCurfewFromJsonString(jsonString, device_type) {
         try {
@@ -5272,7 +5275,7 @@ class Sureflap extends utils.Adapter {
      *
      * @param {object} obj an object with deep values
      * @param {string} path the path to the desired value
-     * @returns {any|undefined} the deep value or undefined
+     * @returns {unknown} the deep value or undefined
      */
     getObjectValueForPath(obj, path) {
         return path
