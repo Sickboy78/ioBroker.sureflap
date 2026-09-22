@@ -187,7 +187,7 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
   ### **WORK IN PROGRESS**
 -->
 
-### **WORK IN PROGRESS**
+### 3.4.4 (2026-09-22)
 
 * (Sickboy78) dependency updates
 * (Sickboy78) reduce log messages
@@ -213,10 +213,6 @@ from [Sure Petcare®](https://www.surepetcare.com/en-us/press).
 ### 3.4.0 (2025-08-11)
 
 * (Sickboy78) removed deprecated util.promisify
-
-### 3.3.0 (2025-07-13)
-
-* (Sickboy78) added translations for unknown pet setting
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

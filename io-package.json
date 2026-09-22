@@ -1,21 +1,34 @@
 {
   "common": {
     "name": "sureflap",
-      "version": "3.4.3",
+    "version": "3.4.4",
     "news": {
-        "3.4.3": {
-            "en": "dependency updates",
-            "de": "Aktualisierungen der Abhängigkeiten",
-            "ru": "Слава Украины",
-            "pt": "atualizações de dependência",
-            "nl": "afhankelijkheidsupdates",
-            "fr": "mises à jour des dépendances",
-            "it": "aggiornamenti delle dipendenze",
-            "es": "actualizaciones de dependencias",
-            "pl": "aktualizacje zależności",
-            "uk": "оновлення залежностей",
-            "zh-cn": "依赖关系更新"
-        },
+      "3.4.4": {
+        "en": "reduce log messages and add node 26 to test matrix",
+        "de": "Logmeldungen reduziert und node 26 zur Testmatrix hinzugefügt",
+        "ru": "Слава Украины",
+        "pt": "reduza os logs e teste a matriz node 26",
+        "nl": "het aantal logboekberichten beperken en node 26 aan de testmatrix toevoegen",
+        "fr": "réduire les log messages et ajoute node 26 au matrice de test",
+        "it": "ridurre i log e aggiunga node 26 alla matrice di test",
+        "es": "reducir log messages y añadir node 26 a la matriz de pruebas",
+        "pl": "zmniejszenie wiadomości dziennika i dodaj node 26 do macierzy testowej",
+        "uk": "зменшити повідомлення журналу та додати node 26 до тестової матриці",
+        "zh-cn": "减少日志消息, 将 node 26 添加到测试矩阵"
+      },
+      "3.4.3": {
+        "en": "dependency updates",
+        "de": "Aktualisierungen der Abhängigkeiten",
+        "ru": "Слава Украины",
+        "pt": "atualizações de dependência",
+        "nl": "afhankelijkheidsupdates",
+        "fr": "mises à jour des dépendances",
+        "it": "aggiornamenti delle dipendenze",
+        "es": "actualizaciones de dependencias",
+        "pl": "aktualizacje zależności",
+        "uk": "оновлення залежностей",
+        "zh-cn": "依赖关系更新"
+      },
       "3.4.2": {
         "en": "dependency updates",
         "de": "Aktualisierungen von Abhängigkeiten",
@@ -80,19 +93,6 @@
         "pl": "możliwość kontrolowania przydziału zwierząt domowych",
         "uk": "зробили призначення домашніх улюбленців контрольованим",
         "zh-cn": "使宠物任务可控"
-      },
-      "3.1.0": {
-        "en": "improved data handling",
-        "de": "verbesserte Datenverarbeitung",
-        "ru": "Слава Украины",
-        "pt": "tratamento de dados melhorado",
-        "nl": "verbeterde dataverwerking",
-        "fr": "amélioration du traitement des données",
-        "it": "migliore gestione dei dati",
-        "es": "tratamiento de datos mejorado",
-        "pl": "ulepszona obsługa danych",
-        "uk": "покращена обробка даних",
-        "zh-cn": "改进数据处理"
       }
     },
     "titleLang": {

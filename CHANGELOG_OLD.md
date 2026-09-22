@@ -1,4 +1,9 @@
 # Older changes
+
+## 3.3.0 (2025-07-13)
+
+* (Sickboy78) added translations for unknown pet setting
+
 ## 3.2.4 (2025-07-07)
 
 * (Sickboy78) fixed unknown pet getting deleted at adapter startup
